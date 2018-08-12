@@ -6,11 +6,17 @@ This software helps with building, deploying and running software locally.
 How to use it?
 --------------
 
-`./fulgens.js <CONFIG_FILE>` will generate a bash script you can use to build, deploy and run your software locally.
+1.) Install it vial the npm registry: `npm -g install fulgens`
+
+2.) Create a Fulgensfile
+
+3.) Exeucte `fulgens` in the same directory as a Fulgensfile and it will generate a bash script you can use to build, deploy and run your software locally
 
 
-The config file
----------------
+A Fulgensfile
+-------------
+
+A Fulgensfile may have the file extension ".js".
 
 ```
 module.exports = {
@@ -46,6 +52,37 @@ module.exports = {
   }
 }
 ```
+
+A simple example / Tutorial
+---------------------------
+
+Create a Web project via: `mvn archetype:generate -DgroupId=de.oglimmer -DartifactId=MyApp -DarchetypeArtifactId=maven-archetype-webapp -DinteractiveMode=false`. Step into the new project directory and create a minimal Fulgensfile with this content there:
+
+```
+module.exports = {
+
+  config: {
+    Name: "example",
+  },
+
+  software: {
+    "MyApp": {
+      Source: "mvn",
+      Artifact: "target/MyApp.war"
+    },
+
+   tomcat: {
+      Source: "tomcat",
+      Connect: "MyApp"
+    }
+  }
+}
+```
+Run `fulgens>run_local.sh` to create a bash script. Follow with `chmod 755 run_local.sh` to make it runnable and finally build, deploy and run via `./run_local.sh -f`.
+
+Now browse to [http://localhost:8080/MyApp/]()
+
+Now try `./run_local.sh -f -t tomcat:docker` to run the Tomcat inside a Docker container. Or `./run_local.sh -f -b docker` to build inside Docker, but run on your local machine.
 
 TYPE_SOURCE
 -----------

@@ -16,7 +16,7 @@ else
   while true; do
     read </dev/tty
     mvn package
-    cp web/target/grid.war $targetPath
+    #TODO: cp $artifact $targetPath
   done
 fi
     `;

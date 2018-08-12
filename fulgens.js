@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+const path = require('path');
+const fs = require('fs');
+
 const head = require('./classes/phase/head');
 const functions = require('./classes/phase/functions');
 const cleanup = require('./classes/phase/cleanup');
@@ -18,14 +21,23 @@ const pluginFactory = require('./classes/plugins/factory');
 
 const RuntimeConfiguration = require('./classes/core/RuntimeConfiguration')
 
-if (process.argv.length < 3) {
-  console.error('config file missing!');
-  process.exit(1);
+var filename;
+if (process.argv[0].endsWith('node') || process.argv[0].endsWith('nodejs')) {
+  filename = process.argv[2];
+} else {
+  filename = process.argv[1];
 }
+if (!filename) {
+  filename = "./Fulgensfile.js";
+  if (!fs.existsSync(path.resolve(filename))) {
+    filename = "./Fulgensfile";
+  }
+}
+filename = path.resolve(filename);
 
-const userConfig = require(process.argv[2]);
+const userConfig = require(filename);
 
-if (!userConfig) {
+if (!userConfig || Object.entries(userConfig).length === 0) {
   console.error('config empty!');
   process.exit(1);
 }

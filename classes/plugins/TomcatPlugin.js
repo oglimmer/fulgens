@@ -46,11 +46,11 @@ class TomcatPlugin {
     postbuildBuilder.add(`
     if [ "$TYPE_SOURCE_TOMCAT" == "download" ]; then
       targetPath=localrun/apache-tomcat-$TOMCAT_VERSION/webapps/
-      cp web/target/grid.war $targetPath
+      cp ${artifact} $targetPath
     fi
     `);
 
-    startBuilder.add(start);
+    startBuilder.add(start(artifact));
   }
 
 }
@@ -74,7 +74,7 @@ if [ "$TYPE_SOURCE_TOMCAT" == "download" ]; then
 fi
 `;
 
-const start = `
+const start = artifact => `
 if [ "$TYPE_SOURCE_TOMCAT" == "download" ]; then
   # start tomcat
   if [ ! -f ".tomcat" ]; then
@@ -94,7 +94,7 @@ if [ "$TYPE_SOURCE_TOMCAT" == "docker" ]; then
   fi
   mkdir -p localrun/webapps
   targetPath=localrun/webapps/
-  cp web/target/grid.war $targetPath
+  cp ${artifact} $targetPath
   if [ ! -f ".tomcat" ]; then
     containerId=$(docker run --rm -d -p 8080:8080 -v $(pwd)/localrun/webapps:/usr/local/tomcat/webapps tomcat:$TYPE_SOURCE_TOMCAT_VERSION)
     echo "$containerId">.tomcat
@@ -110,7 +110,7 @@ if [ "$TYPE_SOURCE_TOMCAT" == "local" ]; then
   fi
   # reuse existing tomcat
   targetPath=$TYPE_SOURCE_TOMCAT_PATH/webapps/
-  cp web/target/grid.war $targetPath
+  cp ${artifact} $targetPath
   tailCmd="tail -f $TYPE_SOURCE_TOMCAT_PATH/logs/catalina.out"
 fi
 `;

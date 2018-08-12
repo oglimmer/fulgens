@@ -1,0 +1,23 @@
+{
+  "name": "fulgens",
+  "version": "0.0.1",
+  "description": "Helps with building, deploying and running software locally",
+  "main": "fulgens.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oglimmer/fulgens.git"
+  },
+  "keywords": [
+    "build",
+    "deploy"
+  ],
+  "author": "Oli Zimpasser",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/oglimmer/fulgens/issues"
+  },
+  "homepage": "https://github.com/oglimmer/fulgens#readme"
+}

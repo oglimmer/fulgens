@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 
-const userConfig = require('./ggo');
-
 const head = require('./classes/phase/head');
 const functions = require('./classes/phase/functions');
 const cleanup = require('./classes/phase/cleanup');
@@ -19,6 +17,18 @@ const globalvariables = require('./classes/phase/globalvariables');
 const pluginFactory = require('./classes/plugins/factory');
 
 const RuntimeConfiguration = require('./classes/core/RuntimeConfiguration')
+
+if (process.argv.length < 3) {
+  console.error('config file missing!');
+  process.exit(1);
+}
+
+const userConfig = require(process.argv[2]);
+
+if (!userConfig) {
+  console.error('config empty!');
+  process.exit(1);
+}
 
 const rtConfig = new RuntimeConfiguration(userConfig);
 

@@ -1,4 +1,5 @@
 
+const ConfigFile = require('./ConfigFile');
 
 class RuntimeConfiguration {
 
@@ -6,9 +7,11 @@ class RuntimeConfiguration {
     this.userConfig = userConfig;
     this.plugins = [];
     this.dependencies = {};
+    this.configFiles = [];
   }
 
-  addPlugin(plugin, name, config) {
+  addPlugin(plugin, name) {
+    plugin.register(name, this.userConfig, this);
     this.plugins.push({
       plugin,
       name
@@ -24,6 +27,13 @@ class RuntimeConfiguration {
     Object.entries(this.dependencies).forEach(e => e[1].exec('dependency', this.userConfig, this))
   }
 
+  addConfigFile(pluginName, name, content, AttachAsEnvVar) {
+    this.configFiles.push(new ConfigFile(pluginName, name, content, AttachAsEnvVar));
+  }
+
+  getConfigFiles(pluginName) {
+    return this.configFiles.filter(f => f.pluginName === pluginName);
+  }
 }
 
 module.exports = RuntimeConfiguration;

@@ -55,7 +55,7 @@ cleanup()
         `).join('') + `
       fi`
     ).join('');
-    return cleanupHead + middle + cleanupTail;
+    return `\n\n#####${this.constructor.name}\n\n` + cleanupHead + middle + cleanupTail;
   }
 
 }

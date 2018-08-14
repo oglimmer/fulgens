@@ -42,12 +42,31 @@ module.exports = {
           npm: [ "jasmine", "phantomjs-prebuilt" ]
         }
       },
-      Artifact: <PATH_TO_BUILD_ARTIFACT>
+      Artifact: <PATH_TO_BUILD_ARTIFACT>,
+      <ANY_CONFIG_FILE>: {
+        Name: "my.properties",
+        Connections: [ { Source:"<SOFTWARE_NAME>", Var: "couchdb.host" } ],
+        Content: [
+          "var1=value1",
+          "var2=value21"
+        ],
+        AttachAsEnvVar: ["JAVA_OPTS", "-Dmy.properties=$$SELF_NAME$$"]
+      },
+      BeforeBuild: "..bash code run before the build..",
+      AfterBuild: ".. bash code after the build"
     },
 
     <SOFTWARE_NAME>: {
+      Source: "couchdb",
+      CouchDB: {
+        Schema: "toldyouso",
+        Create: [ "src/couchdb/_design-User-view.json" ]
+      }
+    }
+
+    <SOFTWARE_NAME>: {
       Source: "tomcat",
-      Connect: <SOFTWARE_NAME_REF_TO_DEPLOY>
+      Deploy: <SOFTWARE_NAME_REF_TO_DEPLOY>
     }
   }
 }
@@ -116,13 +135,15 @@ GET_SOURCE
 
 <del>POST_GET_SOURCE</del>
 
+PRE_BUILD
+
 BUILD
 
 POST_BUILD
 
 START
 
-<del>POST_START</del>
+POST_START
 
 WAIT
 

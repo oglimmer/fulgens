@@ -6,7 +6,7 @@ const BufferedBuilder = require('./BufferedBuilder');
 class WaitBuilder extends BufferedBuilder {
 
   build() {
-    return `
+    return `\n\n#####${this.constructor.name}\n\n` + `
 # waiting for ctrl-c
 if [ "$TAIL" == "YES" ]; then
   $tailCmd

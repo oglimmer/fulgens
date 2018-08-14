@@ -13,7 +13,7 @@ class GlobalVariablesBuilder {
   }
 
   build() {
-    return this.varNames.map(e => `${e.varName}=${e.defaultValue};`).join('\n');
+    return `\n\n#####${this.constructor.name}\n\n` + this.varNames.map(e => `${e.varName}=${e.defaultValue};`).join('\n');
   }
 
 }

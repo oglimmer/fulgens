@@ -5,7 +5,7 @@ const BufferedBuilder = require('./BufferedBuilder');
 class OptionsBuilder extends BufferedBuilder {
 
   build() {
-    return code(this.userConfig.config.Name);
+    return `\n\n#####${this.constructor.name}\n\n` + code(this.userConfig.config.Name);
   }
 
 }

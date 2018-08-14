@@ -56,6 +56,10 @@ class JavaPlugin {
     return instance;
   }
 
+  register(softwareComponentName, userConfig, runtimeConfiguration) {
+    
+  }
+
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
     functionsBuilder.add(functions);
     prepareBuilder.add(prepare);

@@ -10,11 +10,11 @@ class BufferedBuilder {
   }
 
   add(code) {
-    this.buffer += code;
+    this.buffer += `\n${code}\n`;
   }
 
   build() {
-    return this.buffer;
+    return `\n\n#####${this.constructor.name}\n\n${this.buffer}\n\n`;
   }
 
 }

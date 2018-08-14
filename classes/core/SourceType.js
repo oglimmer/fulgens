@@ -30,8 +30,6 @@ class SourceTypeBuilder {
     else
       TYPE_SOURCE_${componentNameUpper}_VERSION=$pathOrVersion
     fi
-  else
-    echo "Illegal component in -t for ${componentNameUpper}" && exit 1
   fi
 `;
 

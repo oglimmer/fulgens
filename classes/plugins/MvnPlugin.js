@@ -3,6 +3,8 @@ const headBuilder = require('../phase/head');
 const functionsBuilder = require('../phase/functions');
 const buildBuilder = require('../phase/build');
 const dependencycheckBuilder = require('../phase/dependencycheck');
+const postbuildBuilder = require('../phase/postbuild');
+const prebuildBuilder = require('../phase/prebuild');
 
 const dependencyManager = require('../core/DependencyManager');
 
@@ -41,11 +43,11 @@ CMD ["mvn"]
 EOFDOCK
     docker build --tag maven_build:$dockerVersion localrun/dockerbuild/
 
-    docker run --rm -v "$(pwd)":/usr/src/build -v $(pwd)/localrun/.m2:/root/.m2 -w /usr/src/build maven_build:$dockerVersion mvn $MVN_CLEAN $MVN_OPTS package 
+    docker run --rm -v "$(pwd)":/usr/src/build -v "$(pwd)/localrun/.m2":/root/.m2 -w /usr/src/build maven_build:$dockerVersion mvn $MVN_CLEAN $MVN_OPTS package 
     ` + end;
   } else {
     return start + `
-    docker run --rm -v "$(pwd)":/usr/src/build -v $(pwd)/localrun/.m2:/root/.m2 -w /usr/src/build maven:$dockerVersion mvn $MVN_CLEAN $MVN_OPTS package
+    docker run --rm -v "$(pwd)":/usr/src/build -v "$(pwd)/localrun/.m2":/root/.m2 -w /usr/src/build maven:$dockerVersion mvn $MVN_CLEAN $MVN_OPTS package
     ` + end;
   }
 }
@@ -56,6 +58,12 @@ class MvnPlugin {
     return new MvnPlugin();
   }
 
+  register(softwareComponentName, userConfig, runtimeConfiguration) {
+    Object.entries(userConfig.software[softwareComponentName]).filter(e => /^[a-z]/.test(e[0])).forEach(e => {
+      runtimeConfiguration.addConfigFile(softwareComponentName, e[1]);
+    });
+  }
+
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
     // Should provide:
     // const artifact = userConfig[softwareComponentName].Artifact;
@@ -64,6 +72,13 @@ class MvnPlugin {
       const bd = userConfig.software[softwareComponentName].Mvn.BuildDependencies;
       dependencyManager.addAptBuild(bd.apt);
       dependencyManager.addNpmBuild(bd.npm);
+    }
+
+    if (userConfig.software[softwareComponentName].BeforeBuild) {
+      prebuildBuilder.add(userConfig.software[softwareComponentName].BeforeBuild);
+    }
+    if (userConfig.software[softwareComponentName].AfterBuild) {
+      postbuildBuilder.add(userConfig.software[softwareComponentName].BeforeBuild);
     }
 
     buildBuilder.add(buildCode());

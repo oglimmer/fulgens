@@ -17,7 +17,7 @@ class DependencycheckBuilder extends BufferedBuilder {
     for (var comp in this.components) {
       buffer += comp + " || exit 1; \n";
     }
-    return buffer + '\n\n\n';
+    return `\n\n#####${this.constructor.name}\n\n` + buffer + '\n\n\n';
   }
 
 }

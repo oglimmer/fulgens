@@ -36,7 +36,7 @@ fi
 class PrepareBuilder extends BufferedBuilder {
 
   build() {
-    return (this.userConfig.config.Vagrant ? vagrant(this.userConfig.config.Vagrant) : '') + `
+    return `\n\n#####${this.constructor.name}\n\n` + (this.userConfig.config.Vagrant ? vagrant(this.userConfig.config.Vagrant) : '') + `
 
 # prepare env
 mkdir -p localrun

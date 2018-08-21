@@ -10,7 +10,11 @@ class BufferedBuilder {
   }
 
   add(code) {
-    this.buffer += `\n${code}\n`;
+    if (Array.isArray(code)) {
+      this.buffer += `\n${code.join('\n')}\n`;
+    } else {
+      this.buffer += `\n${code}\n`;
+    }
   }
 
   build() {

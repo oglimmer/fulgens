@@ -16,7 +16,7 @@ class CleanupBuilder {
   init(userConfig) {
   }
 
-  add(componentName, sourceTypes) {
+  add({ componentName, sourceTypes }) {
     this.componentsCode.push({
       componentName,
       sourceTypes

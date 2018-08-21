@@ -11,16 +11,13 @@ const startBuilder = require('../phase/start');
 const poststartBuilder = require('../phase/poststart');
 const sourceTypeBuilder = require('../core/SourceType');
 
+const BasePlugin = require('./BasePlugin');
 const JavaPlugin = require('./JavaPlugin');
 
-class TomcatPlugin {
+class TomcatPlugin extends BasePlugin {
 
   static instance() {
     return new TomcatPlugin();
-  }
-
-  register(softwareComponentName, userConfig, runtimeConfiguration) {
-    
   }
 
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
@@ -30,19 +27,26 @@ class TomcatPlugin {
     const deploy = userConfig.software[softwareComponentName].Deploy;
     const artifact = userConfig.software[deploy].Artifact;
 
-    sourceTypeBuilder.add(softwareComponentName, 'download', [
-      { typeName: 'download', defaultVersion: '9', code: downloadCode },
-      { typeName: 'docker', defaultVersion: '9' },
-      { typeName: 'local', defaultVersion: '' }
-    ]);
+    sourceTypeBuilder.add({
+      componentName: softwareComponentName,
+      defaultType: 'download', 
+      availableTypes: [
+        { typeName: 'download', defaultVersion: '9', code: downloadCode },
+        { typeName: 'docker', defaultVersion: '9' },
+        { typeName: 'local', defaultVersion: '' }
+      ]
+    });
 
-    cleanupBuilder.add('Tomcat', [{
+    cleanupBuilder.add({
+      componentName: 'Tomcat',
+      sourceTypes: [{
         name: 'download',
         stopCode: './localrun/apache-tomcat-$TOMCAT_VERSION/bin/shutdown.sh'
       }, {
         name: 'docker',
         stopCode: 'docker rm -f $dockerContainerID' + softwareComponentName
-      }]);
+      }]
+    });
     
     dependencycheckBuilder.add('curl --version 1>/dev/null');
     

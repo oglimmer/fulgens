@@ -1,19 +1,58 @@
 
+const crypto = require('crypto');
+const hash = crypto.createHash('sha256');
 
-class ConfigFile {
+/* config is like: {
+    Name: "my.cnf",
+    Content: [
+      "[mysqld]",
+      "collation-server = utf8_unicode_ci",
+      "init-connect='SET NAMES utf8'",
+      "character-set-server = utf8"
+    ],
+    AttachIntoDocker: "/etc/mysql/conf.d"
+  }
+*/
+class AttachIntoDocker {
 
   constructor(pluginName, config) {
-    /* config is like: {
-        Name: "java.properties",
-        Connections: [ { Source:"couchdb", Var: "couchdb.host" ],
-        Content: [ "toldyouso.domain=http://localhost:8080/toldyouso" ],
-        AttachAsEnvVar: ["JAVA_OPTS", "-Dtoldyouso.properties=$$SELF_NAME$$"]
-      }
-    */
     this.pluginName = pluginName;
     this.Name = config.Name;
-    this.Connections = config.Connections;
     this.Content = config.Content;
+    this.AttachIntoDocker = config.AttachIntoDocker;
+    hash.update(this.pluginName + this.Name);
+    this.TmpFolder = hash.digest('hex').substring(0, 8);
+  }
+
+  makeDockerVolume() {
+    return `-v \$(pwd)/localrun/${this.TmpFolder}:/etc/mysql/conf.d`;
+  }
+
+  writeDockerConnectionLogic() {
+      return `
+    mkdir -p localrun/${this.TmpFolder}
+    cat <<EOT > localrun/${this.TmpFolder}/${this.Name}
+${this.Content.join('\n')}
+EOT
+      `;
+  }
+
+}
+
+/* config is like: {
+    Name: "java.properties",
+    Connections: [ { Source:"couchdb", Var: "couchdb.host" ],
+    Content: [ "toldyouso.domain=http://localhost:8080/toldyouso" ],
+    AttachAsEnvVar: ["JAVA_OPTS", "-Dtoldyouso.properties=$$SELF_NAME$$"]
+  }
+*/
+class AttachAsEnvVar {
+
+  constructor(pluginName, config) {
+    this.pluginName = pluginName;
+    this.Name = config.Name;
+    this.Content = config.Content;
+    this.Connections = config.Connections;
     this.AttachAsEnvVar = config.AttachAsEnvVar;
   }
 
@@ -29,7 +68,7 @@ class ConfigFile {
   }
 
   writeDockerConnectionLogic() {
-    return `
+      return `
     mkdir -p localrun/webapps/
     echo "${this.Content}">localrun/webapps/${this.Name}
     ## logic to connect any DATA_SOURCE to this Tomcat running Docker`
@@ -49,5 +88,15 @@ class ConfigFile {
 
 }
 
-module.exports = ConfigFile;
+module.exports = (pluginName, config) => {
+  if (config.AttachAsEnvVar) {
+    return new AttachAsEnvVar(pluginName, config);
+  }
+  else if (config.AttachIntoDocker) {
+    return new AttachIntoDocker(pluginName, config);
+  }
+  else {
+    throw Error(`Undefined type for ${pluginName} : ${JSON.stringify(config)}`);
+  }
+};
 

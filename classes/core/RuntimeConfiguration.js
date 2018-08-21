@@ -1,5 +1,5 @@
 
-const ConfigFile = require('./ConfigFile');
+const createConfigFile = require('./ConfigFile');
 
 class RuntimeConfiguration {
 
@@ -27,8 +27,8 @@ class RuntimeConfiguration {
     Object.entries(this.dependencies).forEach(e => e[1].exec('dependency', this.userConfig, this))
   }
 
-  addConfigFile(pluginName, name, content, AttachAsEnvVar) {
-    this.configFiles.push(new ConfigFile(pluginName, name, content, AttachAsEnvVar));
+  addConfigFile(pluginName, config) {
+    this.configFiles.push(createConfigFile(pluginName, config));
   }
 
   getConfigFiles(pluginName) {

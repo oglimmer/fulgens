@@ -14,6 +14,7 @@ const build = require('./classes/phase/build');
 const getsource = require('./classes/phase/getsource');
 const postbuild = require('./classes/phase/postbuild');
 const prebuild = require('./classes/phase/prebuild');
+const prestart = require('./classes/phase/prestart');
 const start = require('./classes/phase/start');
 const poststart = require('./classes/phase/poststart');
 const wait = require('./classes/phase/wait');
@@ -53,10 +54,11 @@ options.init(userConfig);
 dependencycheck.init(userConfig);
 clean.init(userConfig);
 prepare.init(userConfig);
-build.init(userConfig);
 getsource.init(userConfig);
 prebuild.init(userConfig);
+build.init(userConfig);
 postbuild.init(userConfig);
+prestart.init(userConfig);
 start.init(userConfig);
 poststart.init(userConfig);
 wait.init(userConfig);
@@ -73,5 +75,5 @@ rtConfig.processPlugins();
 
 const output = head.build() + functions.build() + cleanup.build() + options.build() 
   + dependencycheck.build() + clean.build() + globalvariables.build() + prepare.build() + prebuild.build() + build.build()
-  + postbuild.build() + getsource.build() + start.build() + poststart.build() + wait.build();
+  + postbuild.build() + getsource.build() + prestart.build() + start.build() + poststart.build() + wait.build();
 console.log(output);

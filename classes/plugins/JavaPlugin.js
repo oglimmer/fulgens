@@ -4,6 +4,7 @@ const prepareBuilder = require('../phase/prepare');
 const buildBuilder = require('../phase/build');
 const cleanupBuilder = require('../phase/cleanup');
 const dependencycheckBuilder = require('../phase/dependencycheck');
+const BasePlugin = require('./BasePlugin');
 
 var prepare = `
 if [ -n "$JAVA_VERSION" ]; then
@@ -50,14 +51,10 @@ jdk_version() {
 }
 `;
 
-class JavaPlugin {
+class JavaPlugin extends BasePlugin {
 
   static instance() {
     return instance;
-  }
-
-  register(softwareComponentName, userConfig, runtimeConfiguration) {
-    
   }
 
   exec(softwareComponentName, userConfig, runtimeConfiguration) {

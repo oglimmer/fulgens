@@ -10,15 +10,12 @@ const postbuildBuilder = require('../phase/postbuild');
 const startBuilder = require('../phase/start');
 const poststartBuilder = require('../phase/poststart');
 const sourceTypeBuilder = require('../core/SourceType');
+const BasePlugin = require('./BasePlugin');
 
-class CouchdbPlugin {
+class CouchdbPlugin extends BasePlugin {
 
   static instance() {
     return new CouchdbPlugin();
-  }
-
-  register(softwareComponentName, userConfig, runtimeConfiguration) {
-    
   }
 
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
@@ -29,15 +26,22 @@ class CouchdbPlugin {
  
     startBuilder.add(start(softwareComponentName));
 
-    sourceTypeBuilder.add(softwareComponentName, 'docker', [
-      { typeName: 'docker', defaultVersion: '1.7' },
-      { typeName: 'local', defaultVersion: '' }
-    ]);
- 
-    cleanupBuilder.add('CouchDB', [{
-      name: 'docker',
-      stopCode: 'docker rm -f $dockerContainerID' + softwareComponentName
-    }]);
+    sourceTypeBuilder.add({
+      componentName: softwareComponentName,
+      defaultType: 'docker', 
+      availableTypes: [
+        { typeName: 'docker', defaultVersion: '1.7' },
+        { typeName: 'local', defaultVersion: '' }
+      ]
+    });
+
+    cleanupBuilder.add({
+      componentName: 'CouchDB',
+      sourceTypes: [{
+        name: 'docker',
+        stopCode: 'docker rm -f $dockerContainerID' + softwareComponentName
+      }]
+    });
 
 
     poststartBuilder.add(`

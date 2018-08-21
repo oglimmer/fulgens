@@ -14,7 +14,7 @@ done
 
 class SourceTypeBuilder {
 
-  add( componentName, defaultType, availableTypes, code) {
+  add({ componentName, defaultType, availableTypes }) {
     // availableTypes : array of { typeName, defaultVersion, code }
 
     const componentNameUpper = componentName.toUpperCase();

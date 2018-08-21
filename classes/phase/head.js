@@ -1,6 +1,6 @@
 
 
-var head = `#!/bin/bash
+var head = `#!/usr/bin/env bash
 
 trap cleanup 2
 set -e

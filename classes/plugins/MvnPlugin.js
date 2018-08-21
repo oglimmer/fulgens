@@ -3,8 +3,10 @@ const headBuilder = require('../phase/head');
 const functionsBuilder = require('../phase/functions');
 const buildBuilder = require('../phase/build');
 const dependencycheckBuilder = require('../phase/dependencycheck');
+const getsourceBuilder = require('../phase/getsource');
 const postbuildBuilder = require('../phase/postbuild');
 const prebuildBuilder = require('../phase/prebuild');
+const BasePlugin = require('./BasePlugin');
 
 const dependencyManager = require('../core/DependencyManager');
 
@@ -28,7 +30,7 @@ const end = `
 fi   
 `;
 
-const buildCode = () => {
+const buildCode = Goal => {
   if (dependencyManager.hasAnyBuildDep()) {
     return start + `
     mkdir -p localrun/dockerbuild
@@ -43,46 +45,44 @@ CMD ["mvn"]
 EOFDOCK
     docker build --tag maven_build:$dockerVersion localrun/dockerbuild/
 
-    docker run --rm -v "$(pwd)":/usr/src/build -v "$(pwd)/localrun/.m2":/root/.m2 -w /usr/src/build maven_build:$dockerVersion mvn $MVN_CLEAN $MVN_OPTS package 
+    docker run --rm -v "$(pwd)":/usr/src/build -v "$(pwd)/localrun/.m2":/root/.m2 -w /usr/src/build maven_build:$dockerVersion mvn $MVN_CLEAN $MVN_OPTS ${Goal}
     ` + end;
   } else {
     return start + `
-    docker run --rm -v "$(pwd)":/usr/src/build -v "$(pwd)/localrun/.m2":/root/.m2 -w /usr/src/build maven:$dockerVersion mvn $MVN_CLEAN $MVN_OPTS package
+    docker run --rm -v "$(pwd)":/usr/src/build -v "$(pwd)/localrun/.m2":/root/.m2 -w /usr/src/build maven:$dockerVersion mvn $MVN_CLEAN $MVN_OPTS ${Goal}
     ` + end;
   }
 }
 
-class MvnPlugin {
+class MvnPlugin extends BasePlugin {
 
   static instance() {
     return new MvnPlugin();
   }
 
-  register(softwareComponentName, userConfig, runtimeConfiguration) {
-    Object.entries(userConfig.software[softwareComponentName]).filter(e => /^[a-z]/.test(e[0])).forEach(e => {
-      runtimeConfiguration.addConfigFile(softwareComponentName, e[1]);
-    });
-  }
-
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
     // Should provide:
-    // const artifact = userConfig[softwareComponentName].Artifact;
+    // const artifact = userConfig.software[softwareComponentName].Artifact;
 
-    if (userConfig.software[softwareComponentName].Mvn && userConfig.software[softwareComponentName].Mvn.BuildDependencies) {
-      const bd = userConfig.software[softwareComponentName].Mvn.BuildDependencies;
+    dependencycheckBuilder.add('mvn --version 1>/dev/null');
+
+    const { Mvn, BeforeBuild, AfterBuild, Git } = userConfig.software[softwareComponentName];
+    const Goal = Mvn && Mvn.Goal ? Mvn.Goal : "package";
+
+    if (Mvn && Mvn.BuildDependencies) {
+      const bd = Mvn.BuildDependencies;
       dependencyManager.addAptBuild(bd.apt);
       dependencyManager.addNpmBuild(bd.npm);
     }
 
-    if (userConfig.software[softwareComponentName].BeforeBuild) {
-      prebuildBuilder.add(userConfig.software[softwareComponentName].BeforeBuild);
+    if (BeforeBuild) {
+      prebuildBuilder.add(BeforeBuild);
     }
-    if (userConfig.software[softwareComponentName].AfterBuild) {
-      postbuildBuilder.add(userConfig.software[softwareComponentName].BeforeBuild);
+    buildBuilder.add(buildCode(Goal));
+    if (AfterBuild) {
+      postbuildBuilder.add(AfterBuild);
     }
 
-    buildBuilder.add(buildCode());
-    dependencycheckBuilder.add('mvn --version 1>/dev/null');
   }
 
 }

@@ -19,7 +19,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update
     apt-get install -y ${Vagrant.Install}
-    ${Vagrant.AddInstall.join('\n    ')}
+    ${Vagrant.AddInstall ? Vagrant.AddInstall.join('\n    '):''}
     echo "Now continue with..."
     echo "\\$ cd /share_host"
     echo "\\$ ./run_local.sh -f"

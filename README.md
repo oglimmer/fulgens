@@ -12,6 +12,13 @@ How to use it?
 
 3.) Exeucte `fulgens` in the same directory as a Fulgensfile and it will generate a bash script you can use to build, deploy and run your software locally
 
+Supported software
+------------------
+
+* maven build - local and within docker
+* mysql - local and docker
+* couchdb - local and docker
+* tomcat - local, download, docker
 
 A Fulgensfile
 -------------
@@ -56,6 +63,13 @@ module.exports = {
       AfterBuild: ".. bash code after the build"
     },
 
+    //NOT SUPPORTED YET
+    //<SOFTWARE_NAME>: {
+    //  Source: "mvn",
+    //  Git: "url_to_git_repo",
+    //  Mvn: { Goal: "install" }
+    //},
+
     <SOFTWARE_NAME>: {
       Source: "couchdb",
       CouchDB: {
@@ -64,6 +78,30 @@ module.exports = {
       }
     }
 
+    <SOFTWARE_NAME>: {
+      Source: "mysql",
+      Mysql: {
+        Schema: "my_new_schema",
+        Create: [
+          "src/mysql/initial_ddl.sql",
+          "src/mysql/initial_data.sql"
+	     ],
+        RootPasswort: "root"
+      },
+      configFile: {
+        Name: "my.cnf",
+        Content: [
+          "[mysqld]",
+          "collation-server = utf8_unicode_ci",
+          "init-connect='SET NAMES utf8'",
+          "character-set-server = utf8"
+        ],
+        AttachIntoDocker: "/etc/mysql/conf.d" 
+      },
+      AfterStart: [
+        ".. bash code after the mysql started.."
+      ]
+    }
     <SOFTWARE_NAME>: {
       Source: "tomcat",
       Deploy: <SOFTWARE_NAME_REF_TO_DEPLOY>
@@ -133,13 +171,13 @@ PREPARE
 
 GET_SOURCE
 
-<del>POST_GET_SOURCE</del>
-
 PRE_BUILD
 
 BUILD
 
 POST_BUILD
+
+PRE_START
 
 START
 

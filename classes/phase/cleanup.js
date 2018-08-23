@@ -1,4 +1,6 @@
 
+const BaseBuilder = require('./BaseBuilder');
+
 const cleanupTail = `
     fi
   done
@@ -7,13 +9,14 @@ const cleanupTail = `
 }
 `;
 
-class CleanupBuilder {
+class CleanupBuilder extends BaseBuilder {
 
   constructor() {
+    super();
     this.componentsCode = [];
   }
 
-  init(userConfig) {
+  init(userConfig, runtimeConfiguration) {
   }
 
   add({ componentName, sourceTypes }) {
@@ -23,7 +26,7 @@ class CleanupBuilder {
     });
   }
 
-  build() {
+  buildInternal() {
     const cleanupHead = `
 cleanup()
 {
@@ -55,7 +58,7 @@ cleanup()
         `).join('') + `
       fi`
     ).join('');
-    return `\n\n#####${this.constructor.name}\n\n` + cleanupHead + middle + cleanupTail;
+    return cleanupHead + middle + cleanupTail;
   }
 
 }

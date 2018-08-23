@@ -12,12 +12,12 @@ class DependencycheckBuilder extends BufferedBuilder {
     this.components[code] = true;
   }
 
-  build() {
-    var buffer = '\n\n#Check for Dependencies\n';
+  buildInternal() {
+    var buffer = '';
     for (var comp in this.components) {
       buffer += comp + " || exit 1; \n";
     }
-    return `\n\n#####${this.constructor.name}\n\n` + buffer + '\n\n\n';
+    return buffer;
   }
 
 }

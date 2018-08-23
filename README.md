@@ -15,10 +15,31 @@ How to use it?
 Supported software
 ------------------
 
-* maven build - local and within docker
-* mysql - local and docker
-* couchdb - local and docker
-* tomcat - local, download, docker
+###Build environments
+
+* maven
+
+Can be used to build locally or within a docker container. When doing a local build the -j JAVA_VERSION setting is respected.
+
+###Runtime environments
+
+* tomcat
+
+To run a web application a fresh Tomcat can be downloaded, extracted and started, it is also possible to start and run a Tomcat instance inside a docker container. Also an existing local Tomcat installation can be reused.
+
+###Databases
+
+* mysql
+
+A MySQL database can be started and used inside a docker container or an existing local installation can be reused.
+
+* couchdb
+
+A CouchDB database can be started and used inside a docker container or an existing local installation can be reused.
+
+###Vagrant
+
+If the Fulgensfile contains a config.Vagrant section, the entire execution can be run inside a VM (VirtualBox) via Vagrant.
 
 A Fulgensfile
 -------------
@@ -88,7 +109,7 @@ module.exports = {
 	     ],
         RootPasswort: "root"
       },
-      configFile: {
+      <ANY_CONFIG_FILE>: {
         Name: "my.cnf",
         Content: [
           "[mysqld]",
@@ -153,35 +174,35 @@ TYPE_SOURCE
 Phases
 ------
 
-HEAD, immutable
+HEAD, immutable, global
 
-FUNCTIONS, just functions
+FUNCTIONS, x functions, global
 
-CLEANUP, 1 function, components can add cleanUp logic
+CLEANUP, 1 function, components can add cleanUp logic, global
 
-OPTIONS, TBD!!@TODO
+OPTIONS, 1 function, components can text, global, always provided $SKIP_BUILD, $CLEAN, $TYPE_SOURCE
 
-DEPENDENCY_CHECK, global_code, one_liners
+DEPENDENCY_CHECK, components can add checks, global
 
-CLEAN
+CLEAN, using $CLEAN, inside-if, components can add cleanUp logic, global
 
-GLOBALVARIABLES
+GLOBALVARIABLES, components can global variables, global
 
-PREPARE
+PREPARE, created "localrun", Vagrant, Java version init
 
-GET_SOURCE
+  PREPARE_COMP, just added code, per_comp (SourceType init)
 
-PRE_BUILD
+  GET_SOURCE, just added code, per_comp
 
-BUILD
+  PRE_BUILD, just added code, per_comp
+  BUILD, just added code, per_comp
+  POST_BUILD, just added code, per_comp
 
-POST_BUILD
+  PRE_START, just added code, per_comp
+  START, just added code, per_comp
+  POST_START, just added code, per_comp
 
-PRE_START
+  LEAVE_COMP, just added code, per_comp
 
-START
-
-POST_START
-
-WAIT
+WAIT, using $tailCmd, immutable, global
 

@@ -1,9 +1,9 @@
 
 const functionsBuilder = require('../phase/functions');
 const prepareBuilder = require('../phase/prepare');
-const buildBuilder = require('../phase/build');
-const cleanupBuilder = require('../phase/cleanup');
+const optionsBuilder = require('../phase/options');
 const dependencycheckBuilder = require('../phase/dependencycheck');
+
 const BasePlugin = require('./BasePlugin');
 
 var prepare = `
@@ -12,11 +12,10 @@ if [ -n "$JAVA_VERSION" ]; then
 fi
 `;
 
-var functions = `
-# returns the JDK version.
-# 8 for 1.8.0_nn, 9 for 9-ea etc, and "no_java" for undetected
-# from https://stackoverflow.com/questions/7334754/correct-way-to-check-java-version-from-bash-script
-jdk_version() {
+var functionBodyCheckJDKVersion = `
+  # returns the JDK version.
+  # 8 for 1.8.0_nn, 9 for 9-ea etc, and "no_java" for undetected
+  # from https://stackoverflow.com/questions/7334754/correct-way-to-check-java-version-from-bash-script
   local result
   local java_cmd
   if [[ -n $(type -p java) ]]
@@ -48,7 +47,6 @@ jdk_version() {
     done
   fi
   echo "$result"
-}
 `;
 
 class JavaPlugin extends BasePlugin {
@@ -58,7 +56,10 @@ class JavaPlugin extends BasePlugin {
   }
 
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
-    functionsBuilder.add(functions);
+    optionsBuilder.add('j', 'version', 'JAVA_VERSION',
+      'set/overwrite java_home to a specific version, needs to be in format for java_home 1.8, 9, 10)', 
+      [ 'version #can use any locally installed JDK, see /usr/libexec/java_home -V' ]);
+    functionsBuilder.add('jdk_version', functionBodyCheckJDKVersion);
     prepareBuilder.add(prepare);
     dependencycheckBuilder.add('java -version 2>/dev/null');
   }
@@ -67,4 +68,7 @@ class JavaPlugin extends BasePlugin {
 
 const instance = new JavaPlugin();
 
-module.exports = JavaPlugin;
+// fake class with only one fake static method
+module.exports = {
+  instance: () => JavaPlugin.instance()
+};

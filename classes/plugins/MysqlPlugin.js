@@ -1,16 +1,9 @@
 
-const headBuilder = require('../phase/head');
-const functionsBuilder = require('../phase/functions');
-const buildBuilder = require('../phase/build');
 const cleanupBuilder = require('../phase/cleanup');
-const prepareBuilder = require('../phase/prepare');
 const dependencycheckBuilder = require('../phase/dependencycheck');
-const getsourceBuilder = require('../phase/getsource');
-const postbuildBuilder = require('../phase/postbuild');
-const prestartBuilder = require('../phase/prestart');
-const startBuilder = require('../phase/start');
-const poststartBuilder = require('../phase/poststart');
+const optionsBuilder = require('../phase/options');
 const sourceTypeBuilder = require('../core/SourceType');
+
 const BasePlugin = require('./BasePlugin');
 
 class MysqlPlugin extends BasePlugin {
@@ -26,7 +19,12 @@ class MysqlPlugin extends BasePlugin {
     dependencycheckBuilder.add('docker --version 1>/dev/null');
     dependencycheckBuilder.add('mysql --version 1>/dev/null');
  
-    sourceTypeBuilder.add({
+    optionsBuilder.addDetails('t', [
+      'mysql:local #reuse a local, running MySQL installation, does not start/stop this MySQL',
+      'mysql:docker:[5|8] #start docker image \\`mysql:X\\`'
+    ]);
+
+    sourceTypeBuilder.add(this, {
       componentName: softwareComponentName,
       defaultType: 'docker', 
       availableTypes: [
@@ -43,29 +41,37 @@ class MysqlPlugin extends BasePlugin {
       }]
     });
 
+    var dockerPasswordParam = '';
+    if (Mysql && Mysql.RootPassword) {
+      this.poststartBuilder.add(`export MYSQL_PWD="${Mysql.RootPassword}"`);
+      dockerPasswordParam = `-e MYSQL_ROOT_PASSWORD="${Mysql.RootPassword}"`;
+    } else {
+      dockerPasswordParam = '-e MYSQL_ALLOW_EMPTY_PASSWORD=true';
+    }
 
-    poststartBuilder.add(`
-export MYSQL_PWD="${Mysql.RootPassword}"
-while ! mysql -uroot -e "select 1" 1>/dev/null 2>&1; do
+    this.poststartBuilder.add(`
+while ! mysql -uroot --protocol=tcp -e "select 1" 1>/dev/null 2>&1; do
   echo "waiting for mysql..."
   sleep 3
 done`);
 
     if (Mysql.Schema) {
       // check if schema exists, otherwise create
+      this.poststartBuilder.add(`mysql -uroot --protocol=tcp -NB -e "create database if not exists ${Mysql.Schema}"`);
       if (Mysql.Create) {
         // run sql script
+        this.poststartBuilder.add(Mysql.Create.map(sql => `mysql -uroot --protocol=tcp ${Mysql.Schema} < ${sql}`).join('\n'));
       }
     }
 
     const configFiles = runtimeConfiguration.getConfigFiles(softwareComponentName);
 
     if (BeforeStart) {
-      prestartBuilder.add(BeforeStart);
+      this.prestartBuilder.add(BeforeStart);
     }
-    startBuilder.add(start(softwareComponentName, configFiles, Mysql.RootPassword));
+    this.startBuilder.add(start(softwareComponentName, configFiles, dockerPasswordParam));
     if (AfterStart) {
-      poststartBuilder.add(AfterStart);
+      this.poststartBuilder.add(AfterStart);
     }
 
   }
@@ -74,12 +80,12 @@ done`);
 
 module.exports = MysqlPlugin;
 
-const start = (softwareComponentName, configFiles, RootPassword) => `
+const start = (softwareComponentName, configFiles, dockerPasswordParam) => `
 if [ "$TYPE_SOURCE_MYSQL" == "docker" ]; then
   # run in docker
   if [ ! -f ".mysql" ]; then
     ${configFiles.map(f => f.writeDockerConnectionLogic()).join('\n')}
-    dockerContainerID${softwareComponentName}=$(docker run --rm -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD="${RootPassword}" \\
+    dockerContainerID${softwareComponentName}=$(docker run --rm -d -p 3306:3306 ${dockerPasswordParam} \\
       ${configFiles.map(f => f.makeDockerVolume()).join('\n')} mysql:$TYPE_SOURCE_MYSQL_VERSION)
     echo "$dockerContainerID${softwareComponentName}">.mysql
   else

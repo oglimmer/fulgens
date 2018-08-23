@@ -5,4 +5,4 @@ class GetsourceBuilder extends BufferedBuilder {
 
 }
 
-module.exports = new GetsourceBuilder();
+module.exports = GetsourceBuilder;

@@ -5,4 +5,4 @@ class StartBuilder extends BufferedBuilder {
 
 }
 
-module.exports = new StartBuilder();
+module.exports = StartBuilder;

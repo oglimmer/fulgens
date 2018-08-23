@@ -10,15 +10,9 @@ const options = require('./classes/phase/options');
 const dependencycheck = require('./classes/phase/dependencycheck');
 const clean = require('./classes/phase/clean');
 const prepare = require('./classes/phase/prepare');
-const build = require('./classes/phase/build');
-const getsource = require('./classes/phase/getsource');
-const postbuild = require('./classes/phase/postbuild');
-const prebuild = require('./classes/phase/prebuild');
-const prestart = require('./classes/phase/prestart');
-const start = require('./classes/phase/start');
-const poststart = require('./classes/phase/poststart');
 const wait = require('./classes/phase/wait');
 const globalvariables = require('./classes/phase/globalvariables');
+const Vagrant = require('./classes/core/Vagrant');
 
 const pluginFactory = require('./classes/plugins/factory');
 
@@ -47,22 +41,19 @@ if (!userConfig || Object.entries(userConfig).length === 0) {
 
 const rtConfig = new RuntimeConfiguration(userConfig);
 
-head.init(userConfig);
-functions.init(userConfig);
-cleanup.init(userConfig);
-options.init(userConfig);
-dependencycheck.init(userConfig);
-clean.init(userConfig);
-prepare.init(userConfig);
-getsource.init(userConfig);
-prebuild.init(userConfig);
-build.init(userConfig);
-postbuild.init(userConfig);
-prestart.init(userConfig);
-start.init(userConfig);
-poststart.init(userConfig);
-wait.init(userConfig);
-globalvariables.init(userConfig);
+head.init(userConfig, rtConfig);
+functions.init(userConfig, rtConfig);
+cleanup.init(userConfig, rtConfig);
+options.init(userConfig, rtConfig);
+dependencycheck.init(userConfig, rtConfig);
+clean.init(userConfig, rtConfig);
+prepare.init(userConfig, rtConfig);
+wait.init(userConfig, rtConfig);
+globalvariables.init(userConfig, rtConfig);
+
+if (userConfig.config.Vagrant) {
+  Vagrant.add(userConfig);
+}
 
 Object.entries(userConfig.software).forEach(s => {
   const key = s[0];
@@ -74,6 +65,7 @@ Object.entries(userConfig.software).forEach(s => {
 rtConfig.processPlugins();
 
 const output = head.build() + functions.build() + cleanup.build() + options.build() 
-  + dependencycheck.build() + clean.build() + globalvariables.build() + prepare.build() + prebuild.build() + build.build()
-  + postbuild.build() + getsource.build() + prestart.build() + start.build() + poststart.build() + wait.build();
+  + dependencycheck.build() + clean.build() + globalvariables.build() + prepare.build() 
+  + rtConfig.buildPlugins()
+  + wait.build();
 console.log(output);

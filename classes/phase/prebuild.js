@@ -5,4 +5,4 @@ class PrebuildBuilder extends BufferedBuilder {
 
 }
 
-module.exports = new PrebuildBuilder();
+module.exports = PrebuildBuilder;

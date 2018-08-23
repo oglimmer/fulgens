@@ -5,4 +5,4 @@ class PrestartBuilder extends BufferedBuilder {
 
 }
 
-module.exports = new PrestartBuilder();
+module.exports = PrestartBuilder;

@@ -1,15 +1,11 @@
 
 const headBuilder = require('../phase/head');
-const functionsBuilder = require('../phase/functions');
-const buildBuilder = require('../phase/build');
 const cleanupBuilder = require('../phase/cleanup');
-const prepareBuilder = require('../phase/prepare');
 const dependencycheckBuilder = require('../phase/dependencycheck');
-const getsourceBuilder = require('../phase/getsource');
-const postbuildBuilder = require('../phase/postbuild');
-const startBuilder = require('../phase/start');
-const poststartBuilder = require('../phase/poststart');
+const optionsBuilder = require('../phase/options');
+
 const sourceTypeBuilder = require('../core/SourceType');
+
 const BasePlugin = require('./BasePlugin');
 
 class CouchdbPlugin extends BasePlugin {
@@ -23,10 +19,14 @@ class CouchdbPlugin extends BasePlugin {
     const CouchDB = userConfig.software[softwareComponentName].CouchDB;
 
     dependencycheckBuilder.add('docker --version 1>/dev/null');
- 
-    startBuilder.add(start(softwareComponentName));
+    
+    optionsBuilder.addDetails('t', [
+      'couchdb:local #reuse a local, running CouchDB installation, does not start/stop this CouchDB',
+      'couchdb:docker:[1.7|2] #start docker image \\`couchdb:X\\`']);
 
-    sourceTypeBuilder.add({
+    this.startBuilder.add(start(softwareComponentName));
+
+    sourceTypeBuilder.add(this, {
       componentName: softwareComponentName,
       defaultType: 'docker', 
       availableTypes: [
@@ -44,21 +44,21 @@ class CouchdbPlugin extends BasePlugin {
     });
 
 
-    poststartBuilder.add(`
+    this.poststartBuilder.add(`
 while [ "$(curl --write-out %{http_code} --silent --output /dev/null http://localhost:5984)" != "200" ]; do
   echo "waiting for couchdb..."
   sleep 1
 done`);
 
     if (CouchDB.Schema) {
-      poststartBuilder.add(`if [[ "$(curl -s http://localhost:5984/${CouchDB.Schema})" =~ .*"error".*"not_found".* ]]; then`);
-      poststartBuilder.add(`  curl -X PUT http://localhost:5984/${CouchDB.Schema}`);
+      this.poststartBuilder.add(`if [[ "$(curl -s http://localhost:5984/${CouchDB.Schema})" =~ .*"error".*"not_found".* ]]; then`);
+      this.poststartBuilder.add(`  curl -X PUT http://localhost:5984/${CouchDB.Schema}`);
       if (CouchDB.Create) {
-        poststartBuilder.add(CouchDB.Create.map(e => 
+        this.poststartBuilder.add(CouchDB.Create.map(e => 
           ` curl -X POST -H "Content-Type: application/json" -d @${e} http://localhost:5984/${CouchDB.Schema}`)
           .join('\n'));
       }
-      poststartBuilder.add('fi');
+      this.poststartBuilder.add('fi');
     }
   }
 

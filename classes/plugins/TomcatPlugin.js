@@ -1,14 +1,7 @@
 
-const headBuilder = require('../phase/head');
-const functionsBuilder = require('../phase/functions');
-const buildBuilder = require('../phase/build');
 const cleanupBuilder = require('../phase/cleanup');
-const prepareBuilder = require('../phase/prepare');
 const dependencycheckBuilder = require('../phase/dependencycheck');
-const getsourceBuilder = require('../phase/getsource');
-const postbuildBuilder = require('../phase/postbuild');
-const startBuilder = require('../phase/start');
-const poststartBuilder = require('../phase/poststart');
+const optionsBuilder = require('../phase/options');
 const sourceTypeBuilder = require('../core/SourceType');
 
 const BasePlugin = require('./BasePlugin');
@@ -24,10 +17,18 @@ class TomcatPlugin extends BasePlugin {
     
     runtimeConfiguration.addDependency(JavaPlugin.instance());
 
-    const deploy = userConfig.software[softwareComponentName].Deploy;
-    const artifact = userConfig.software[deploy].Artifact;
+    optionsBuilder.addDetails('t', [
+      'tomcat:local:/usr/lib/tomcat #reuse tomcat installation from /usr/lib/tomcat, does not start/stop this tomcat',
+      'tomcat:download:[7|8|9] #download tomcat version x and run this build within it, would respect -j',
+      'tomcat:docker:[7|8|9] #start docker image \\`tomcat:X\\` and run this build within it'
+    ]);
 
-    sourceTypeBuilder.add({
+    runtimeConfiguration.setTail('apache catalina');
+
+    const { BeforeStart, AfterStart, Deploy, Lib } = userConfig.software[softwareComponentName];
+    const { Artifact } = userConfig.software[Deploy];
+
+    sourceTypeBuilder.add(this, {
       componentName: softwareComponentName,
       defaultType: 'download', 
       availableTypes: [
@@ -50,9 +51,9 @@ class TomcatPlugin extends BasePlugin {
     
     dependencycheckBuilder.add('curl --version 1>/dev/null');
     
-    getsourceBuilder.add(getSource);
+    this.getsourceBuilder.add(getSource);
     
-    poststartBuilder.add(`
+    this.poststartBuilder.add(`
     if [ "$TYPE_SOURCE_TOMCAT" == "download" ]; then
       targetPath=localrun/apache-tomcat-$TOMCAT_VERSION/webapps/
     fi
@@ -63,14 +64,41 @@ class TomcatPlugin extends BasePlugin {
     if [ "$TYPE_SOURCE_TOMCAT" == "local" ]; then
       targetPath=$TYPE_SOURCE_TOMCAT_PATH/webapps/
     fi
-    cp ${artifact} $targetPath
+    f_deploy() {
+      cp ${Artifact} $targetPath
+    }
+    f_deploy
     `);
 
-    const configFiles = runtimeConfiguration.getConfigFiles(deploy);
+    const configFiles = runtimeConfiguration.getConfigFiles(Deploy);
 
-    startBuilder.add(startDownload(configFiles));
-    startBuilder.add(startDocker(configFiles, softwareComponentName));
-    startBuilder.add(startLocal(configFiles));
+    if (Lib) {
+      this.prestartBuilder.add('if [ "$TYPE_SOURCE_TOMCAT" == "download" ]; then\n' 
+        + Lib.map(lib => userConfig.software[lib].Artifact)
+        .map(lib => lib.replace('$$TMP$$', 'localrun'))
+        .map(lib => `  cp ${lib} localrun/apache-tomcat-$TOMCAT_VERSION/lib/`).join('\n')
+      + '\nfi');
+      this.prestartBuilder.add(`
+dockerFixRef=()
+if [ "$TYPE_SOURCE_TOMCAT" == "docker" ]; then
+` 
+        + Lib.map(lib => userConfig.software[lib].Artifact)
+        .map(lib => lib.replace('$$TMP$$', 'localrun'))
+        .map(lib => `  dockerFixRef+=("-v $(pwd)/${lib}:/usr/local/tomcat/lib/$(basename ${lib})")`).join('\n')
+      + '\nfi');
+    }
+
+    this.startBuilder.add(startDownload(configFiles));
+    this.startBuilder.add(startDocker(configFiles, softwareComponentName));
+    this.startBuilder.add(startLocal(configFiles));
+
+    if (BeforeStart) {
+      this.prestartBuilder.add(BeforeStart.map(e => e.replace('$$SELF_DIR$$', 'localrun/apache-tomcat-$TOMCAT_VERSION')));
+    }
+    if (AfterStart) {
+      this.poststartBuilder.add(AfterStart.map(e => e.replace('$$SELF_DIR$$', 'localrun/apache-tomcat-$TOMCAT_VERSION')));
+    }
+
   }
 
 }
@@ -101,7 +129,7 @@ if [ "$TYPE_SOURCE_TOMCAT" == "docker" ]; then
   fi
   if [ ! -f ".tomcat" ]; then
     ${configFiles.map(f => f.writeDockerConnectionLogic()).join('\n')}
-    dockerContainerID${softwareComponentName}=$(docker run --rm -d $dockerCouchRef -p 8080:8080 ${configFiles.map(f => f.makeDockerEnvVar()).join('\n')} -v "$(pwd)/localrun/webapps":/usr/local/tomcat/webapps tomcat:$TYPE_SOURCE_TOMCAT_VERSION)
+    dockerContainerID${softwareComponentName}=$(docker run --rm -d $dockerCouchRef \${dockerFixRef[@]} -p 8080:8080 ${configFiles.map(f => f.makeDockerEnvVar()).join('\n')} -v "$(pwd)/localrun/webapps":/usr/local/tomcat/webapps tomcat:$TYPE_SOURCE_TOMCAT_VERSION)
     echo "$dockerContainerID${softwareComponentName}">.tomcat
   else
     dockerContainerID${softwareComponentName}=$(<.tomcat)

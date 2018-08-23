@@ -5,4 +5,4 @@ class PostbuildBuilder extends BufferedBuilder {
 
 }
 
-module.exports = new PostbuildBuilder();
+module.exports = PostbuildBuilder;

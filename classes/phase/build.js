@@ -6,4 +6,4 @@ class BuildBuilder extends BufferedBuilder {
 
 }
 
-module.exports = new BuildBuilder();
+module.exports = BuildBuilder;

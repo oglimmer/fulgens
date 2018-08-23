@@ -1,12 +1,12 @@
 
-class BufferedBuilder {
+const Strings = require('../core/Strings');
+const BaseBuilder = require('./BaseBuilder');
+
+class BufferedBuilder extends BaseBuilder {
 
   constructor() {
+    super();
     this.buffer = '';
-  }
-
-  init(userConfig) {
-    this.userConfig = userConfig;
   }
 
   add(code) {
@@ -17,8 +17,8 @@ class BufferedBuilder {
     }
   }
 
-  build() {
-    return `\n\n#####${this.constructor.name}\n\n${this.buffer}\n\n`;
+  buildInternal() {
+    return this.buffer;
   }
 
 }

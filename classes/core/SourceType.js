@@ -1,6 +1,6 @@
 
 const globalVariables = require('../phase/globalvariables');
-const prepare = require('../phase/prepare');
+const preparecompBuilder = require('../phase/preparecomp');
 
 
 const start = `
@@ -14,7 +14,7 @@ done
 
 class SourceTypeBuilder {
 
-  add({ componentName, defaultType, availableTypes }) {
+  add(plugin, { componentName, defaultType, availableTypes }) {
     // availableTypes : array of { typeName, defaultVersion, code }
 
     const componentNameUpper = componentName.toUpperCase();
@@ -33,7 +33,7 @@ class SourceTypeBuilder {
   fi
 `;
 
-    prepare.add(start + middle + end + availableTypes.filter(e => e.defaultVersion).map(e => `
+    plugin.preparecompBuilder.add(start + middle + end + availableTypes.filter(e => e.defaultVersion).map(e => `
 if [ "$TYPE_SOURCE_${componentNameUpper}" == "${e.typeName}" ]; then
   if [ -z "$TYPE_SOURCE_${componentNameUpper}_VERSION" ]; then
     TYPE_SOURCE_${componentNameUpper}_VERSION=${e.defaultVersion}

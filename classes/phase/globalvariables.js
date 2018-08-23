@@ -1,19 +1,22 @@
 
-class GlobalVariablesBuilder {
+const BaseBuilder = require('./BaseBuilder');
+
+class GlobalVariablesBuilder extends BaseBuilder {
 
   constructor() {
+    super();
     this.varNames = [];
   }
 
-  init(userConfig) {
+  init(userConfig, runtimeConfiguration) {
   }
 
   add(varName, defaultValue) {
     this.varNames.push({ varName, defaultValue });
   }
 
-  build() {
-    return `\n\n#####${this.constructor.name}\n\n` + this.varNames.map(e => `${e.varName}=${e.defaultValue};`).join('\n');
+  buildInternal() {
+    return this.varNames.map(e => `${e.varName}=${e.defaultValue}`).join('\n');
   }
 
 }

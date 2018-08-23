@@ -5,4 +5,4 @@ class PoststartBuilder extends BufferedBuilder {
 
 }
 
-module.exports = new PoststartBuilder();
+module.exports = PoststartBuilder;

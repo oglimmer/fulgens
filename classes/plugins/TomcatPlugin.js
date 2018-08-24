@@ -14,83 +14,114 @@ class TomcatPlugin extends BasePlugin {
   }
 
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
+
+    const { BeforeStart, AfterStart, Deploy, Lib, SourceType } = userConfig.software[softwareComponentName];
+    const { Artifact } = userConfig.software[Deploy];
     
     runtimeConfiguration.addDependency(JavaPlugin.instance());
 
-    optionsBuilder.addDetails('t', [
-      'tomcat:local:/usr/lib/tomcat #reuse tomcat installation from /usr/lib/tomcat, does not start/stop this tomcat',
-      'tomcat:download:[7|8|9] #download tomcat version x and run this build within it, would respect -j',
-      'tomcat:docker:[7|8|9] #start docker image \\`tomcat:X\\` and run this build within it'
-    ]);
+    const configFiles = runtimeConfiguration.getConfigFiles(Deploy);
+
+    var optionsBuilderData = [];
+    var availableTypesData = [];
+    var cleanupSourceTypesData = [];
+    var defaultTypeData = 'download';
+    var poststartBuilderData = [];
+    var prestartBuilderData = [];
+
+    (SourceType?SourceType:['docker','download','local']).forEach(s => {
+      switch(s) {
+        case 'docker':
+          optionsBuilderData.push('tomcat:local:/usr/lib/tomcat #reuse tomcat installation from /usr/lib/tomcat, does not start/stop this tomcat');
+          availableTypesData.push({ typeName: 'docker', defaultVersion: '9' });
+          cleanupSourceTypesData.push({
+            name: 'docker',
+            stopCode: 'docker rm -f $dockerContainerID' + softwareComponentName
+          });
+          if (!SourceType.find(e => e === 'download')) {
+            defaultTypeData = 'docker';
+          }
+          poststartBuilderData.push(`
+            if [ "$TYPE_SOURCE_TOMCAT" == "docker" ]; then
+              mkdir -p localrun/webapps
+              targetPath=localrun/webapps/
+            fi
+          `);
+          prestartBuilderData.push(`
+            dockerFixRef=()
+            if [ "$TYPE_SOURCE_TOMCAT" == "docker" ]; then
+            ` + Lib.map(lib => userConfig.software[lib].Artifact)
+              .map(lib => lib.replace('$$TMP$$', 'localrun'))
+              .map(lib => `  dockerFixRef+=("-v $(pwd)/${lib}:/usr/local/tomcat/lib/$(basename ${lib})")`).join('\n')
+            + '\nfi');
+          this.startBuilder.add(startDocker(configFiles, softwareComponentName));
+        break;
+        case 'download':
+          optionsBuilderData.push('tomcat:download:[7|8|9] #download tomcat version x and run this build within it, would respect -j');
+          availableTypesData.push({ typeName: 'download', defaultVersion: '9', code: downloadCode });
+          cleanupSourceTypesData.push({
+            name: 'download',
+            stopCode: './localrun/apache-tomcat-$TOMCAT_VERSION/bin/shutdown.sh'
+          });
+          poststartBuilderData.push(`
+            if [ "$TYPE_SOURCE_TOMCAT" == "download" ]; then
+              targetPath=localrun/apache-tomcat-$TOMCAT_VERSION/webapps/
+            fi
+          `);
+          prestartBuilderData.push('if [ "$TYPE_SOURCE_TOMCAT" == "download" ]; then\n' 
+            + Lib.map(lib => userConfig.software[lib].Artifact)
+              .map(lib => lib.replace('$$TMP$$', 'localrun'))
+              .map(lib => `  cp ${lib} localrun/apache-tomcat-$TOMCAT_VERSION/lib/`).join('\n')
+            + '\nfi');
+          this.getsourceBuilder.add(getSource);
+          this.startBuilder.add(startDownload(configFiles));
+        break;
+        case 'local':
+          optionsBuilderData.push('tomcat:docker:[7|8|9] #start docker image \\`tomcat:X\\` and run this build within it');
+          availableTypesData.push({ typeName: 'local', defaultVersion: '' });
+          if (!SourceType.find(e => e === 'download') && !SourceType.find(e => e === 'docker')) {
+            defaultTypeData = 'local';
+          }
+          poststartBuilderData.push(`
+            if [ "$TYPE_SOURCE_TOMCAT" == "local" ]; then
+              targetPath=$TYPE_SOURCE_TOMCAT_PATH/webapps/
+            fi
+          `);
+          this.startBuilder.add(startLocal(configFiles));
+        break;
+        default:
+          throw Error(`SourceType ${s} not supported for Tomcat`);
+      }
+    });
+
+    optionsBuilder.addDetails('t', optionsBuilderData);
 
     runtimeConfiguration.setTail('apache catalina');
 
-    const { BeforeStart, AfterStart, Deploy, Lib } = userConfig.software[softwareComponentName];
-    const { Artifact } = userConfig.software[Deploy];
-
     sourceTypeBuilder.add(this, {
       componentName: softwareComponentName,
-      defaultType: 'download', 
-      availableTypes: [
-        { typeName: 'download', defaultVersion: '9', code: downloadCode },
-        { typeName: 'docker', defaultVersion: '9' },
-        { typeName: 'local', defaultVersion: '' }
-      ]
+      defaultType: defaultTypeData, 
+      availableTypes: availableTypesData
     });
 
     cleanupBuilder.add({
       componentName: 'Tomcat',
-      sourceTypes: [{
-        name: 'download',
-        stopCode: './localrun/apache-tomcat-$TOMCAT_VERSION/bin/shutdown.sh'
-      }, {
-        name: 'docker',
-        stopCode: 'docker rm -f $dockerContainerID' + softwareComponentName
-      }]
+      sourceTypes: cleanupSourceTypesData
     });
     
     dependencycheckBuilder.add('curl --version 1>/dev/null');
-    
-    this.getsourceBuilder.add(getSource);
-    
+        
     this.poststartBuilder.add(`
-    if [ "$TYPE_SOURCE_TOMCAT" == "download" ]; then
-      targetPath=localrun/apache-tomcat-$TOMCAT_VERSION/webapps/
-    fi
-    if [ "$TYPE_SOURCE_TOMCAT" == "docker" ]; then
-      mkdir -p localrun/webapps
-      targetPath=localrun/webapps/
-    fi
-    if [ "$TYPE_SOURCE_TOMCAT" == "local" ]; then
-      targetPath=$TYPE_SOURCE_TOMCAT_PATH/webapps/
-    fi
+    ${poststartBuilderData.join('\n')}
     f_deploy() {
       cp ${Artifact} $targetPath
     }
     f_deploy
     `);
 
-    const configFiles = runtimeConfiguration.getConfigFiles(Deploy);
-
     if (Lib) {
-      this.prestartBuilder.add('if [ "$TYPE_SOURCE_TOMCAT" == "download" ]; then\n' 
-        + Lib.map(lib => userConfig.software[lib].Artifact)
-        .map(lib => lib.replace('$$TMP$$', 'localrun'))
-        .map(lib => `  cp ${lib} localrun/apache-tomcat-$TOMCAT_VERSION/lib/`).join('\n')
-      + '\nfi');
-      this.prestartBuilder.add(`
-dockerFixRef=()
-if [ "$TYPE_SOURCE_TOMCAT" == "docker" ]; then
-` 
-        + Lib.map(lib => userConfig.software[lib].Artifact)
-        .map(lib => lib.replace('$$TMP$$', 'localrun'))
-        .map(lib => `  dockerFixRef+=("-v $(pwd)/${lib}:/usr/local/tomcat/lib/$(basename ${lib})")`).join('\n')
-      + '\nfi');
+      this.prestartBuilder.add(prestartBuilderData);
     }
-
-    this.startBuilder.add(startDownload(configFiles));
-    this.startBuilder.add(startDocker(configFiles, softwareComponentName));
-    this.startBuilder.add(startLocal(configFiles));
 
     if (BeforeStart) {
       this.prestartBuilder.add(BeforeStart.map(e => e.replace('$$SELF_DIR$$', 'localrun/apache-tomcat-$TOMCAT_VERSION')));
@@ -122,10 +153,6 @@ if [ "$TYPE_SOURCE_TOMCAT" == "docker" ]; then
   if [ -f .tomcat ] && [ "$(<.tomcat)" == "download" ]; then
     echo "Tomcat running but started from different source type"
     exit 1
-  fi
-  # run in docker
-  if [ -z "$TYPE_SOURCE_TOMCAT_VERSION" ]; then
-    TYPE_SOURCE_TOMCAT_VERSION=9
   fi
   if [ ! -f ".tomcat" ]; then
     ${configFiles.map(f => f.writeDockerConnectionLogic()).join('\n')}

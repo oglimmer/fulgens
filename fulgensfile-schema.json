@@ -1,0 +1,323 @@
+{
+  "$id": "http://oglimmer.de/fulgensfile-schema",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "JSON Schema a Fulgensfile",
+  "type": "object",
+  "required": [ "config", "software" ],
+  "properties": {
+    "config": { 
+      "$ref": "#/definitions/config"
+    },
+    "software": { 
+      "$ref": "#/definitions/softwareType"
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "config": {
+      "properties": {
+        "Name": {
+          "type": "string"
+        },
+        "Vagrant": {
+          "$ref": "#/definitions/config/definitions/Vagrant"
+        }
+      },
+      "additionalProperties": false,
+      "required": [ "Name" ],
+      "definitions": {
+        "Vagrant": {
+          "properties": {
+            "Box": {
+              "type": "string"
+            },
+            "Install": {
+              "type": "string"
+            },
+            "AddInstall": {
+              "type": "array",
+                "minItems": 0,
+                "items": {
+                  "type": "string"
+                },
+                "uniqueItems": true
+            }
+          },
+          "additionalProperties": false,
+          "required": [ "Box" ]
+        }
+      }
+    },
+    "softwareType": {
+      "patternProperties": {
+        ".*":  {
+          "type": "object",
+          "oneOf": [
+             { "$ref": "#/definitions/MvnType" },
+             { "$ref": "#/definitions/MysqlType" },
+             { "$ref": "#/definitions/CouchdbType" },
+             { "$ref": "#/definitions/TomcatType" }
+          ]
+        }
+      }
+    },
+    "MvnType": {
+      "properties": {
+        "Source": {
+          "enum": [ "mvn" ]
+        },
+        "Git": {
+          "type": "string"
+        },
+        "Mvn": {
+          "$ref": "#/definitions/MvnType/definitions/MvnSubType"
+        },
+        "Param": {
+          "$ref": "#/definitions/MvnType/definitions/Param"
+        },
+        "Artifact": {
+          "type": "string"
+        },
+        "BeforeBuild": {
+          "type": "string"
+        },
+        "AfterBuild": {
+          "type": "string"
+        }
+      },
+      "patternProperties": {
+        "^[a-z]+.*$": {
+          "$ref": "#/definitions/MvnType/definitions/ConfigFileDef"
+        }
+      },
+      "additionalProperties": false,
+      "required": [ "Source" ],
+      "definitions": {
+        "ConfigFileDef": {
+          "properties": {
+            "Name": {
+              "type": "string"
+            },
+            "Connections": {
+              "type": "array",
+              "minItems": 0,
+              "items": {
+                "$ref": "#/definitions/MvnType/definitions/ConfigFileDef/definitions/Connections"
+              },
+              "uniqueItems": true
+            },
+            "Content": {
+              "type": "array",
+              "minItems": 0,
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            },
+            "AttachAsEnvVar": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            }
+          },
+          "additionalProperties": false,
+          "required": [ "Name", "Connections", "Content", "AttachAsEnvVar" ],
+          "definitions": {
+            "Connections": {
+              "properties": {
+                "Source": {
+                  "type": "string"
+                },
+                "Var": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "required": [ "Source", "Var" ]
+            }
+          }
+        },
+        "MvnSubType": {
+          "properties": {
+            "Dir": {
+              "type": "string"
+            },
+            "Goal": {
+              "type": "string"
+            },
+            "BuildDependencies": {
+              "$ref": "#/definitions/MvnType/definitions/MvnSubType/definitions/BuildDependencies"
+            }
+          },
+          "additionalProperties": false,
+          "definitions": {
+            "BuildDependencies": {
+              "properties": {
+                "apt": {
+                  "type": "array",
+                    "minItems": 0,
+                    "items": {
+                      "type": "string"
+                    },
+                    "uniqueItems": true
+                },
+                "npm": {
+                  "type": "array",
+                  "minItems": 0,
+                  "items": {
+                    "type": "string"
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "Param": {
+          "properties": {
+            "char": {
+              "type": "string"
+            },
+            "var": {
+              "type": "string"
+            },
+            "desc": {
+              "type": "string"
+            }
+          },
+          "required": [ "char", "var", "desc" ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "MysqlType": {
+      "properties": {
+        "Source": {
+          "enum": [ "mysql" ]
+        },
+        "Mysql": {
+          "$ref": "#/definitions/MysqlType/definitions/MysqlSubType"
+        },
+        "AfterStart": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      },
+      "patternProperties": {
+        "^[a-z]+.*$": {
+          "$ref": "#/definitions/MysqlType/definitions/ConfigFileDef"
+        }
+      },
+      "required": [ "Source" ],
+      "additionalProperties": true,
+      "definitions": {
+        "ConfigFileDef": {
+          "properties": {
+            "Name": {
+              "type": "string"
+            },
+            "Content": {
+              "type": "array",
+              "minItems": 0,
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            },
+            "AttachIntoDocker": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "required": [ "Name", "Content", "AttachIntoDocker" ]
+        },
+        "MysqlSubType": {
+          "properties": {
+            "Schema": {
+              "type": "string"
+            },
+            "Create": {
+              "type": "array",
+                "minItems": 0,
+                "items": {
+                  "type": "string"
+                },
+                "uniqueItems": true
+            },
+            "RootPassword": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "CouchdbType": {
+      "properties": {
+        "Source": {
+          "enum": [ "couchdb" ]
+        },
+        "CouchDB": {
+          "$ref": "#/definitions/CouchdbType/definitions/CouchdbSubType"
+        }
+      },
+      "required": [ "Source" ],
+      "additionalProperties": false,
+      "definitions": {
+        "CouchdbSubType": {
+          "properties": {
+            "Schema": {
+              "type": "string"
+            },
+            "Create": {
+              "type": "array",
+              "minItems": 0,
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "TomcatType": {
+      "properties": {
+        "Source": {
+          "enum": [ "tomcat" ]
+        },
+        "SourceTypes": {
+          "type": "array",
+            "minItems": 1,
+            "items": {
+              "enum": ["docker", "local", "download"]
+            },
+            "uniqueItems": true
+        },
+        "Lib": {
+          "type": "array",
+            "minItems": 0,
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+        },
+        "Deploy": {
+          "type": "string"
+        }
+      },
+      "required": [ "Source", "Deploy" ],
+      "additionalProperties": false
+    }
+  }
+}

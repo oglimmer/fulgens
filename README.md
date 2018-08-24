@@ -10,7 +10,7 @@ How to use it?
 
 2.) Create a Fulgensfile
 
-3.) Exeucte `fulgens` in the same directory as a Fulgensfile and it will generate a bash script you can use to build, deploy and run your software locally
+3.) Execute `fulgens` in the same directory as a Fulgensfile and it will generate a bash script you can use to build, deploy and run your software locally
 
 Supported software
 ------------------
@@ -46,6 +46,10 @@ A Fulgensfile
 
 A Fulgensfile may have the file extension ".js".
 
+A [json-schema.org](http://json-schema.org) compliant json-schema file can be found [here](fulgensfile-schema.json)
+
+Example:
+
 ```
 module.exports = {
 
@@ -62,6 +66,30 @@ module.exports = {
   },
 
   software: {
+
+    <SOFTWARE_NAME>: {
+      Source: "mvn",
+      Git: "url_to_git_repo",
+      Mvn: {
+        Dir: "$$TMP$$/my-git-repo",
+        Goal: "install"
+      },
+      Param: {
+        char: 'o',
+        var: 'BASH_VAR_NAME',
+        desc: 'Use this switch to set BASH_VAR_NAME to YES'
+      }
+    },
+    
+    mysqldriver: {
+      Source: "mvn",
+      Mvn: {
+        Dir: "$$TMP$$/lib",
+        Goal: "dependency:copy -Dartifact=mysql:mysql-connector-java:8.0.12 -DoutputDirectory=$$TMP$$/lib/"
+      },
+      Artifact: "$$TMP$$/lib/mysql-connector-java-8.0.12.jar"
+    },
+    
     <SOFTWARE_NAME>: {
       Source: "mvn",
       Mvn: {
@@ -83,13 +111,6 @@ module.exports = {
       BeforeBuild: "..bash code run before the build..",
       AfterBuild: ".. bash code after the build"
     },
-
-    //NOT SUPPORTED YET
-    //<SOFTWARE_NAME>: {
-    //  Source: "mvn",
-    //  Git: "url_to_git_repo",
-    //  Mvn: { Goal: "install" }
-    //},
 
     <SOFTWARE_NAME>: {
       Source: "couchdb",
@@ -122,10 +143,13 @@ module.exports = {
       AfterStart: [
         ".. bash code after the mysql started.."
       ]
-    }
+    },
+    
     <SOFTWARE_NAME>: {
       Source: "tomcat",
-      Deploy: <SOFTWARE_NAME_REF_TO_DEPLOY>
+      Deploy: "<SOFTWARE_NAME_REF_TO_DEPLOY>",
+      Lib: [ "mysqldriver" ],
+      SourceTypes: [ "download", "local" ]
     }
   }
 }

@@ -15,7 +15,7 @@ class TomcatPlugin extends BasePlugin {
 
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
 
-    const { BeforeStart, AfterStart, Deploy, Lib, SourceType } = userConfig.software[softwareComponentName];
+    const { BeforeStart, AfterStart, Deploy, Lib, SourceTypes = ['docker','download','local'] } = userConfig.software[softwareComponentName];
     const { Artifact } = userConfig.software[Deploy];
     
     runtimeConfiguration.addDependency(JavaPlugin.instance());
@@ -27,9 +27,8 @@ class TomcatPlugin extends BasePlugin {
     var cleanupSourceTypesData = [];
     var defaultTypeData = 'download';
     var poststartBuilderData = [];
-    var prestartBuilderData = [];
 
-    (SourceType?SourceType:['docker','download','local']).forEach(s => {
+    SourceTypes.forEach(s => {
       switch(s) {
         case 'docker':
           optionsBuilderData.push('tomcat:local:/usr/lib/tomcat #reuse tomcat installation from /usr/lib/tomcat, does not start/stop this tomcat');
@@ -38,7 +37,7 @@ class TomcatPlugin extends BasePlugin {
             name: 'docker',
             stopCode: 'docker rm -f $dockerContainerID' + softwareComponentName
           });
-          if (!SourceType.find(e => e === 'download')) {
+          if (!SourceTypes.find(e => e === 'download')) {
             defaultTypeData = 'docker';
           }
           poststartBuilderData.push(`
@@ -47,13 +46,15 @@ class TomcatPlugin extends BasePlugin {
               targetPath=localrun/webapps/
             fi
           `);
-          prestartBuilderData.push(`
-            dockerFixRef=()
-            if [ "$TYPE_SOURCE_TOMCAT" == "docker" ]; then
-            ` + Lib.map(lib => userConfig.software[lib].Artifact)
-              .map(lib => lib.replace('$$TMP$$', 'localrun'))
-              .map(lib => `  dockerFixRef+=("-v $(pwd)/${lib}:/usr/local/tomcat/lib/$(basename ${lib})")`).join('\n')
-            + '\nfi');
+          if (Lib) {
+            this.prestartBuilder.add(`
+              dockerFixRef=()
+              if [ "$TYPE_SOURCE_TOMCAT" == "docker" ]; then
+              ` + Lib.map(lib => userConfig.software[lib].Artifact)
+                .map(lib => lib.replace('$$TMP$$', 'localrun'))
+                .map(lib => `  dockerFixRef+=("-v $(pwd)/${lib}:/usr/local/tomcat/lib/$(basename ${lib})")`).join('\n')
+              + '\nfi');
+          }
           this.startBuilder.add(startDocker(configFiles, softwareComponentName));
         break;
         case 'download':
@@ -68,18 +69,20 @@ class TomcatPlugin extends BasePlugin {
               targetPath=localrun/apache-tomcat-$TOMCAT_VERSION/webapps/
             fi
           `);
-          prestartBuilderData.push('if [ "$TYPE_SOURCE_TOMCAT" == "download" ]; then\n' 
-            + Lib.map(lib => userConfig.software[lib].Artifact)
-              .map(lib => lib.replace('$$TMP$$', 'localrun'))
-              .map(lib => `  cp ${lib} localrun/apache-tomcat-$TOMCAT_VERSION/lib/`).join('\n')
-            + '\nfi');
+          if (Lib) {
+            this.prestartBuilder.add('if [ "$TYPE_SOURCE_TOMCAT" == "download" ]; then\n' 
+              + Lib.map(lib => userConfig.software[lib].Artifact)
+                .map(lib => lib.replace('$$TMP$$', 'localrun'))
+                .map(lib => `  cp ${lib} localrun/apache-tomcat-$TOMCAT_VERSION/lib/`).join('\n')
+              + '\nfi');
+          }
           this.getsourceBuilder.add(getSource);
           this.startBuilder.add(startDownload(configFiles));
         break;
         case 'local':
           optionsBuilderData.push('tomcat:docker:[7|8|9] #start docker image \\`tomcat:X\\` and run this build within it');
           availableTypesData.push({ typeName: 'local', defaultVersion: '' });
-          if (!SourceType.find(e => e === 'download') && !SourceType.find(e => e === 'docker')) {
+          if (!SourceTypes.find(e => e === 'download') && !SourceTypes.find(e => e === 'docker')) {
             defaultTypeData = 'local';
           }
           poststartBuilderData.push(`
@@ -118,10 +121,6 @@ class TomcatPlugin extends BasePlugin {
     }
     f_deploy
     `);
-
-    if (Lib) {
-      this.prestartBuilder.add(prestartBuilderData);
-    }
 
     if (BeforeStart) {
       this.prestartBuilder.add(BeforeStart.map(e => e.replace('$$SELF_DIR$$', 'localrun/apache-tomcat-$TOMCAT_VERSION')));

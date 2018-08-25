@@ -1,4 +1,4 @@
-#Fulgens
+# Fulgens
 
 This software helps with building, deploying and running software **locally**. It is a shell script generator to orchestrate software components **locally**.
 
@@ -8,7 +8,7 @@ The tool was made for software developers to document deployment dependencies li
 
 It standardizes "run this software locally", like maven standardized "build this software".
 
-##How to use it?
+## How to use it?
 
 1.) Install via npm: `npm -g install fulgens`
 
@@ -16,7 +16,7 @@ It standardizes "run this software locally", like maven standardized "build this
 
 3.) Execute `fulgens` in the same directory as a Fulgensfile and generate a bash script you can use to build, deploy and run your software locally. Start with `fulgens | bash -s -- -h` to read the help for your generated bash script.
 
-##A simple example / Tutorial
+## A simple example / Tutorial
 
 Create a Web project via: `mvn archetype:generate -DgroupId=de.oglimmer -DartifactId=MyApp -DarchetypeArtifactId=maven-archetype-webapp -DinteractiveMode=false`. Step into the new project directory and create a minimal Fulgensfile with this content there:
 
@@ -46,11 +46,11 @@ Now browse to [http://localhost:8080/MyApp/]()
 
 Now try `./run_local.sh -f -t tomcat:docker` to run the Tomcat inside a Docker container. Or `./run_local.sh -f -b docker` to build inside Docker, but run on your local machine.
 
-##Supported software
+## Supported software
 
-###Build environments
+### Build environments
 
-* maven
+#### maven
 
 Can be used to build locally or within a docker container. When doing a local build the -j JAVA_VERSION setting is respected.
 
@@ -141,9 +141,9 @@ software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Connection.Var | string | A line in 
 software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Content | array of string | static content of the config file
 software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.AttachAsEnvVar | array of string size 2 | Element 0 is shell script variable name. Element 1 the value for this variable. $$SELF_NAME$$ will be replaced with the full filename of the config file
 
-###Runtime environments
+### Runtime environments
 
-####tomcat
+#### tomcat
 
 To run a web application a fresh Tomcat can be downloaded, extracted and started, it is also possible to start and run a Tomcat instance inside a docker container. Also an existing local Tomcat installation can be reused.
 
@@ -168,9 +168,9 @@ software.COMPONENT\_NAME.Lib | array of string | Name of another component. The 
 software.COMPONENT\_NAME.SourceTypes | array of string | Optional. Default is "download", "local", "docker". This parameter can limit the option of source types.
 
 
-###Databases
+### Databases
 
-####mysql
+#### mysql
 
 A MySQL database can be started and used inside a docker container or an existing local installation can be reused.
 
@@ -218,7 +218,7 @@ software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Content | array of string | content 
 software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.AttachIntoDocker | string | full path and filename where the config file will be mounted inside a docker container
 software.COMPONENT\_NAME.AfterStart | array of string | bash code executed after mysql has started
 
-####couchdb
+#### couchdb
 
 A CouchDB database can be started and used inside a docker container or an existing local installation can be reused.
 
@@ -244,7 +244,7 @@ software.COMPONENT_NAME.CouchDB.Schema | string | Creates this schema if it does
 software.COMPONENT_NAME.CouchDB.Create | array of string | json file imported after startup, usually something like views
 
 
-###Vagrant
+### Vagrant
 
 If the Fulgensfile contains a config.Vagrant section, one can start VM (VirtualBox) via Vagrant and there run the output of fulgens.
 
@@ -270,7 +270,7 @@ config.Vagrant.Box | string | Vagrant box name, must be Debian based (as it uses
 config.Vagrant.Install | string | Package name for apt-get, comma separated
 config.Vagrant.AddInstall | array of string | bash code to execute inside the Vagrant VM after VM was created and started.
 
-##A Fulgensfile
+## A Fulgensfile
 
 A Fulgensfile may have the file extension ".js".
 
@@ -384,9 +384,9 @@ module.exports = {
 ```
 
 
-#Internal documantation
+# Internal documantation
 
-##TYPE_SOURCE
+## TYPE_SOURCE
 
   - docker
   - download
@@ -394,7 +394,7 @@ module.exports = {
   - local installation (for 3rd party software)
   - git
 
-##Phases
+## Phases
 
 In order of execution
 

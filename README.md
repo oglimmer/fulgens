@@ -186,7 +186,7 @@ software: {
         "src/mysql/initial_ddl.sql",
         "src/mysql/initial_data.sql"
      ],
-      RootPasswort: "root"
+      RootPassword: "root"
     },
     "my_cnf_config": {
       Name: "my.cnf",
@@ -211,7 +211,7 @@ software.COMPONENT\_NAME.Source | string | must be "mysql"
 software.COMPONENT\_NAME.Mysql | object | optional, defines the mysql specific config
 software.COMPONENT\_NAME.Mysql.Schema | string | Creates this schema if it doesn't exist
 software.COMPONENT\_NAME.Mysql.Create | array of string | sql files to execute after startup
-software.COMPONENT_NAME.Mysql.RootPasswort | string | Root password to set
+software.COMPONENT_NAME.Mysql.RootPassword | string | Root password to set
 software.COMPONENT\_NAME.CONFIG\_FILE\_NAME | object | optional, defines a config file e.g. my.cnf
 software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Name | string | name of the config file on the file system
 software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Content | array of string | content of the config file
@@ -356,7 +356,7 @@ module.exports = {
           "src/mysql/initial_ddl.sql",
           "src/mysql/initial_data.sql"
 	     ],
-        RootPasswort: "root"
+        RootPassword: "root"
       },
       <ANY_CONFIG_FILE>: {
         Name: "my.cnf",

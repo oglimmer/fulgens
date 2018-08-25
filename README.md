@@ -35,7 +35,7 @@ module.exports = {
 
    tomcat: {
       Source: "tomcat",
-      Connect: "MyApp"
+      Deploy: "MyApp"
     }
   }
 }

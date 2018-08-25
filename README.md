@@ -257,6 +257,9 @@ Example:
     Vagrant: {
       Box: 'ubuntu/xenial64'
       Install: 'maven openjdk-8-jdk-headless npm docker.io',
+      BeforeInstall: [
+        'debconf-set-selections <<< 'mysql-server mysql-server/root_password password foobarpass''
+      ],
       AddInstall: [
         'ln -s /usr/bin/nodejs /usr/bin/node',
         'npm install -g jasmine',
@@ -268,6 +271,7 @@ Config param            | Type | Description
 ----------------------- | ---- | -----------
 config.Vagrant.Box | string | Vagrant box name, must be Debian based (as it uses apt-get)
 config.Vagrant.Install | string | Package name for apt-get, comma separated
+config.Vagrant.BeforeInstall | array of string | bash code to execute inside the Vagrant VM before apt-get install gets executed.
 config.Vagrant.AddInstall | array of string | bash code to execute inside the Vagrant VM after VM was created and started.
 
 ## A Fulgensfile

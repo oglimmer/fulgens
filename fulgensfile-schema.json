@@ -34,6 +34,14 @@
             "Install": {
               "type": "string"
             },
+            "BeforeInstall": {
+              "type": "array",
+                "minItems": 0,
+                "items": {
+                  "type": "string"
+                },
+                "uniqueItems": true              
+            },
             "AddInstall": {
               "type": "array",
                 "minItems": 0,

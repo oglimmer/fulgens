@@ -21,6 +21,7 @@ Vagrant.configure("2") do |config|
     vb.memory = "1024"
   end
   config.vm.provision "shell", inline: <<-SHELL
+    ${userConfig.config.Vagrant.BeforeInstall ? userConfig.config.Vagrant.BeforeInstall.join('\n    '):''}
     apt-get update
     apt-get install -y ${userConfig.config.Vagrant.Install}
     ${userConfig.config.Vagrant.AddInstall ? userConfig.config.Vagrant.AddInstall.join('\n    '):''}

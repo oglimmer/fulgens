@@ -72,11 +72,11 @@ class DependencyManager {
         + ` apt-get  -qy install ${apt95.join(' ')};`
     }
     return `
-      if [ "\\$(cat /etc/debian_version)" = "8.11" ]; then \\
-         ${buffer811} \\
-      elif [ "\\$(cat /etc/debian_version)" = "9.5" ]; then \\
-        ${buffer95} \\
-      else apt-get -qy install ${this.aptPackages.join(' ')} fi \\
+      if [ "\\$(cat /etc/debian_version)" = "8.11" ]; then \\\\
+         ${buffer811} \\\\
+      elif [ "\\$(cat /etc/debian_version)" = "9.5" ]; then \\\\
+        ${buffer95} \\\\
+      else apt-get -qy install ${this.aptPackages.join(' ')}; fi \\\\
     `;
   }
 

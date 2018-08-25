@@ -38,8 +38,8 @@ const buildCode = (Goal, BeforeBuild = '', AfterBuild = '') => {
   mkdir -p localrun/dockerbuild
   cat <<-EOFDOCK > localrun/dockerbuild/Dockerfile
 FROM maven:$dockerVersion
-RUN apt-get update && \\` + dependencyManager.getAptBuild() + ` && \\
-  apt-get clean && \\
+RUN apt-get update && \\\\` + dependencyManager.getAptBuild() + ` && \\\\
+  apt-get clean && \\\\
   rm -rf /tmp/* /var/tmp/* /var/lib/apt/archive/* /var/lib/apt/lists/*
 RUN ` + dependencyManager.getNpmBuild() + `
 ENTRYPOINT ["/usr/local/bin/mvn-entrypoint.sh"]

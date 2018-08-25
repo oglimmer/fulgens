@@ -32,7 +32,11 @@ Vagrant.configure("2") do |config|
 end
 EOF
   vagrant up
-  vagrant ssh -c "cd /share_host && ./run_local.sh -f"
+  if [ -f "../run_local.sh" ]; then
+    vagrant ssh -c "cd /share_host && ./run_local.sh -f"
+  else
+    echo "Save the fulgens output into a bash script (e.g. run_local.sh) and use it inside the new VM"
+  fi
   exit 1
 fi
 `);

@@ -4,7 +4,7 @@ const TomcatPlugin = require('./TomcatPlugin');
 const JavaPlugin = require('./JavaPlugin');
 const CouchdbPlugin = require('./CouchdbPlugin');
 const MysqlPlugin = require('./MysqlPlugin');
-
+const NodePlugin = require('./NodePlugin');
 
 module.exports = name => {
     switch (name) {
@@ -18,6 +18,8 @@ module.exports = name => {
       return CouchdbPlugin.instance();
     case 'mysql':
       return MysqlPlugin.instance();
+    case 'node':
+      return NodePlugin.instance();
     default:
     throw Error(`Unknown Plugin ${name}`);
   }

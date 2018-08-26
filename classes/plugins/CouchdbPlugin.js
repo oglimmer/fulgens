@@ -51,7 +51,7 @@ while [ "$(curl --write-out %{http_code} --silent --output /dev/null http://loca
   sleep 1
 done`);
 
-    if (CouchDB.Schema) {
+    if (CouchDB && CouchDB.Schema) {
       this.poststartBuilder.add(`if [[ "$(curl -s http://localhost:5984/${CouchDB.Schema})" =~ .*"error".*"not_found".* ]]; then`);
       this.poststartBuilder.add(`  curl -X PUT http://localhost:5984/${CouchDB.Schema}`);
       if (CouchDB.Create) {

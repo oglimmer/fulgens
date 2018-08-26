@@ -24,7 +24,7 @@ Vagrant.configure("2") do |config|
     ${userConfig.config.Vagrant.BeforeInstall ? userConfig.config.Vagrant.BeforeInstall.join('\n    '):''}
     apt-get update
     apt-get install -y ${userConfig.config.Vagrant.Install}
-    ${userConfig.config.Vagrant.AddInstall ? userConfig.config.Vagrant.AddInstall.join('\n    '):''}
+    ${userConfig.config.Vagrant.AfterInstall ? userConfig.config.Vagrant.AfterInstall.join('\n    '):''}
     echo "Now continue with..."
     echo "\\$ cd /share_host"
     echo "\\$ ./run_local.sh -f"

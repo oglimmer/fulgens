@@ -85,8 +85,8 @@ class MvnPlugin extends BasePlugin {
     const Dir = Mvn && Mvn.Dir ? Mvn.Dir : null;
 
     if (Param) {
-      optionsBuilder.add(Param.char, '', Param.var, Param.desc);
-      this.preparecompBuilder.add(`if [ "$${Param.var}" == "YES" ]; then`);
+      optionsBuilder.add(Param.Char, '', Param.VariableName, Param.Description);
+      this.preparecompBuilder.add(`if [ "$${Param.VariableName}" == "YES" ]; then`);
     }
 
     if (Git) {

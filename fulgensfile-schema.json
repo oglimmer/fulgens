@@ -196,17 +196,17 @@
         },
         "Param": {
           "properties": {
-            "char": {
+            "Char": {
               "type": "string"
             },
-            "var": {
+            "VariableName": {
               "type": "string"
             },
-            "desc": {
+            "Description": {
               "type": "string"
             }
           },
-          "required": [ "char", "var", "desc" ],
+          "required": [ "Char", "VariableName", "Description" ],
           "additionalProperties": false
         }
       }

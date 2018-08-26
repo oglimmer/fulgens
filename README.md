@@ -87,9 +87,9 @@ software: {
 	    Goal: "install"
 	  },
 	  Param: {
-	    char: 'o',
-	    var: 'BASH_VAR_NAME',
-	    desc: 'Use this switch to set BASH_VAR_NAME to YES'
+	    Char: 'o',
+	    VariableName: 'BASH_VAR_NAME',
+	    Description: 'Use this switch to set BASH_VAR_NAME to YES'
 	  }
 	},
 
@@ -144,9 +144,9 @@ software.COMPONENT\_NAME.Mvn.BuildDependencies | object | Optional. Defines buil
 software.COMPONENT\_NAME.Mvn.BuildDependencies.apt | array of string | apt package to install for docker based builds
 software.COMPONENT\_NAME.Mvn.BuildDependencies.npm | array of string | npm package to install for docker based builds. Make sure you have added node, nodejs or npm to the apt dependencies when using a npm package
 software.COMPONENT\_NAME.Param | object | Optional. Defines a script switch / parameter to make this software component optinal
-software.COMPONENT\_NAME.Param.char | string with size 1 | character to use for this script parameter. Must not use h,s,c,k,t
-software.COMPONENT\_NAME.Param.var | string | Shell variable name to set to YES if the parameter was given to the script
-software.COMPONENT\_NAME.Param.desc | string | A description for the help section of the script
+software.COMPONENT\_NAME.Param.Char | string with size 1 | character to use for this script parameter. Must not use h,s,c,k,t
+software.COMPONENT\_NAME.Param.VariableName | string | Shell variable name to set to YES if the parameter was given to the script
+software.COMPONENT\_NAME.Param.Description | string | A description for the help section of the script
 software.COMPONENT\_NAME.Artifact | string | Defines a file name. For web projects this is usually a war file.
 software.COMPONENT\_NAME.BeforeBuild | string | Optional. Bash code to execute before the build is performed
 software.COMPONENT\_NAME.AfterBuild | string | Optional. Bash code to execute after the build is performed
@@ -324,9 +324,9 @@ module.exports = {
         Goal: "install"
       },
       Param: {
-        char: 'o',
-        var: 'BASH_VAR_NAME',
-        desc: 'Use this switch to set BASH_VAR_NAME to YES'
+        Char: 'o',
+        VariableName: 'BASH_VAR_NAME',
+        Description: 'Use this switch to set BASH_VAR_NAME to YES'
       }
     },
     

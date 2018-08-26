@@ -7,8 +7,10 @@ const dependencycheckBuilder = require('../phase/dependencycheck');
 const BasePlugin = require('./BasePlugin');
 
 var prepare = `
-if [ -n "$JAVA_VERSION" ]; then
-  export JAVA_HOME=$(/usr/libexec/java_home -v $JAVA_VERSION)
+if [ "$(uname)" == "Darwin" ]; then 
+  if [ -n "$JAVA_VERSION" ]; then
+    export JAVA_HOME=$(/usr/libexec/java_home -v $JAVA_VERSION)
+  fi
 fi
 `;
 
@@ -56,11 +58,16 @@ class JavaPlugin extends BasePlugin {
   }
 
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
-    optionsBuilder.add('j', 'version', 'JAVA_VERSION',
-      'set/overwrite java_home to a specific version, needs to be in format for java_home 1.8, 9, 10)', 
-      [ 'version #can use any locally installed JDK, see /usr/libexec/java_home -V' ]);
+    if (userConfig.config.JavaVersion && userConfig.config.JavaVersion.length === 1) {
+      prepareBuilder.add(`if [ "$(uname)" == "Darwin" ]; then export JAVA_HOME=$(/usr/libexec/java_home -v ${userConfig.config.JavaVersion[0]}); fi`);
+    } else {
+      optionsBuilder.add('j', 'version', 'JAVA_VERSION',
+        `macOS only: set/overwrite JAVA_HOME to a specific version, needs to be in format for /usr/libexec/java_home`, 
+        [ 'version #can use any locally installed JDK, see /usr/libexec/java_home -V' ]);
+      prepareBuilder.add(prepare);
+    }
+
     functionsBuilder.add('jdk_version', functionBodyCheckJDKVersion);
-    prepareBuilder.add(prepare);
     dependencycheckBuilder.add('java -version 2>/dev/null');
   }
 

@@ -50,6 +50,23 @@ Now try `./run_local.sh -f -t tomcat:docker` to run the Tomcat inside a Docker c
 
 ### Build environments
 
+### java
+
+By default the script will not change JAVA_HOME. Though on macOS the script will provide a parameter to switch  Java (respectively JAVA_HOME) to 1.8, 9 or 10.
+
+To document the compatibility one can set JavaVersion in the config section. As said on macOS this also defines the possible values for the "-j" parameter.
+
+```
+config: {
+	JavaVersion: [ "1.8", "9", "10" ]
+}
+```
+
+Config param            | Type | Description
+----------------------- | ---- | -----------
+config.JavaVersion | array of string | Java version this project is compabile with. On macOS this value will be used with /usr/libexec/java_home
+
+
 #### maven
 
 Can be used to build locally or within a docker container. When doing a local build the -j JAVA_VERSION setting is respected.

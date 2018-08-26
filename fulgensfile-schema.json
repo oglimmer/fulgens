@@ -21,6 +21,14 @@
         },
         "Vagrant": {
           "$ref": "#/definitions/config/definitions/Vagrant"
+        },
+        "JavaVersion": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true              
         }
       },
       "additionalProperties": false,
@@ -36,19 +44,19 @@
             },
             "BeforeInstall": {
               "type": "array",
-                "minItems": 0,
-                "items": {
-                  "type": "string"
-                },
-                "uniqueItems": true              
+              "minItems": 0,
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true              
             },
             "AddInstall": {
               "type": "array",
-                "minItems": 0,
-                "items": {
-                  "type": "string"
-                },
-                "uniqueItems": true
+              "minItems": 0,
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
             }
           },
           "additionalProperties": false,

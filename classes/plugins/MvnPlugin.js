@@ -112,8 +112,8 @@ class MvnPlugin extends BasePlugin {
 
     if (Mvn && Mvn.BuildDependencies) {
       const bd = Mvn.BuildDependencies;
-      dependencyManager.addAptBuild(bd.apt);
-      dependencyManager.addNpmBuild(bd.npm);
+      dependencyManager.addAptBuild(bd.Apt);
+      dependencyManager.addNpmBuild(bd.Npm);
     }
 
     this.buildBuilder.add(buildCode(Goal, BeforeBuild, AfterBuild));

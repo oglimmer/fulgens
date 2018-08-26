@@ -173,7 +173,7 @@
           "definitions": {
             "BuildDependencies": {
               "properties": {
-                "apt": {
+                "Apt": {
                   "type": "array",
                     "minItems": 0,
                     "items": {
@@ -181,7 +181,7 @@
                     },
                     "uniqueItems": true
                 },
-                "npm": {
+                "Npm": {
                   "type": "array",
                   "minItems": 0,
                   "items": {

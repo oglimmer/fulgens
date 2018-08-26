@@ -113,8 +113,8 @@ software: {
 	  Source: "mvn",
 	  Mvn: {
 	    BuildDependencies: {
-	      apt: [ "npm" ],
-	      npm: [ "jasmine" ]
+	      Apt: [ "npm" ],
+	      Npm: [ "jasmine" ]
 	    }
 	  },
 	  Artifact: "target/my_mvn_build_software.war",
@@ -141,8 +141,8 @@ software.COMPONENT\_NAME.Mvn | object | Optional. Defines maven specific config
 software.COMPONENT\_NAME.Mvn.Dir | string | Optional. Defines the directory where the build will performed. Must be inline where the source code be found. Default is ".".
 software.COMPONENT\_NAME.Mvn.Goal | string | Optional. Default is "package". Defines a maven goal, e.g. "install"
 software.COMPONENT\_NAME.Mvn.BuildDependencies | object | Optional. Defines build dependencies for apt and npm
-software.COMPONENT\_NAME.Mvn.BuildDependencies.apt | array of string | apt package to install for docker based builds
-software.COMPONENT\_NAME.Mvn.BuildDependencies.npm | array of string | npm package to install for docker based builds. Make sure you have added node, nodejs or npm to the apt dependencies when using a npm package
+software.COMPONENT\_NAME.Mvn.BuildDependencies.Apt | array of string | apt package to install for docker based builds
+software.COMPONENT\_NAME.Mvn.BuildDependencies.Npm | array of string | npm package to install for docker based builds. Make sure you have added node, nodejs or npm to the apt dependencies when using a npm package
 software.COMPONENT\_NAME.Param | object | Optional. Defines a script switch / parameter to make this software component optinal
 software.COMPONENT\_NAME.Param.Char | string with size 1 | character to use for this script parameter. Must not use h,s,c,k,t
 software.COMPONENT\_NAME.Param.VariableName | string | Shell variable name to set to YES if the parameter was given to the script
@@ -343,8 +343,8 @@ module.exports = {
       Source: "mvn",
       Mvn: {
         BuildDependencies: {
-          apt: [ "npm" ],
-          npm: [ "jasmine" ]
+          Apt: [ "npm" ],
+          Npm: [ "jasmine" ]
         }
       },
       Artifact: <PATH_TO_BUILD_ARTIFACT>,

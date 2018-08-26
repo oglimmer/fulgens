@@ -14,8 +14,9 @@ class TomcatPlugin extends BasePlugin {
   }
 
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
+    super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
-    const { BeforeStart, AfterStart, Deploy, Lib, SourceTypes = ['docker','download','local'] } = userConfig.software[softwareComponentName];
+    const { Deploy, Lib, SourceTypes = ['docker','download','local'] } = userConfig.software[softwareComponentName];
     const { Artifact } = userConfig.software[Deploy];
     
     runtimeConfiguration.addDependency(JavaPlugin.instance());
@@ -26,7 +27,7 @@ class TomcatPlugin extends BasePlugin {
     var availableTypesData = [];
     var cleanupSourceTypesData = [];
     var defaultTypeData = 'download';
-    var poststartBuilderData = [];
+    var prestartBuilderData = [];
 
     SourceTypes.forEach(s => {
       switch(s) {
@@ -40,7 +41,7 @@ class TomcatPlugin extends BasePlugin {
           if (!SourceTypes.find(e => e === 'download')) {
             defaultTypeData = 'docker';
           }
-          poststartBuilderData.push(`
+          prestartBuilderData.push(`
             if [ "$TYPE_SOURCE_TOMCAT" == "docker" ]; then
               mkdir -p localrun/webapps
               targetPath=localrun/webapps/
@@ -64,7 +65,7 @@ class TomcatPlugin extends BasePlugin {
             name: 'download',
             stopCode: './localrun/apache-tomcat-$TOMCAT_VERSION/bin/shutdown.sh'
           });
-          poststartBuilderData.push(`
+          prestartBuilderData.push(`
             if [ "$TYPE_SOURCE_TOMCAT" == "download" ]; then
               targetPath=localrun/apache-tomcat-$TOMCAT_VERSION/webapps/
             fi
@@ -85,7 +86,7 @@ class TomcatPlugin extends BasePlugin {
           if (!SourceTypes.find(e => e === 'download') && !SourceTypes.find(e => e === 'docker')) {
             defaultTypeData = 'local';
           }
-          poststartBuilderData.push(`
+          prestartBuilderData.push(`
             if [ "$TYPE_SOURCE_TOMCAT" == "local" ]; then
               targetPath=$TYPE_SOURCE_TOMCAT_PATH/webapps/
             fi
@@ -114,20 +115,13 @@ class TomcatPlugin extends BasePlugin {
     
     dependencycheckBuilder.add('curl --version 1>/dev/null');
         
-    this.poststartBuilder.add(`
-    ${poststartBuilderData.join('\n')}
+    this.prestartBuilder.add(`
+    ${prestartBuilderData.join('\n')}
     f_deploy() {
       cp ${Artifact} $targetPath
     }
     f_deploy
     `);
-
-    if (BeforeStart) {
-      this.prestartBuilder.add(BeforeStart.map(e => e.replace('$$SELF_DIR$$', 'localrun/apache-tomcat-$TOMCAT_VERSION')));
-    }
-    if (AfterStart) {
-      this.poststartBuilder.add(AfterStart.map(e => e.replace('$$SELF_DIR$$', 'localrun/apache-tomcat-$TOMCAT_VERSION')));
-    }
 
   }
 

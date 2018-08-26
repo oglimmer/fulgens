@@ -15,6 +15,7 @@ class CouchdbPlugin extends BasePlugin {
   }
 
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
+    super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
     const CouchDB = userConfig.software[softwareComponentName].CouchDB;
 

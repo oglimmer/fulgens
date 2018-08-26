@@ -60,6 +60,7 @@ where:
   -c [all|build]             clean local run directory, when a build is scheduled for execution it also does a full build
   -k [component]             keep comma sperarated list of components running
   -t [component:type:[path|version]] run component inside [docker] container, [download] component (default) or [local] use installed component from path
+  -V                         enable Verbose
 ${data.map(o => `  -${o.option} ${o.longParam}${o.spaces()}${o.helpDesc}`).join('\n')}
 
 Details:
@@ -69,7 +70,7 @@ ${dataDetails.map(o => o.detailsArray.map(d => ` -${o.option} ${d}`).join('\n'))
 cd $(cd "$(dirname "$0")";pwd -P)
 
 BUILD=local
-while getopts ':hsc:k:t:${data.map(o => `${o.option}${o.longParam?':':''}`).join('')}' option; do
+while getopts ':hsc:k:t:V${data.map(o => `${o.option}${o.longParam?':':''}`).join('')}' option; do
   case "$option" in
     h) echo "$usage"
        exit;;
@@ -82,6 +83,7 @@ while getopts ':hsc:k:t:${data.map(o => `${o.option}${o.longParam?':':''}`).join
        ;;
     k) KEEP_RUNNING=$OPTARG;;
     t) TYPE_SOURCE=$OPTARG;;
+    V) VERBOSE=YES;;
 ${data.map(o => `    ${o.option}) ${o.varNameToSet}=${o.longParam?'$OPTARG':'YES'};;`).join('\n')}
     :) printf "missing argument for -%s\\n" "$OPTARG" >&2
        echo "$usage" >&2

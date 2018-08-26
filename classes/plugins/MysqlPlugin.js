@@ -13,8 +13,9 @@ class MysqlPlugin extends BasePlugin {
   }
 
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
+    super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
-    const { Mysql, BeforeStart, AfterStart } = userConfig.software[softwareComponentName];
+    const { Mysql } = userConfig.software[softwareComponentName];
 
     dependencycheckBuilder.add('docker --version 1>/dev/null');
     dependencycheckBuilder.add('mysql --version 1>/dev/null');
@@ -41,19 +42,19 @@ class MysqlPlugin extends BasePlugin {
       }]
     });
 
-    var dockerPasswordParam = '';
-    if (Mysql && Mysql.RootPassword) {
-      this.poststartBuilder.add(`export MYSQL_PWD="${Mysql.RootPassword}"`);
-      dockerPasswordParam = `-e MYSQL_ROOT_PASSWORD="${Mysql.RootPassword}"`;
-    } else {
-      dockerPasswordParam = '-e MYSQL_ALLOW_EMPTY_PASSWORD=true';
-    }
-
-    this.poststartBuilder.add(`
+    this.poststartBuilder.addBegin(`
 while ! mysql -uroot --protocol=tcp -e "select 1" 1>/dev/null 2>&1; do
   echo "waiting for mysql..."
   sleep 3
 done`);
+    
+    var dockerPasswordParam = '';
+    if (Mysql && Mysql.RootPassword) {
+      this.poststartBuilder.addBegin(`export MYSQL_PWD="${Mysql.RootPassword}"`);
+      dockerPasswordParam = `-e MYSQL_ROOT_PASSWORD="${Mysql.RootPassword}"`;
+    } else {
+      dockerPasswordParam = '-e MYSQL_ALLOW_EMPTY_PASSWORD=true';
+    }
 
     if (Mysql.Schema) {
       // check if schema exists, otherwise create
@@ -66,13 +67,7 @@ done`);
 
     const configFiles = runtimeConfiguration.getConfigFiles(softwareComponentName);
 
-    if (BeforeStart) {
-      this.prestartBuilder.add(BeforeStart);
-    }
     this.startBuilder.add(start(softwareComponentName, configFiles, dockerPasswordParam));
-    if (AfterStart) {
-      this.poststartBuilder.add(AfterStart);
-    }
 
   }
 

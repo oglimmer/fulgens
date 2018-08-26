@@ -58,8 +58,10 @@ class JavaPlugin extends BasePlugin {
   }
 
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
-    if (userConfig.config.JavaVersion && userConfig.config.JavaVersion.length === 1) {
-      prepareBuilder.add(`if [ "$(uname)" == "Darwin" ]; then export JAVA_HOME=$(/usr/libexec/java_home -v ${userConfig.config.JavaVersion[0]}); fi`);
+    //super.exec(softwareComponentName, userConfig, runtimeConfiguration);
+
+    if (userConfig.config.JavaVersions && userConfig.config.JavaVersions.length === 1) {
+      prepareBuilder.add(`if [ "$(uname)" == "Darwin" ]; then export JAVA_HOME=$(/usr/libexec/java_home -v ${userConfig.config.JavaVersions[0]}); fi`);
     } else {
       optionsBuilder.add('j', 'version', 'JAVA_VERSION',
         `macOS only: set/overwrite JAVA_HOME to a specific version, needs to be in format for /usr/libexec/java_home`, 

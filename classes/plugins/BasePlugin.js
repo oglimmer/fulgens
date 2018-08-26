@@ -1,4 +1,6 @@
 
+const optionsBuilder = require('../phase/options');
+
 const Preparecomp = require('../phase/Preparecomp');
 const Getsource = require('../phase/Getsource');
 const Prebuild = require('../phase/Prebuild');
@@ -14,6 +16,7 @@ const Strings = require('../core/Strings');
 class BasePlugin {
 
   register(softwareComponentName, userConfig, runtimeConfiguration) {
+    this.softwareComponentName = softwareComponentName;
     this.preparecompBuilder = new Preparecomp();
     this.getsourceBuilder = new Getsource();
     this.prebuildBuilder = new Prebuild();
@@ -42,6 +45,43 @@ class BasePlugin {
   }
 
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
+    const { Git, Param, Dir, BeforeStart, AfterStart } = userConfig.software[softwareComponentName];
+
+    if (Param) {
+      optionsBuilder.add(Param.Char, '', Param.VariableName, Param.Description);
+      this.preparecompBuilder.add(`if [ "$${Param.VariableName}" == "YES" ]; then`);
+    }
+
+    if (Git) {
+      this.getsourceBuilder.add(`
+        if [ ! -d ".git" ]; then
+          git clone "${Git}" .
+        else
+          git pull
+        fi
+      `);
+    }
+
+    if (BeforeStart) {
+      this.prestartBuilder.add(BeforeStart);
+    }
+    if (AfterStart) {
+      this.poststartBuilder.add(AfterStart);
+    }
+
+    if (Dir) {
+      this.preparecompBuilder.add(`  mkdir -p ${Dir.replace('$$TMP$$', 'localrun')}`);
+      this.preparecompBuilder.add(`
+  OPWD=$(pwd)
+  cd ${Dir.replace('$$TMP$$', 'localrun')}
+        `);
+      this.leavecompBuilder.add('  cd $OPWD');
+    }
+
+    if (Param) {
+      // this must be the last addition to leavecompBuilder
+      this.leavecompBuilder.add('fi');
+    }
   }
 
   build() {

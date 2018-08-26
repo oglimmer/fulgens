@@ -22,7 +22,7 @@
         "Vagrant": {
           "$ref": "#/definitions/config/definitions/Vagrant"
         },
-        "JavaVersion": {
+        "JavaVersions": {
           "type": "array",
           "minItems": 0,
           "items": {
@@ -83,6 +83,9 @@
           "enum": [ "mvn" ]
         },
         "Git": {
+          "type": "string"
+        },
+        "Dir": {
           "type": "string"
         },
         "Mvn": {
@@ -159,8 +162,8 @@
         },
         "MvnSubType": {
           "properties": {
-            "Dir": {
-              "type": "string"
+            "GoalIgnoreClean": {
+              "type": "boolean"
             },
             "Goal": {
               "type": "string"
@@ -218,6 +221,14 @@
         },
         "Mysql": {
           "$ref": "#/definitions/MysqlType/definitions/MysqlSubType"
+        },
+        "BeforeStart": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
         },
         "AfterStart": {
           "type": "array",

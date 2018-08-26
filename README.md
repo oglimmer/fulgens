@@ -48,23 +48,32 @@ Now try `./run_local.sh -f -t tomcat:docker` to run the Tomcat inside a Docker c
 
 ## Supported software
 
+To write a Fulgensfile one defines all software components needed to run a project. Supported software is
+
+* java / maven
+* tomcat
+* mysql
+* couchdb
+
+Futhermore Vagrant/VirtualBox is supported as well.
+
 ### Build environments
 
 ### java
 
 By default the script will not change JAVA_HOME. Though on macOS the script will provide a parameter to switch  Java (respectively JAVA_HOME) to 1.8, 9 or 10.
 
-To document the compatibility one can set JavaVersion in the config section. As said on macOS this also defines the possible values for the "-j" parameter.
+To document the compatibility one can set JavaVersions in the config section. As said on macOS this also defines the possible values for the "-j" parameter.
 
 ```
 config: {
-	JavaVersion: [ "1.8", "9", "10" ]
+	JavaVersions: [ "1.8", "9", "10" ]
 }
 ```
 
 Config param            | Type | Description
 ----------------------- | ---- | -----------
-config.JavaVersion | array of string | Java version this project is compabile with. On macOS this value will be used with /usr/libexec/java_home
+config.JavaVersions | array of string | Java version this project is compabile with. On macOS this value will be used with /usr/libexec/java_home
 
 
 #### maven
@@ -82,8 +91,8 @@ software: {
 	"a_external_dependency_project": {
 	  Source: "mvn",
 	  Git: "url_to_git_repo",
+    Dir: "$$TMP$$/my-git-repo",
 	  Mvn: {
-	    Dir: "$$TMP$$/my-git-repo",
 	    Goal: "install"
 	  },
 	  Param: {
@@ -98,8 +107,8 @@ software: {
     
 	mysqldriver: {
 	  Source: "mvn",
+    Dir: "$$TMP$$/lib",
 	  Mvn: {
-	    Dir: "$$TMP$$/lib",
 	    Goal: "dependency:copy -Dartifact=mysql:mysql-connector-java:8.0.12 -DoutputDirectory=$$TMP$$/lib/"
 	  },
 	  Artifact: "$$TMP$$/lib/mysql-connector-java-8.0.12.jar"
@@ -137,8 +146,8 @@ Config param            | Type | Description
 ----------------------- | ---- | -----------
 software.COMPONENT\_NAME.Source | string | must be "mvn"
 software.COMPONENT\_NAME.Git | string | Optional, git URL to checkout or pull
+software.COMPONENT\_NAME.Dir | string | Optional. Defines the directory where the build will performed. Must be inline where the source code be found. Default is ".". 
 software.COMPONENT\_NAME.Mvn | object | Optional. Defines maven specific config
-software.COMPONENT\_NAME.Mvn.Dir | string | Optional. Defines the directory where the build will performed. Must be inline where the source code be found. Default is ".".
 software.COMPONENT\_NAME.Mvn.Goal | string | Optional. Default is "package". Defines a maven goal, e.g. "install"
 software.COMPONENT\_NAME.Mvn.BuildDependencies | object | Optional. Defines build dependencies for apt and npm
 software.COMPONENT\_NAME.Mvn.BuildDependencies.Apt | array of string | apt package to install for docker based builds
@@ -215,6 +224,9 @@ software: {
       ],
       AttachIntoDocker: "/etc/mysql/conf.d" 
     },
+    BeforeStart: [
+      ".. bash code before the mysql started.."
+    ],
     AfterStart: [
       ".. bash code after the mysql started.."
     ]
@@ -233,6 +245,7 @@ software.COMPONENT\_NAME.CONFIG\_FILE\_NAME | object | optional, defines a confi
 software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Name | string | name of the config file on the file system
 software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Content | array of string | content of the config file
 software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.AttachIntoDocker | string | full path and filename where the config file will be mounted inside a docker container
+software.COMPONENT\_NAME.BeforeStart | array of string | bash code executed before mysql has started
 software.COMPONENT\_NAME.AfterStart | array of string | bash code executed after mysql has started
 
 #### couchdb
@@ -312,6 +325,7 @@ module.exports = {
         'npm install -g jasmine',
       ]
     },
+    JavaVersions: [ "1.8", "9", "10" ]
   },
 
   software: {
@@ -319,8 +333,8 @@ module.exports = {
     <SOFTWARE_NAME>: {
       Source: "mvn",
       Git: "url_to_git_repo",
+      Dir: "$$TMP$$/my-git-repo",
       Mvn: {
-        Dir: "$$TMP$$/my-git-repo",
         Goal: "install"
       },
       Param: {
@@ -332,8 +346,8 @@ module.exports = {
     
     mysqldriver: {
       Source: "mvn",
+      Dir: "$$TMP$$/lib",
       Mvn: {
-        Dir: "$$TMP$$/lib",
         Goal: "dependency:copy -Dartifact=mysql:mysql-connector-java:8.0.12 -DoutputDirectory=$$TMP$$/lib/"
       },
       Artifact: "$$TMP$$/lib/mysql-connector-java-8.0.12.jar"
@@ -389,6 +403,9 @@ module.exports = {
         ],
         AttachIntoDocker: "/etc/mysql/conf.d" 
       },
+      BeforeStart: [
+        ".. bash code before the mysql strted.."
+      ],
       AfterStart: [
         ".. bash code after the mysql started.."
       ]

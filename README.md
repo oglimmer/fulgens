@@ -91,7 +91,7 @@ software: {
 	"a_external_dependency_project": {
 	  Source: "mvn",
 	  Git: "url_to_git_repo",
-    Dir: "$$TMP$$/my-git-repo",
+          Dir: "$$TMP$$/my-git-repo",
 	  Mvn: {
 	    Goal: "install"
 	  },
@@ -107,9 +107,9 @@ software: {
     
 	mysqldriver: {
 	  Source: "mvn",
-    Dir: "$$TMP$$/lib",
+          Dir: "$$TMP$$/lib",
 	  Mvn: {
-	    Goal: "dependency:copy -Dartifact=mysql:mysql-connector-java:8.0.12 -DoutputDirectory=$$TMP$$/lib/"
+	    Goal: "dependency:copy -Dartifact=mysql:mysql-connector-java:8.0.12 -DoutputDirectory=."
 	  },
 	  Artifact: "$$TMP$$/lib/mysql-connector-java-8.0.12.jar"
 	},
@@ -348,7 +348,7 @@ module.exports = {
       Source: "mvn",
       Dir: "$$TMP$$/lib",
       Mvn: {
-        Goal: "dependency:copy -Dartifact=mysql:mysql-connector-java:8.0.12 -DoutputDirectory=$$TMP$$/lib/"
+        Goal: "dependency:copy -Dartifact=mysql:mysql-connector-java:8.0.12 -DoutputDirectory=."
       },
       Artifact: "$$TMP$$/lib/mysql-connector-java-8.0.12.jar"
     },

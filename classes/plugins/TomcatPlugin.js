@@ -32,7 +32,7 @@ class TomcatPlugin extends BasePlugin {
     SourceTypes.forEach(s => {
       switch(s) {
         case 'docker':
-          optionsBuilderData.push('tomcat:local:/usr/lib/tomcat #reuse tomcat installation from /usr/lib/tomcat, does not start/stop this tomcat');
+          optionsBuilderData.push('tomcat:docker:[7|8|9] #start docker image \\`tomcat:X\\` and run this build within it');
           availableTypesData.push({ typeName: 'docker', defaultVersion: '9' });
           cleanupSourceTypesData.push({
             name: 'docker',
@@ -81,7 +81,7 @@ class TomcatPlugin extends BasePlugin {
           this.startBuilder.add(startDownload(configFiles));
         break;
         case 'local':
-          optionsBuilderData.push('tomcat:docker:[7|8|9] #start docker image \\`tomcat:X\\` and run this build within it');
+          optionsBuilderData.push('tomcat:local:/usr/lib/tomcat #reuse tomcat installation from /usr/lib/tomcat, does not start/stop this tomcat');
           availableTypesData.push({ typeName: 'local', defaultVersion: '' });
           if (!SourceTypes.find(e => e === 'download') && !SourceTypes.find(e => e === 'docker')) {
             defaultTypeData = 'local';

@@ -153,6 +153,9 @@
                 },
                 "Var": {
                   "type": "string"
+                },
+                "Content": {
+                  "type": "string"
                 }
               },
               "additionalProperties": false,

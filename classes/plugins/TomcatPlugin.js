@@ -133,7 +133,7 @@ const startDownload = (configFiles) => `
 if [ "$TYPE_SOURCE_TOMCAT" == "download" ]; then
   # start tomcat
   if [ ! -f ".tomcat" ]; then
-    ${configFiles.map(f => f.makeEnvVar()).join('\n')}
+    ${configFiles.map(f => f.storeFileAndExportEnvVar()).join('\n')}
     ./localrun/apache-tomcat-$TOMCAT_VERSION/bin/startup.sh
     echo "download">.tomcat
   fi
@@ -148,8 +148,10 @@ if [ "$TYPE_SOURCE_TOMCAT" == "docker" ]; then
     exit 1
   fi
   if [ ! -f ".tomcat" ]; then
-    ${configFiles.map(f => f.writeDockerConnectionLogic()).join('\n')}
-    dockerContainerID${softwareComponentName}=$(docker run --rm -d $dockerCouchRef \${dockerFixRef[@]} -p 8080:8080 ${configFiles.map(f => f.makeDockerEnvVar()).join('\n')} -v "$(pwd)/localrun/webapps":/usr/local/tomcat/webapps tomcat:$TYPE_SOURCE_TOMCAT_VERSION)
+    ${configFiles.map(f => f.storeFileForDocker()).join('\n')}
+    dockerContainerID${softwareComponentName}=$(docker run --rm -d $dockerCouchRef \${dockerFixRef[@]} -p 8080:8080 \\
+        ${configFiles.map(f => f.mountToDocker('/usr/local/tomcat/webapps')).join('\n')} \\
+        -v "$(pwd)/localrun/webapps":/usr/local/tomcat/webapps tomcat:$TYPE_SOURCE_TOMCAT_VERSION)
     echo "$dockerContainerID${softwareComponentName}">.tomcat
   else
     dockerContainerID${softwareComponentName}=$(<.tomcat)

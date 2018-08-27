@@ -70,7 +70,7 @@ if [ "$TYPE_SOURCE_NODE" == "docker" ]; then
   fi
   if [ ! -f ".node" ]; then
     ${configFiles.map(f => f.storeFileForDocker()).join('\n')}
-    if [ -n "$VERBOSE" ]; then echo "debug...."; fi
+    if [ -n "$VERBOSE" ]; then echo "docker run --rm -d $dockerCouchRef -p 1337:1337 ${configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n')}  -v $(pwd):/home/node/exec_env -w /home/node/exec_env node:$TYPE_SOURCE_NODE_VERSION ./${Artifact}"; fi
     dockerContainerID${softwareComponentName}=$(docker run --rm -d $dockerCouchRef -p 1337:1337 \\
         ${configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n')}  \\
         -v "$(pwd)":/home/node/exec_env -w /home/node/exec_env node:$TYPE_SOURCE_NODE_VERSION ./${Artifact})

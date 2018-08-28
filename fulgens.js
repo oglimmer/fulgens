@@ -18,21 +18,29 @@ const pluginFactory = require('./classes/plugins/factory');
 
 const RuntimeConfiguration = require('./classes/core/RuntimeConfiguration')
 
-var filename;
+var displayFilename;
+var systemFilename;
 if (process.argv[0].endsWith('node') || process.argv[0].endsWith('nodejs')) {
-  filename = process.argv[2];
+  displayFilename = process.argv[2];
 } else {
-  filename = process.argv[1];
+  displayFilename = process.argv[1];
 }
-if (!filename) {
-  filename = "./Fulgensfile.js";
-  if (!fs.existsSync(path.resolve(filename))) {
-    filename = "./Fulgensfile";
+if (!displayFilename) {
+  displayFilename = "./Fulgensfile";
+  if (!fs.existsSync(path.resolve(displayFilename))) {
+    displayFilename = "./Fulgensfile.js";
   }
+} else {
+  
 }
-filename = path.resolve(filename);
+systemFilename = path.resolve(displayFilename);
 
-const userConfig = require(filename);
+if (!fs.existsSync(systemFilename)) {
+  console.error(`File ${displayFilename} not found!`);
+  process.exit(1);
+}
+
+const userConfig = require(systemFilename);
 
 if (!userConfig || Object.entries(userConfig).length === 0) {
   console.error('config empty!');

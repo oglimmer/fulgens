@@ -23,6 +23,8 @@ class NodePlugin extends BasePlugin {
       'node:docker:[6|8|10] #start docker image \\`node:X\\`'
     ]);
 
+    runtimeConfiguration.setTail('nodejs');
+
     sourceTypeBuilder.add(this, {
       componentName: softwareComponentName,
       defaultType: 'local', 
@@ -37,22 +39,31 @@ class NodePlugin extends BasePlugin {
       sourceTypes: [{
         name: 'docker',
         stopCode: 'docker rm -f $dockerContainerID' + softwareComponentName
+      }, {
+        name: 'local',
+        stopCode: `ps -p $processId${softwareComponentName} >/dev/null && kill $processId${softwareComponentName}`
       }]
     });
 
-
-
-    const Artifact = userConfig.software[softwareComponentName].Artifact;
+    const { Artifact, ExposedPort = '3000' } = userConfig.software[softwareComponentName];
 
     this.buildBuilder.add(`
-      if [ "$SKIP_BUILD" != "YES" ]; then
+      f_build() {
+        if [ "$VERBOSE" == "YES" ]; then echo "npm i --save-prod"; fi
         npm i --save-prod
+      }
+      if [ "$SKIP_BUILD" != "YES" ]; then
+        if [ -n "$CLEAN" ]; then
+          if [ "$VERBOSE" == "YES" ]; then echo "rm -rf node_modules/"; fi
+          rm -rf node_modules/
+        fi
+        f_build        
       fi
     `);
 
     const configFiles = runtimeConfiguration.getConfigFiles(softwareComponentName);
 
-    this.startBuilder.add(startDocker(Artifact, configFiles, softwareComponentName));
+    this.startBuilder.add(startDocker(Artifact, ExposedPort, configFiles, softwareComponentName));
     this.startBuilder.add(startLocal(Artifact, configFiles, softwareComponentName));
 
   }
@@ -62,16 +73,16 @@ class NodePlugin extends BasePlugin {
 module.exports = NodePlugin;
 
 
-const startDocker = (Artifact, configFiles, softwareComponentName) => `
+const startDocker = (Artifact, ExposedPort, configFiles, softwareComponentName) => `
 if [ "$TYPE_SOURCE_NODE" == "docker" ]; then
-  if [ -f .node ] && [ "$(<.node)" == "download" ]; then
-    echo "node running but started from different source type"
-    exit 1
-  fi
+  #if [ -f .node ] && [ "$(<.node)" == "download" ]; then
+  #  echo "node running but started from different source type"
+  #  exit 1
+  #fi
   if [ ! -f ".node" ]; then
     ${configFiles.map(f => f.storeFileForDocker()).join('\n')}
-    if [ -n "$VERBOSE" ]; then echo "docker run --rm -d $dockerCouchRef -p 1337:1337 ${configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n')}  -v $(pwd):/home/node/exec_env -w /home/node/exec_env node:$TYPE_SOURCE_NODE_VERSION ./${Artifact}"; fi
-    dockerContainerID${softwareComponentName}=$(docker run --rm -d $dockerCouchRef -p 1337:1337 \\
+    if [ -n "$VERBOSE" ]; then echo "docker run --rm -d $dockerCouchRef -p ${ExposedPort}:${ExposedPort} ${configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n')}  -v $(pwd):/home/node/exec_env -w /home/node/exec_env node:$TYPE_SOURCE_NODE_VERSION ./${Artifact}"; fi
+    dockerContainerID${softwareComponentName}=$(docker run --rm -d $dockerCouchRef -p ${ExposedPort}:${ExposedPort} \\
         ${configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n')}  \\
         -v "$(pwd)":/home/node/exec_env -w /home/node/exec_env node:$TYPE_SOURCE_NODE_VERSION ./${Artifact})
     echo "$dockerContainerID${softwareComponentName}">.node
@@ -84,12 +95,22 @@ fi
 
 const startLocal = (Artifact, configFiles, softwareComponentName) => `
 if [ "$TYPE_SOURCE_NODE" == "local" ]; then
-  if [ -f .node ]; then
-    echo "node running but started from different source type"
-    exit 1
+  #if [ -f .node ]; then
+  #  echo "node running but started from different source type"
+  #  exit 1
+  #fi
+  if [ ! -f ".node" ]; then
+      cat > localrun/noint.js <<EOF
+      process.on( "SIGINT", function() {} );
+      require('../${Artifact}');
+EOF
+    ${configFiles.map(f => f.storeFileAndExportEnvVar()).join('\n')}
+    node localrun/noint.js >localrun/noint.out 2>&1 & 
+    processId${softwareComponentName}=$!
+    echo "$processId${softwareComponentName}">.node
+  else
+    processId${softwareComponentName}=$(<.node)
   fi
-  ${configFiles.map(f => f.storeFileAndExportEnvVar()).join('\n')}
-  ./${Artifact}
-  echo "$dockerContainerID${softwareComponentName}">.node
+  tailCmd="tail -f localrun/noint.out"
 fi
 `;

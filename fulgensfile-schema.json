@@ -306,6 +306,9 @@
         },
         "Artifact": {
           "type": "string"
+        },
+        "ExposedPort": {
+          "type": "number"
         }
       },
       "patternProperties": {

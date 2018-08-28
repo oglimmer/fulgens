@@ -81,7 +81,7 @@ if [ "$TYPE_SOURCE_MYSQL" == "docker" ]; then
   if [ ! -f ".mysql" ]; then
     ${configFiles.map(f => f.writeDockerConnectionLogic()).join('\n')}
     dockerContainerID${softwareComponentName}=$(docker run --rm -d -p 3306:3306 ${dockerPasswordParam} \\
-      ${configFiles.map(f => f.makeDockerVolume()).join('\n')} mysql:$TYPE_SOURCE_MYSQL_VERSION)
+      ${configFiles.map(f => f.makeDockerVolume('/etc/mysql/conf.d')).join('\n')} mysql:$TYPE_SOURCE_MYSQL_VERSION)
     echo "$dockerContainerID${softwareComponentName}">.mysql
   else
     dockerContainerID${softwareComponentName}=$(<.mysql)

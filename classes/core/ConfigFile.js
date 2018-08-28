@@ -30,8 +30,8 @@ class AttachIntoDocker {
     this.TmpFolder = hash.digest('hex').substring(0, 8);
   }
 
-  makeDockerVolume() {
-    return `-v \$(pwd)/localrun/${this.TmpFolder}:/etc/mysql/conf.d`;
+  makeDockerVolume(targetPath) {
+    return `-v \$(pwd)/localrun/${this.TmpFolder}:${targetPath}`;
   }
 
   writeDockerConnectionLogic() {

@@ -137,8 +137,8 @@ software: {
 	    ],
 	    AttachAsEnvVar: ["JAVA_OPTS", "-Dmy.properties=$$SELF_NAME$$"]
 	  },
-	  BeforeBuild: "..bash code run before the build..",
-	  AfterBuild: ".. bash code after the build"
+	  BeforeBuild: [ "..bash code run before the build.." ],
+	  AfterBuild: [ ".. bash code after the build" ]
 	}
 }
 ```
@@ -158,8 +158,8 @@ software.COMPONENT\_NAME.Param.Char | string with size 1 | character to use for 
 software.COMPONENT\_NAME.Param.VariableName | string | Shell variable name to set to YES if the parameter was given to the script
 software.COMPONENT\_NAME.Param.Description | string | A description for the help section of the script
 software.COMPONENT\_NAME.Artifact | string | Defines a file name. For web projects this is usually a war file.
-software.COMPONENT\_NAME.BeforeBuild | string | Optional. Bash code to execute before the build is performed
-software.COMPONENT\_NAME.AfterBuild | string | Optional. Bash code to execute after the build is performed
+software.COMPONENT\_NAME.BeforeBuild | array of string | Optional. Bash code to execute before the build is performed
+software.COMPONENT\_NAME.AfterBuild | array of string | Optional. Bash code to execute after the build is performed
 software.COMPONENT\_NAME.CONFIG\_FILE\_NAME | object | Optional. Defines a config file e.g. a custom java.properties for the application
 software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Name | string | name of the config file on the file system
 software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Connection | object | Defines connections to other software components like database connections
@@ -413,8 +413,8 @@ module.exports = {
         ],
         AttachAsEnvVar: ["JAVA_OPTS", "-Dmy.properties=$$SELF_NAME$$"]
       },
-      BeforeBuild: "..bash code run before the build..",
-      AfterBuild: ".. bash code after the build"
+      BeforeBuild: [ "..bash code run before the build.." ],
+      AfterBuild: [ ".. bash code after the build" ]
     },
 
     <SOFTWARE_NAME>: {

@@ -99,10 +99,20 @@
           "type": "string"
         },
         "BeforeBuild": {
-          "type": "string"
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
         },
         "AfterBuild": {
-          "type": "string"
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
         }
       },
       "patternProperties": {
@@ -131,11 +141,11 @@
               "properties": {
                 "Apt": {
                   "type": "array",
-                    "minItems": 0,
-                    "items": {
-                      "type": "string"
-                    },
-                    "uniqueItems": true
+                  "minItems": 0,
+                  "items": {
+                    "type": "string"
+                  },
+                  "uniqueItems": true
                 },
                 "Npm": {
                   "type": "array",

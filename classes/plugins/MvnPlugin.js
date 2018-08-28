@@ -12,9 +12,9 @@ const start = (Goal, GoalIgnoreClean, BeforeBuild, AfterBuild) => `
 if [ "$BUILD" == "local" ]; then
   f_build() {
     if [ -n "$VERBOSE" ]; then echo "pwd=$(pwd)"; echo "mvn ${GoalIgnoreClean?'':'$MVN_CLEAN'} $MVN_OPTS ${Goal}"; fi
-    ${BeforeBuild}
+    ${BeforeBuild.join('\n')}
     mvn ${GoalIgnoreClean?'':'$MVN_CLEAN'} $MVN_OPTS ${Goal}
-    ${AfterBuild}
+    ${AfterBuild.join('\n')}
   }
 elif [[ "$BUILD" == docker* ]]; then
   IFS=: read mainType dockerVersion <<< "$BUILD"
@@ -33,7 +33,7 @@ if [ "$SKIP_BUILD" != "YES" ]; then
 fi
 `;
 
-const buildCode = (Goal, GoalIgnoreClean, BeforeBuild = '', AfterBuild = '') => {
+const buildCode = (Goal, GoalIgnoreClean, BeforeBuild = [], AfterBuild = []) => {
   if (dependencyManager.hasAnyBuildDep()) {
     return start(Goal, GoalIgnoreClean, BeforeBuild, AfterBuild) + `
   mkdir -p localrun/dockerbuild
@@ -49,18 +49,18 @@ EOFDOCK
   docker build --tag maven_build:$dockerVersion localrun/dockerbuild/
   f_build() {
     if [ -n "$VERBOSE" ]; then echo "pwd=$(pwd)"; echo "docker run --rm -v $(pwd):/usr/src/build -v $(pwd)/localrun/.m2:/root/.m2 -w /usr/src/build maven_build:$dockerVersion mvn ${GoalIgnoreClean?'':'$MVN_CLEAN'} $MVN_OPTS ${Goal}"; fi
-    ${BeforeBuild}
+    ${BeforeBuild.join('\n')}
     docker run --rm -v "$(pwd)":/usr/src/build -v "$(pwd)/localrun/.m2":/root/.m2 -w /usr/src/build maven_build:$dockerVersion mvn ${GoalIgnoreClean?'':'$MVN_CLEAN'} $MVN_OPTS ${Goal}
-    ${AfterBuild}
+    ${AfterBuild.join('\n')}
   }
     ` + end;
   } else {
     return start(Goal, GoalIgnoreClean, BeforeBuild, AfterBuild) + `
   f_build() {
     if [ -n "$VERBOSE" ]; then echo "pwd=$(pwd)"; echo "docker run --rm -v $(pwd):/usr/src/build -v $(pwd)/localrun/.m2:/root/.m2 -w /usr/src/build maven:$dockerVersion mvn ${GoalIgnoreClean?'':'$MVN_CLEAN'} $MVN_OPTS ${Goal}"; fi
-    ${BeforeBuild}
+    ${BeforeBuild.join('\n')}
     docker run --rm -v "$(pwd)":/usr/src/build -v "$(pwd)/localrun/.m2":/root/.m2 -w /usr/src/build maven:$dockerVersion mvn ${GoalIgnoreClean?'':'$MVN_CLEAN'} $MVN_OPTS ${Goal}
-    ${AfterBuild}
+    ${AfterBuild.join('\n')}
   }
     ` + end;
   }

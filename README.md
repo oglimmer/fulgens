@@ -51,6 +51,7 @@ Now try `./run_local.sh -f -t tomcat:docker` to run the Tomcat inside a Docker c
 To write a Fulgensfile one defines all software components needed to run a project. Supported software is
 
 * java / maven
+* node
 * tomcat
 * mysql
 * couchdb
@@ -168,6 +169,47 @@ software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Content | array of string | static c
 software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.AttachAsEnvVar | array of string size 2 | Element 0 is shell script variable name. Element 1 the value for this variable. $$SELF_NAME$$ will be replaced with the full filename of the config file
 
 ### Runtime environments
+
+### node
+
+To run a node.js application a local node installation can be used, it is also possible to start and run a Node application inside a docker container.
+
+Example:
+
+```
+{
+software: {
+	"node": {
+      Source: "node",
+      Artifact: "startServer.js",
+      ExposedPort: 8080,
+      configFile: {
+        Name: "citybuilder.properties",
+        Connections: [
+          { Source:"couchdb", Var: "dbHost", Content: "http://$$VALUE$$:5984" },
+          { Source:"couchdb", Var: "db", Content: "http://$$VALUE$$:5984/citybuilder" },
+        ],
+        Content: [
+          "dbSchema=citybuilder",
+          "httpPort=8080",
+          "httpHost=0.0.0.0"
+        ],
+        AttachAsEnvVar: ["CITYBUILDER_PROPERTIES", "$$SELF_NAME$$"]
+      }
+    }
+}
+```
+
+Config param            | Type | Description
+----------------------- | ---- | -----------
+software.COMPONENT\_NAME.Source | string | must be "node"
+software.COMPONENT\_NAME.CONFIG\_FILE\_NAME | object | Optional. Defines a config file e.g. a custom properties file for the application
+software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Name | string | name of the config file on the file system
+software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Connection | object | Defines connections to other software components like database connections
+software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Connection.Source | string | Name of another software component within this Fulgensfile
+software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Connection.Var | string | A line in the form `key=value` will be added to the config file. This config defines the key, while the hostname of the software component defined via Source will define the value.
+software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Content | array of string | static content of the config file
+software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.AttachAsEnvVar | array of string size 2 | Element 0 is shell script variable name. Element 1 the value for this variable. $$SELF_NAME$$ will be replaced with the full filename of the config file
 
 #### tomcat
 

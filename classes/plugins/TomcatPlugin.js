@@ -18,6 +18,8 @@ class TomcatPlugin extends BasePlugin {
 
     const { Deploy, Lib, SourceTypes = ['docker','download','local'] } = userConfig.software[softwareComponentName];
     const { Artifact } = userConfig.software[Deploy];
+
+    const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
     
     runtimeConfiguration.addDependency(JavaPlugin.instance());
 
@@ -42,43 +44,43 @@ class TomcatPlugin extends BasePlugin {
             defaultTypeData = 'docker';
           }
           prestartBuilderData.push(`
-            if [ "$TYPE_SOURCE_TOMCAT" == "docker" ]; then
+            if [ "$${typeSourceVarName}" == "docker" ]; then
               mkdir -p localrun/webapps
               targetPath=localrun/webapps/
             fi
           `);
           if (Lib) {
             this.prestartBuilder.add(`
-              dockerFixRef=()
-              if [ "$TYPE_SOURCE_TOMCAT" == "docker" ]; then
+              dockerAddLibRefs=()
+              if [ "$${typeSourceVarName}" == "docker" ]; then
               ` + Lib.map(lib => userConfig.software[lib].Artifact)
                 .map(lib => lib.replace('$$TMP$$', 'localrun'))
-                .map(lib => `  dockerFixRef+=("-v $(pwd)/${lib}:/usr/local/tomcat/lib/$(basename ${lib})")`).join('\n')
+                .map(lib => `  dockerAddLibRefs+=("-v $(pwd)/${lib}:/usr/local/tomcat/lib/$(basename ${lib})")`).join('\n')
               + '\nfi');
           }
-          this.startBuilder.add(startDocker(configFiles, softwareComponentName));
+          this.startBuilder.add(startDocker(typeSourceVarName, configFiles, softwareComponentName));
         break;
         case 'download':
           optionsBuilderData.push('tomcat:download:[7|8|9] #download tomcat version x and run this build within it, would respect -j');
-          availableTypesData.push({ typeName: 'download', defaultVersion: '9', code: downloadCode });
+          availableTypesData.push({ typeName: 'download', defaultVersion: '9', code: downloadCode(typeSourceVarName) });
           cleanupSourceTypesData.push({
             name: 'download',
             stopCode: './localrun/apache-tomcat-$TOMCAT_VERSION/bin/shutdown.sh'
           });
           prestartBuilderData.push(`
-            if [ "$TYPE_SOURCE_TOMCAT" == "download" ]; then
+            if [ "$${typeSourceVarName}" == "download" ]; then
               targetPath=localrun/apache-tomcat-$TOMCAT_VERSION/webapps/
             fi
           `);
           if (Lib) {
-            this.prestartBuilder.add('if [ "$TYPE_SOURCE_TOMCAT" == "download" ]; then\n' 
+            this.prestartBuilder.add(`if [ "$${typeSourceVarName}" == "download" ]; then\n` 
               + Lib.map(lib => userConfig.software[lib].Artifact)
                 .map(lib => lib.replace('$$TMP$$', 'localrun'))
                 .map(lib => `  cp ${lib} localrun/apache-tomcat-$TOMCAT_VERSION/lib/`).join('\n')
               + '\nfi');
           }
-          this.getsourceBuilder.add(getSource);
-          this.startBuilder.add(startDownload(configFiles));
+          this.getsourceBuilder.add(getSource(typeSourceVarName));
+          this.startBuilder.add(startDownload(typeSourceVarName, configFiles));
         break;
         case 'local':
           optionsBuilderData.push('tomcat:local:/usr/lib/tomcat #reuse tomcat installation from /usr/lib/tomcat, does not start/stop this tomcat');
@@ -87,11 +89,11 @@ class TomcatPlugin extends BasePlugin {
             defaultTypeData = 'local';
           }
           prestartBuilderData.push(`
-            if [ "$TYPE_SOURCE_TOMCAT" == "local" ]; then
-              targetPath=$TYPE_SOURCE_TOMCAT_PATH/webapps/
+            if [ "$${typeSourceVarName}" == "local" ]; then
+              targetPath=$${typeSourceVarName}_PATH/webapps/
             fi
           `);
-          this.startBuilder.add(startLocal(configFiles));
+          this.startBuilder.add(startLocal(typeSourceVarName));
         break;
         default:
           throw Error(`SourceType ${s} not supported for Tomcat`);
@@ -109,7 +111,8 @@ class TomcatPlugin extends BasePlugin {
     });
 
     cleanupBuilder.add({
-      componentName: 'Tomcat',
+      pluginName: 'tomcat',
+      componentName: softwareComponentName,
       sourceTypes: cleanupSourceTypesData
     });
     
@@ -129,59 +132,70 @@ class TomcatPlugin extends BasePlugin {
 
 module.exports = TomcatPlugin;
 
-const startDownload = (configFiles) => `
-if [ "$TYPE_SOURCE_TOMCAT" == "download" ]; then
+const startDownload = (typeSourceVarName, configFiles) => {
+  const pidFile = `.${softwareComponentName}Pid`;
+  return `
+if [ "$${typeSourceVarName}" == "download" ]; then
   # start tomcat
-  if [ ! -f ".tomcat" ]; then
+  if [ ! -f "${pidFile}" ]; then
     ${configFiles.map(f => f.storeFileAndExportEnvVar()).join('\n')}
     ./localrun/apache-tomcat-$TOMCAT_VERSION/bin/startup.sh
-    echo "download">.tomcat
+    echo "download">${pidFile}
   fi
   tailCmd="tail -f ./localrun/apache-tomcat-$TOMCAT_VERSION/logs/catalina.out"
 fi
-`;
+`
+};
 
-const startDocker = (configFiles, softwareComponentName) => `
-if [ "$TYPE_SOURCE_TOMCAT" == "docker" ]; then
-  if [ -f .tomcat ] && [ "$(<.tomcat)" == "download" ]; then
+const startDocker = (typeSourceVarName, configFiles, softwareComponentName) => {
+  const pidFile = `.${softwareComponentName}Pid`;
+  return `
+if [ "$${typeSourceVarName}" == "docker" ]; then
+  if [ -f "${pidFile}" ] && [ "$(<${pidFile})" == "download" ]; then
     echo "Tomcat running but started from different source type"
     exit 1
   fi
-  if [ ! -f ".tomcat" ]; then
-    ${configFiles.map(f => f.storeFileForDocker()).join('\n')}
-    dockerContainerID${softwareComponentName}=$(docker run --rm -d $dockerCouchRef \${dockerFixRef[@]} -p 8080:8080 \\
+  if [ ! -f "${pidFile}" ]; then
+    ${configFiles.map(f => f.storeFileForDocker('dockerTomcatExtRef')).join('\n')}
+    dockerContainerID${softwareComponentName}=$(docker run --rm -d $dockerTomcatExtRef \${dockerAddLibRefs[@]} -p 8080:8080 \\
         ${configFiles.map(f => f.mountToDocker('/usr/local/tomcat/webapps')).join('\n')} \\
-        -v "$(pwd)/localrun/webapps":/usr/local/tomcat/webapps tomcat:$TYPE_SOURCE_TOMCAT_VERSION)
-    echo "$dockerContainerID${softwareComponentName}">.tomcat
+        -v "$(pwd)/localrun/webapps":/usr/local/tomcat/webapps tomcat:$${typeSourceVarName}_VERSION)
+    echo "$dockerContainerID${softwareComponentName}">${pidFile}
   else
-    dockerContainerID${softwareComponentName}=$(<.tomcat)
+    dockerContainerID${softwareComponentName}=$(<${pidFile})
   fi
   tailCmd="docker logs -f $dockerContainerID${softwareComponentName}"
 fi
-`;
+`
+};
 
-const startLocal = () => `
-if [ "$TYPE_SOURCE_TOMCAT" == "local" ]; then
-  if [ -f .tomcat ]; then
+const startLocal = typeSourceVarName => {
+  const pidFile = `.${softwareComponentName}Pid`;
+  return `
+if [ "$${typeSourceVarName}" == "local" ]; then
+  if [ -f "${pidFile}" ]; then
     echo "Tomcat running but started from different source type"
     exit 1
   fi
-  tailCmd="tail -f $TYPE_SOURCE_TOMCAT_PATH/logs/catalina.out"
+  tailCmd="tail -f $${typeSourceVarName}_PATH/logs/catalina.out"
 fi
-`;
+`
+};
 
-const downloadCode = `# find latest tomcat version for $TYPE_SOURCE_TOMCAT_VERSION
+const downloadCode = typeSourceVarName => `# find latest tomcat version for $${typeSourceVarName}_VERSION
   if [ "$(uname)" == "Linux" ]; then
     GREP_PERL_MODE="-P"
   fi
   TOMCAT_BASE_URL="http://mirror.vorboss.net/apache/tomcat"
-  TOMCAT_VERSION_PRE=$(curl -s "$TOMCAT_BASE_URL/tomcat-$TYPE_SOURCE_TOMCAT_VERSION/"|grep -m1 -o $GREP_PERL_MODE "<a href=\\"v\\d*.\\d*.\\d*" || echo "__________9.0.10")
+  TOMCAT_VERSION_PRE=$(curl -s "$TOMCAT_BASE_URL/tomcat-$${typeSourceVarName}_VERSION/"|grep -m1 -o $GREP_PERL_MODE "<a href=\\"v\\d*.\\d*.\\d*" || echo "__________9.0.10")
   TOMCAT_VERSION=\${TOMCAT_VERSION_PRE:10}
-  TOMCAT_URL=$TOMCAT_BASE_URL/tomcat-$TYPE_SOURCE_TOMCAT_VERSION/v$TOMCAT_VERSION/bin/apache-tomcat-$TOMCAT_VERSION.tar.gz`;
+  TOMCAT_URL=$TOMCAT_BASE_URL/tomcat-$${typeSourceVarName}_VERSION/v$TOMCAT_VERSION/bin/apache-tomcat-$TOMCAT_VERSION.tar.gz`;
 
-const getSource = `
-if [ "$TYPE_SOURCE_TOMCAT" == "download" ]; then
-  if [ -f .tomcat ] && [ "$(<.tomcat)" != "download" ]; then
+const getSource = typeSourceVarName => {
+  const pidFile = `.${softwareComponentName}Pid`;
+  return `
+if [ "$${typeSourceVarName}" == "download" ]; then
+  if [ -f "${pidFile}" ] && [ "$(<${pidFile})" != "download" ]; then
     echo "Tomcat running but started from different source type"
     exit 1
   fi
@@ -194,4 +208,5 @@ if [ "$TYPE_SOURCE_TOMCAT" == "download" ]; then
     tar -xf /\${TMPDIR:-/tmp}/apache-tomcat-$TOMCAT_VERSION.tar -C ./localrun
   fi
 fi
-`;
+`
+};

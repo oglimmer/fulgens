@@ -35,7 +35,8 @@ class MysqlPlugin extends BasePlugin {
     });
  
     cleanupBuilder.add({
-      componentName:'MySQL',
+      pluginName: 'mysql',
+      componentName: softwareComponentName,
       sourceTypes: [{
         name: 'docker',
         stopCode: 'docker rm -f $dockerContainerID' + softwareComponentName
@@ -66,8 +67,9 @@ done`);
     }
 
     const configFiles = runtimeConfiguration.getConfigFiles(softwareComponentName);
+    const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
 
-    this.startBuilder.add(start(softwareComponentName, configFiles, dockerPasswordParam));
+    this.startBuilder.add(start(typeSourceVarName, softwareComponentName, configFiles, dockerPasswordParam));
 
   }
 
@@ -75,22 +77,26 @@ done`);
 
 module.exports = MysqlPlugin;
 
-const start = (softwareComponentName, configFiles, dockerPasswordParam) => `
-if [ "$TYPE_SOURCE_MYSQL" == "docker" ]; then
+const start = (typeSourceVarName, softwareComponentName, configFiles, dockerPasswordParam) => {
+  const pidFile = `.${softwareComponentName}Pid`;
+  return `
+if [ "$${typeSourceVarName}" == "docker" ]; then
   # run in docker
-  if [ ! -f ".mysql" ]; then
-    ${configFiles.map(f => f.writeDockerConnectionLogic()).join('\n')}
+  if [ ! -f "${pidFile}" ]; then
+    ${configFiles.map(f => f.writeDockerConnectionLogic('dockerMysqlExtRef')).join('\n')}
+    if [ "$VERBOSE" == "YES" ]; then echo "docker run --rm -d -p 3306:3306 $dockerMysqlExtRef ${dockerPasswordParam} ${configFiles.map(f => f.makeDockerVolume()).join('\n')} mysql:$${typeSourceVarName}_VERSION"; fi
     dockerContainerID${softwareComponentName}=$(docker run --rm -d -p 3306:3306 ${dockerPasswordParam} \\
-      ${configFiles.map(f => f.makeDockerVolume('/etc/mysql/conf.d')).join('\n')} mysql:$TYPE_SOURCE_MYSQL_VERSION)
-    echo "$dockerContainerID${softwareComponentName}">.mysql
+      ${configFiles.map(f => f.makeDockerVolume()).join('\n')} mysql:$${typeSourceVarName}_VERSION)
+    echo "$dockerContainerID${softwareComponentName}">${pidFile}
   else
-    dockerContainerID${softwareComponentName}=$(<.mysql)
+    dockerContainerID${softwareComponentName}=$(<${pidFile})
   fi
 fi
-if [ "$TYPE_SOURCE_MYSQL" == "local" ]; then
-  if [ -f .mysql ]; then
+if [ "$${typeSourceVarName}" == "local" ]; then
+  if [ -f "${pidFile}" ]; then
     echo "mysql running but started from different source type"
     exit 1
   fi
 fi
-`;
+`
+};

@@ -67,7 +67,8 @@ Details:
 ${dataDetails.map(o => o.detailsArray.map(d => ` -${o.option} ${d}`).join('\n')).join('\n')}
 "
 
-cd $(cd "$(dirname "$0")";pwd -P)
+cd "$(cd "$(dirname "$0")";pwd -P)"
+BASE_PWD=$(pwd)
 
 BUILD=local
 while getopts ':hsc:k:t:V${data.map(o => `${o.option}${o.longParam?':':''}`).join('')}' option; do

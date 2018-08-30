@@ -16,7 +16,10 @@ class GlobalVariablesBuilder extends BaseBuilder {
   }
 
   buildInternal() {
-    return this.varNames.map(e => `${e.varName}=${e.defaultValue}`).join('\n');
+    return this.varNames.map(e => `
+      if [ "$VERBOSE" == "YES" ]; then echo "DEFAULT: ${e.varName}=${e.defaultValue}"; fi
+      ${e.varName}=${e.defaultValue}
+    `).join('\n');
   }
 
 }

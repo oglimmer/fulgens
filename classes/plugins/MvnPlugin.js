@@ -12,9 +12,9 @@ const start = (Goal, GoalIgnoreClean, BeforeBuild, AfterBuild) => `
 if [ "$BUILD" == "local" ]; then
   f_build() {
     if [ -n "$VERBOSE" ]; then echo "pwd=$(pwd)"; echo "mvn ${GoalIgnoreClean?'':'$MVN_CLEAN'} $MVN_OPTS ${Goal}"; fi
-    ${BeforeBuild.join('\n')}
+    ${BeforeBuild}
     mvn ${GoalIgnoreClean?'':'$MVN_CLEAN'} $MVN_OPTS ${Goal}
-    ${AfterBuild.join('\n')}
+    ${AfterBuild}
   }
 elif [[ "$BUILD" == docker* ]]; then
   IFS=: read mainType dockerVersion <<< "$BUILD"
@@ -33,7 +33,7 @@ if [ "$SKIP_BUILD" != "YES" ]; then
 fi
 `;
 
-const buildCode = (Goal, GoalIgnoreClean, BeforeBuild = [], AfterBuild = []) => {
+const buildCode = (Goal, GoalIgnoreClean, BeforeBuild, AfterBuild) => {
   if (dependencyManager.hasAnyBuildDep()) {
     return start(Goal, GoalIgnoreClean, BeforeBuild, AfterBuild) + `
   mkdir -p localrun/dockerbuild
@@ -49,18 +49,18 @@ EOFDOCK
   docker build --tag maven_build:$dockerVersion localrun/dockerbuild/
   f_build() {
     if [ -n "$VERBOSE" ]; then echo "pwd=$(pwd)"; echo "docker run --rm -v $(pwd):/usr/src/build -v $(pwd)/localrun/.m2:/root/.m2 -w /usr/src/build maven_build:$dockerVersion mvn ${GoalIgnoreClean?'':'$MVN_CLEAN'} $MVN_OPTS ${Goal}"; fi
-    ${BeforeBuild.join('\n')}
+    ${BeforeBuild}
     docker run --rm -v "$(pwd)":/usr/src/build -v "$(pwd)/localrun/.m2":/root/.m2 -w /usr/src/build maven_build:$dockerVersion mvn ${GoalIgnoreClean?'':'$MVN_CLEAN'} $MVN_OPTS ${Goal}
-    ${AfterBuild.join('\n')}
+    ${AfterBuild}
   }
     ` + end;
   } else {
     return start(Goal, GoalIgnoreClean, BeforeBuild, AfterBuild) + `
   f_build() {
     if [ -n "$VERBOSE" ]; then echo "pwd=$(pwd)"; echo "docker run --rm -v $(pwd):/usr/src/build -v $(pwd)/localrun/.m2:/root/.m2 -w /usr/src/build maven:$dockerVersion mvn ${GoalIgnoreClean?'':'$MVN_CLEAN'} $MVN_OPTS ${Goal}"; fi
-    ${BeforeBuild.join('\n')}
+    ${BeforeBuild}
     docker run --rm -v "$(pwd)":/usr/src/build -v "$(pwd)/localrun/.m2":/root/.m2 -w /usr/src/build maven:$dockerVersion mvn ${GoalIgnoreClean?'':'$MVN_CLEAN'} $MVN_OPTS ${Goal}
-    ${AfterBuild.join('\n')}
+    ${AfterBuild}
   }
     ` + end;
   }
@@ -84,7 +84,7 @@ class MvnPlugin extends BasePlugin {
       [ 'docker:[3-jdk-8|3-jdk-9|3-jdk-10] #do a docker based build, uses \\`maven:3-jdk-10\\` image',
         'local #do a local build, would respect -j']);
 
-    const { Mvn, BeforeBuild, AfterBuild } = userConfig.software[softwareComponentName];
+    const { Mvn, BeforeBuild = [], AfterBuild = [] } = userConfig.software[softwareComponentName];
     const Goal = Mvn && Mvn.Goal ? Mvn.Goal.replace('$$TMP$$', 'localrun') : 'package';
     const GoalIgnoreClean = Mvn && Mvn.GoalIgnoreClean ? true : false;
 
@@ -94,7 +94,9 @@ class MvnPlugin extends BasePlugin {
       dependencyManager.addNpmBuild(bd.Npm);
     }
 
-    this.buildBuilder.add(buildCode(Goal, GoalIgnoreClean, BeforeBuild, AfterBuild));
+    const rpl = a => a.map(e => e.replace('$$TMP$$', 'localrun')).join('\n');
+
+    this.buildBuilder.add(buildCode(Goal, GoalIgnoreClean, rpl(BeforeBuild), rpl(AfterBuild)));
   }
 
 }

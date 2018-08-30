@@ -1,6 +1,6 @@
 
 const crypto = require('crypto');
-const hash = crypto.createHash('sha256');
+const fs = require('fs');
 
 /* 
   - works only with docker (must be ignored for local, currently unsupported for download)
@@ -26,19 +26,54 @@ class AttachIntoDocker {
     this.Name = config.Name;
     this.Content = config.Content;
     this.AttachIntoDocker = config.AttachIntoDocker;
+    this.Connections = config.Connections ? config.Connections : [];
+    const hash = crypto.createHash('sha256');
     hash.update(this.pluginName + this.Name);
     this.TmpFolder = hash.digest('hex').substring(0, 8);
   }
 
-  makeDockerVolume(targetPath) {
-    return `-v \$(pwd)/localrun/${this.TmpFolder}:${targetPath}`;
+  makeDockerVolume() {
+    return `-v "\$(pwd)/localrun/${this.TmpFolder}:${this.AttachIntoDocker}"`;
   }
 
-  writeDockerConnectionLogic() {
-      return `
-    mkdir -p localrun/${this.TmpFolder}
+  writeDockerConnectionLogic(refVarName) {
+    const reducedConnections = Array.from(this.Connections.reduce((accumulator, currentValue) => {
+      var arrayOnSource = accumulator.get(currentValue.Source);
+      if (!arrayOnSource) {
+        arrayOnSource = [currentValue];
+        accumulator.set(currentValue.Source, arrayOnSource);
+      } else {
+        arrayOnSource.push(currentValue);
+      }
+      return accumulator;
+    }, new Map()).entries());
+    const insertREPLVAR = (e, rpl) => e.map(c => 
+      `REPLVAR${c.Var.replace('.', '_')}="${(c.Content ? c.Content.replace('$$VALUE$$', rpl(c)) : rpl(c))}"`)
+      .join('\n');
+    return `
+    mkdir -p localrun/${this.TmpFolder}` +
+    reducedConnections.map(e => `
+    if [ "$TYPE_SOURCE_${e[0].toUpperCase()}" == "docker" ]; then
+      ${refVarName}="--link $dockerContainerID${e[0]}"
+      ${insertREPLVAR(e[1], c => `$dockerContainerID${c.Source}`)}
+    elif [ "$TYPE_SOURCE_${e[0].toUpperCase()}" == "local" ]; then
+      if [ "$(uname)" != "Linux" ]; then 
+      ${insertREPLVAR(e[1], () => 'host.docker.internal')}
+      else 
+        ${refVarName}="--net=host"
+      fi
+    fi
+    `).join('\n') +
+    `
     cat <<EOT${this.TmpFolder} > localrun/${this.TmpFolder}/${this.Name}
-${this.Content.join('\n')}
+${this.Content.map(l => {
+        const connToReplace = this.Connections.find(c => c.Var == l.split(/=/)[0])
+        if (connToReplace) {
+          return `${connToReplace.Var}=$REPLVAR${connToReplace.Var.replace('.', '_')}`;
+        } else {
+          return l;
+        }
+      }).join('\n')}
 EOT${this.TmpFolder}
       `;
   }
@@ -57,6 +92,7 @@ EOT${this.TmpFolder}
     Name: "java.properties",
     Connections: [ { Source:"couchdb", Var: "couchdb.host" ],
     Content: [ "toldyouso.domain=http://localhost:8080/toldyouso" ],
+    LoadDefaultContent: 'src/main/resources/default.properties',
     AttachAsEnvVar: ["JAVA_OPTS", "-Dtoldyouso.properties=$$SELF_NAME$$"]
   }
 */
@@ -66,37 +102,54 @@ class AttachAsEnvVar {
     this.pluginName = pluginName;
     this.Name = config.Name;
     this.Content = config.Content ? config.Content : [];
+    this.LoadDefaultContent = config.LoadDefaultContent;
     this.Connections = config.Connections ? config.Connections : [];
     this.AttachAsEnvVar = config.AttachAsEnvVar;
+    const hash = crypto.createHash('sha256');
     hash.update(this.pluginName + this.Name);
     this.TmpFolder = hash.digest('hex').substring(0, 8);
   }
 
   /*private*/ createFile() {
+    /*
+     - load default content and loop over all entries finding Connection-vars and replacing them $REPLVAR???
+     - append this to the static content from Fulgensfile
+    */
+    if (this.LoadDefaultContent) {
+      const loadedContent = fs.readFileSync(this.LoadDefaultContent, { encoding: 'utf8' });
+      loadedContent.split(/\r?\n/).map(l => {
+        const connToReplace = this.Connections.find(c => c.Var == l.split(/=/)[0])
+        if (connToReplace) {
+          return `${connToReplace.Var}=$REPLVAR${connToReplace.Var.replace('.', '_')}`;
+        } else {
+          return l;
+        }
+      }).forEach(l => this.Content.push(l));
+    }
     return `
   mkdir -p localrun/${this.TmpFolder}
-  > localrun/${this.TmpFolder}/${this.Name}
-${this.Content.map(c => `  echo "${c}">>localrun/${this.TmpFolder}/${this.Name}`).join('\n')}`;
+  cat <<EOT${this.TmpFolder} > localrun/${this.TmpFolder}/${this.Name}
+${this.Content.join('\n')}
+EOT${this.TmpFolder}
+    `;
   }
 
   /* download & local */
   storeFileAndExportEnvVar() {
     return `
+      ${this.Connections.map(c => `REPLVAR${c.Var.replace('.', '_')}="` + ( c.Content ? `${c.Content.replace('$$VALUE$$', 'localhost')}` : 'localhost' ) + '"')}
       ${this.createFile()}
-` + this.Connections.map(c => 
-    `  echo "${c.Var}=` + ( c.Content ? `${c.Content.replace('$$VALUE$$', 'localhost')}` : 'localhost' ) 
-    + `">>localrun/${this.TmpFolder}/${this.Name}`).join('\n') + `
   export ${this.AttachAsEnvVar[0]}="${this.AttachAsEnvVar[1].replace('$$SELF_NAME$$', `localrun/${this.TmpFolder}/` + this.Name)}"
     `;
   }
 
   /* docker */
   mountToDocker() {
-    return `-v $(pwd)/localrun/${this.TmpFolder}:/tmp/${this.TmpFolder} -e ${this.AttachAsEnvVar[0]}="${this.AttachAsEnvVar[1].replace('$$SELF_NAME$$', `/tmp/${this.TmpFolder}/${this.Name}`)}"`
+    return `-v "$(pwd)/localrun/${this.TmpFolder}:/tmp/${this.TmpFolder}" -e ${this.AttachAsEnvVar[0]}="${this.AttachAsEnvVar[1].replace('$$SELF_NAME$$', `/tmp/${this.TmpFolder}/${this.Name}`)}"`
   }
 
   /* docker */
-  storeFileForDocker() {
+  storeFileForDocker(refVarName) {
     const reducedConnections = Array.from(this.Connections.reduce((accumulator, currentValue) => {
       var arrayOnSource = accumulator.get(currentValue.Source);
       if (!arrayOnSource) {
@@ -107,27 +160,25 @@ ${this.Content.map(c => `  echo "${c}">>localrun/${this.TmpFolder}/${this.Name}`
       }
       return accumulator;
     }, new Map()).entries());
+    const insertREPLVAR = (e, rpl) => e.map(c => 
+      `REPLVAR${c.Var.replace('.', '_')}="${(c.Content ? c.Content.replace('$$VALUE$$', rpl(c)) : rpl(c))}"`)
+      .join('\n');
     return `
-    mkdir -p localrun/webapps/
-    ${this.createFile()}
-    ## logic to connect any DATA_SOURCE to this Tomcat running Docker` + reducedConnections.map(e => `
+    mkdir -p localrun/webapps/`
+    + reducedConnections.map(e => `
     if [ "$TYPE_SOURCE_${e[0].toUpperCase()}" == "docker" ]; then
-      dockerCouchRef="--link $dockerContainerID${e[0]}"
-    ` + e[1].map(c => `
-      echo "${c.Var}=` 
-        + ( c.Content ? `${c.Content.replace('$$VALUE$$', `$dockerContainerID${c.Source}`)}` : `$dockerContainerID${c.Source}` )
-        + `">>localrun/${this.TmpFolder}/${this.Name}
-    `).join('\n') + `
+      ${refVarName}="--link $dockerContainerID${e[0]}"
+      ${insertREPLVAR(e[1], c => `$dockerContainerID${c.Source}`)}
     elif [ "$TYPE_SOURCE_${e[0].toUpperCase()}" == "local" ]; then
-      if [ "$(uname)" != "Linux" ]; then ` + e[1].map(c => `
-        echo "${c.Var}=` + ( c.Content ? `${c.Content.replace('$$VALUE$$', 'host.docker.internal')}` : `host.docker.internal` ) 
-        + `">>localrun/${this.TmpFolder}/${this.Name}
-    `).join('\n') + `
+      if [ "$(uname)" != "Linux" ]; then 
+      ${insertREPLVAR(e[1], () => 'host.docker.internal')}
       else 
-        dockerCouchRef="--net=host"
+        ${refVarName}="--net=host"
       fi
     fi
-    `).join('\n');
+    `).join('\n') + `
+    ${this.createFile()}
+    `;
   }
 
 }

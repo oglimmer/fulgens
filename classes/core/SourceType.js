@@ -39,7 +39,12 @@ if [ "$TYPE_SOURCE_${componentNameUpper}" == "${e.typeName}" ]; then
     TYPE_SOURCE_${componentNameUpper}_VERSION=${e.defaultVersion}
   fi
   ` + (e.code ? e.code : '') + `
-fi`).join('\n'));
+fi
+
+if [ "$VERBOSE" == "YES" ]; then
+  echo "TYPE_SOURCE_${componentNameUpper} = $TYPE_SOURCE_${componentNameUpper} // TYPE_SOURCE_${componentNameUpper}_PATH = $TYPE_SOURCE_${componentNameUpper}_PATH // TYPE_SOURCE_${componentNameUpper}_VERSION = $TYPE_SOURCE_${componentNameUpper}_VERSION"
+fi
+`).join('\n'));
   }
 
 }

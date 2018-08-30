@@ -19,8 +19,9 @@ class CleanupBuilder extends BaseBuilder {
   init(userConfig, runtimeConfiguration) {
   }
 
-  add({ componentName, sourceTypes }) {
+  add({ pluginName, componentName, sourceTypes }) {
     this.componentsCode.push({
+      pluginName,
       componentName,
       sourceTypes
     });
@@ -34,7 +35,7 @@ cleanup()
   echo "Stopping software .....please wait...."
   echo "****************************************************************"
 
-  ALL_COMPONENTS=(${this.componentsCode.map(e => e.componentName.toLowerCase()).join(' ')})
+  ALL_COMPONENTS=(${this.componentsCode.map(e => e.pluginName.toLowerCase()).join(' ')})
   for keepRunningAllElement in "\${ALL_COMPONENTS[@]}"; do
     IFS=',' read -r -a array <<< "$KEEP_RUNNING"
     found=0
@@ -48,12 +49,12 @@ cleanup()
 `;
 
     const middle = this.componentsCode.map(e => `
-      if [ "$keepRunningAllElement" == "${e.componentName.toLowerCase()}" ]; then
+      if [ "$keepRunningAllElement" == "${e.pluginName.toLowerCase()}" ]; then
         echo "Stopping $keepRunningAllElement ..."
         `
         + e.sourceTypes.map(a => `if [ "$TYPE_SOURCE_${e.componentName.toUpperCase()}" == "${a.name}" ]; then
          ${a.stopCode}
-         rm -f .${e.componentName.toLowerCase()}
+         rm -f .${e.componentName}Pid
         fi
         `).join('') + `
       fi`

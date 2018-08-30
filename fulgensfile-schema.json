@@ -257,7 +257,17 @@
           "enum": [ "couchdb" ]
         },
         "CouchDB": {
-          "$ref": "#/definitions/CouchdbType/definitions/CouchdbSubType"
+          "anyOf": [
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/definitions/CouchdbType/definitions/CouchdbSubType"
+              }
+            }, {
+              "$ref": "#/definitions/CouchdbType/definitions/CouchdbSubType"
+            }
+          ]
         }
       },
       "required": [ "Source" ],
@@ -277,6 +287,7 @@
               "uniqueItems": true
             }
           },
+          "required": [ "Schema" ],
           "additionalProperties": false
         }
       }
@@ -288,19 +299,19 @@
         },
         "SourceTypes": {
           "type": "array",
-            "minItems": 1,
-            "items": {
-              "enum": ["docker", "local", "download"]
-            },
-            "uniqueItems": true
+          "minItems": 1,
+          "items": {
+            "enum": ["docker", "local", "download"]
+          },
+          "uniqueItems": true
         },
         "Lib": {
           "type": "array",
-            "minItems": 0,
-            "items": {
-              "type": "string"
-            },
-            "uniqueItems": true
+          "minItems": 0,
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
         },
         "Deploy": {
           "type": "string"
@@ -319,6 +330,17 @@
         },
         "ExposedPort": {
           "type": "number"
+        },
+        "EnvVars": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "Node": {
+          "$ref": "#/definitions/NodeType/definitions/NodeSubType"
         }
       },
       "patternProperties": {
@@ -327,7 +349,17 @@
         }
       },
       "required": [ "Source", "Artifact" ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "definitions": {
+        "NodeSubType": {
+          "properties": {
+            "Param": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
     },
     "ConfigFileDef": {
       "properties": {
@@ -350,6 +382,9 @@
           },
           "uniqueItems": true
         },
+        "LoadDefaultContent": {
+          "type": "string"
+        },
         "AttachAsEnvVar": {
           "type": "array",
           "minItems": 2,
@@ -361,7 +396,7 @@
         }
       },
       "additionalProperties": false,
-      "required": [ "Name", "Connections", "Content", "AttachAsEnvVar" ],
+      "required": [ "Name", "AttachAsEnvVar" ],
       "definitions": {
         "Connections": {
           "properties": {

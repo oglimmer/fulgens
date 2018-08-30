@@ -2,7 +2,10 @@
 const functionsBuilder = require('../phase/functions');
 const prepareBuilder = require('../phase/prepare');
 const optionsBuilder = require('../phase/options');
+const cleanupBuilder = require('../phase/cleanup');
+const sourceTypeBuilder = require('../core/SourceType');
 const dependencycheckBuilder = require('../phase/dependencycheck');
+
 
 const BasePlugin = require('./BasePlugin');
 
@@ -51,33 +54,97 @@ var functionBodyCheckJDKVersion = `
   echo "$result"
 `;
 
+var onceOnlyDone = false;
+
 class JavaPlugin extends BasePlugin {
 
   static instance() {
-    return instance;
+    return new JavaPlugin();
   }
 
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
-    //super.exec(softwareComponentName, userConfig, runtimeConfiguration);
+    super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
-    if (userConfig.config.JavaVersions && userConfig.config.JavaVersions.length === 1) {
-      prepareBuilder.add(`if [ "$(uname)" == "Darwin" ]; then export JAVA_HOME=$(/usr/libexec/java_home -v ${userConfig.config.JavaVersions[0]}); fi`);
-    } else {
-      optionsBuilder.add('j', 'version', 'JAVA_VERSION',
-        `macOS only: set/overwrite JAVA_HOME to a specific version, needs to be in format for /usr/libexec/java_home`, 
-        [ 'version #can use any locally installed JDK, see /usr/libexec/java_home -V' ]);
-      prepareBuilder.add(prepare);
+    if(!onceOnlyDone) {
+      if (userConfig.config.JavaVersions && userConfig.config.JavaVersions.length === 1) {
+        prepareBuilder.add(`if [ "$(uname)" == "Darwin" ]; then export JAVA_HOME=$(/usr/libexec/java_home -v ${userConfig.config.JavaVersions[0]}); fi`);
+      } else {
+        optionsBuilder.add('j', 'version', 'JAVA_VERSION',
+          `macOS only: set/overwrite JAVA_HOME to a specific version, needs to be in format for /usr/libexec/java_home`, 
+          [ 'version #can use any locally installed JDK, see /usr/libexec/java_home -V' ]);
+        prepareBuilder.add(prepare);
+      }
+
+      functionsBuilder.add('jdk_version', functionBodyCheckJDKVersion);
+      dependencycheckBuilder.add('java -version 2>/dev/null');
+      onceOnlyDone = true;
     }
 
-    functionsBuilder.add('jdk_version', functionBodyCheckJDKVersion);
-    dependencycheckBuilder.add('java -version 2>/dev/null');
-  }
+    const { Start, ExposedPort, EnvVars = [] } = userConfig.software[softwareComponentName];
+    const { Artifact } = userConfig.software[Start];
+    const ArtifactRpld = Artifact.replace('$$TMP$$', 'localrun');
 
+    sourceTypeBuilder.add(this, {
+      componentName: softwareComponentName,
+      defaultType: 'local', 
+      availableTypes: [
+        { typeName: 'local', defaultVersion: '' },
+        { typeName: 'docker', defaultVersion: '10-jre' }
+      ]
+    });
+
+    const pid = `javaPID${softwareComponentName}`;
+    const dcId = `dockerContainerID${softwareComponentName}`;
+
+    cleanupBuilder.add({
+      pluginName: 'java',
+      componentName: softwareComponentName,
+      sourceTypes: [{
+        name: 'local',
+        stopCode: 'kill $' + pid
+      }, {
+        name: 'docker',
+        stopCode: 'docker rm -f $' + dcId
+      }]
+    });
+
+    const configFiles = runtimeConfiguration.getConfigFiles(softwareComponentName);
+    const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
+    const pidFile = `.${softwareComponentName}Pid`;
+
+    this.startBuilder.add(`
+    if [ "$${typeSourceVarName}" == "local" ]; then
+      OPWD="$(pwd)"
+      cd "$(dirname "${ArtifactRpld}")"
+      if [ ! -f "$BASE_PWD/${pidFile}" ]; then
+        if [ "$VERBOSE" == "YES" ]; then echo "nohup "./$(basename "${ArtifactRpld}")" 1>>"$BASE_PWD/localrun/${softwareComponentName}.log" 2>>"$BASE_PWD/localrun/${softwareComponentName}.log" &"; fi
+        nohup "./$(basename "${ArtifactRpld}")" 1>>"$BASE_PWD/localrun/${softwareComponentName}.log" 2>>"$BASE_PWD/localrun/${softwareComponentName}.log" &
+        ${pid}=$!
+        echo "$${pid}">"$BASE_PWD/${pidFile}"
+      else 
+        ${pid}=$(<"$BASE_PWD/${pidFile}")
+      fi
+      cd "$OPWD"
+    fi
+    if [ "$${typeSourceVarName}" == "docker" ]; then
+      #if [ -f "$BASE_PWD/${pidFile}" ] && [ "$(<"$BASE_PWD/${pidFile}")" == "download" ]; then
+      #  echo "node running but started from different source type"
+      #  exit 1
+      #fi
+      if [ ! -f "$BASE_PWD/${pidFile}" ]; then
+        ${configFiles.map(f => f.storeFileForDocker('dockerJavaExtRef')).join('\n')}
+        if [ -n "$VERBOSE" ]; then echo ".."; fi
+        ${dcId}=$(docker run --rm -d $dockerJavaExtRef -p ${ExposedPort}:${ExposedPort} \\
+            ${configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n')}  \\
+            ${EnvVars.map(p => `-e ${p}`).join(' ')} \\
+            -v "$(pwd)":/home/node/exec_env -w /home/node/exec_env openjdk:$${typeSourceVarName}_VERSION /bin/bash -c ./${ArtifactRpld})
+        echo "$${dcId}">"$BASE_PWD/${pidFile}"
+      else
+        ${dcId}=$(<"$BASE_PWD/${pidFile}")
+      fi
+    fi
+    `);
+  }
 }
 
-const instance = new JavaPlugin();
-
-// fake class with only one fake static method
-module.exports = {
-  instance: () => JavaPlugin.instance()
-};
+module.exports = JavaPlugin;

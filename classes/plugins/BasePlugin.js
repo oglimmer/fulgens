@@ -72,10 +72,10 @@ class BasePlugin {
     if (Dir) {
       this.preparecompBuilder.add(`  mkdir -p ${Dir.replace('$$TMP$$', 'localrun')}`);
       this.preparecompBuilder.add(`
-  OPWD=$(pwd)
-  cd ${Dir.replace('$$TMP$$', 'localrun')}
+  OPWD="$(pwd)"
+  cd "${Dir.replace('$$TMP$$', 'localrun')}"
         `);
-      this.leavecompBuilder.add('  cd $OPWD');
+      this.leavecompBuilder.add('  cd "$OPWD"');
     }
 
     if (Param) {

@@ -74,7 +74,8 @@
              { "$ref": "#/definitions/CouchdbType" },
              { "$ref": "#/definitions/TomcatType" },
              { "$ref": "#/definitions/NodeType" },
-             { "$ref": "#/definitions/JavaType" }
+             { "$ref": "#/definitions/JavaType" },
+             { "$ref": "#/definitions/RedisType" }
           ]
         }
       }
@@ -360,6 +361,15 @@
         }
       },
       "required": [ "Source", "Start" ],
+      "additionalProperties": false
+    },
+    "RedisType": {
+      "properties": {
+        "Source": {
+          "enum": [ "redis" ]
+        }
+      },
+      "required": [ "Source" ],
       "additionalProperties": false
     },
     "ConfigFileDef": {

@@ -57,7 +57,7 @@ while [ "$(curl -s http://localhost:8080/MyApp/|grep -o 'Hello World')" != "Hell
   Sleep 1
 done
 
-TOMCAT_DOCKER_ID=$(<.tomcat)
+TOMCAT_DOCKER_ID=$(<.tomcatPid)
 docker rm -f $TOMCAT_DOCKER_ID
 kill $PID
 

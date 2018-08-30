@@ -4,11 +4,12 @@ const optionsBuilder = require('../phase/options');
 
 class RuntimeConfiguration {
 
-  constructor(userConfig) {
+  constructor(userConfig, projectBasePath) {
     this.userConfig = userConfig;
     this.plugins = [];
     this.dependencies = {};
     this.configFiles = [];
+    this.projectBasePath = projectBasePath;
   }
 
   addPlugin(plugin, name) {
@@ -35,7 +36,7 @@ class RuntimeConfiguration {
   }
 
   addConfigFile(pluginName, config) {
-    this.configFiles.push(createConfigFile(pluginName, config));
+    this.configFiles.push(createConfigFile(pluginName, config, this));
   }
 
   getConfigFiles(pluginName) {

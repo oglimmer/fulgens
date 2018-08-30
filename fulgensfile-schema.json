@@ -73,7 +73,8 @@
              { "$ref": "#/definitions/MysqlType" },
              { "$ref": "#/definitions/CouchdbType" },
              { "$ref": "#/definitions/TomcatType" },
-             { "$ref": "#/definitions/NodeType" }
+             { "$ref": "#/definitions/NodeType" },
+             { "$ref": "#/definitions/JavaType" }
           ]
         }
       }
@@ -204,32 +205,12 @@
       },
       "patternProperties": {
         "^[a-z]+.*$": {
-          "$ref": "#/definitions/MysqlType/definitions/ConfigFileDef"
+          "$ref": "#/definitions/ConfigFileDef"
         }
       },
       "required": [ "Source" ],
       "additionalProperties": true,
       "definitions": {
-        "ConfigFileDef": {
-          "properties": {
-            "Name": {
-              "type": "string"
-            },
-            "Content": {
-              "type": "array",
-              "minItems": 0,
-              "items": {
-                "type": "string"
-              },
-              "uniqueItems": true
-            },
-            "AttachIntoDocker": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "required": [ "Name", "Content", "AttachIntoDocker" ]
-        },
         "MysqlSubType": {
           "properties": {
             "Schema": {
@@ -268,6 +249,11 @@
               "$ref": "#/definitions/CouchdbType/definitions/CouchdbSubType"
             }
           ]
+        }
+      },
+      "patternProperties": {
+        "^[a-z]+.*$": {
+          "$ref": "#/definitions/ConfigFileDef"
         }
       },
       "required": [ "Source" ],
@@ -361,6 +347,21 @@
         }
       }
     },
+    "JavaType": {
+      "properties": {
+        "Source": {
+          "enum": [ "java" ]
+        },
+        "Start": {
+          "type": "string"
+        },
+        "ExposedPort": {
+          "type": "number"
+        }
+      },
+      "required": [ "Source", "Start" ],
+      "additionalProperties": false
+    },
     "ConfigFileDef": {
       "properties": {
         "Name": {
@@ -393,10 +394,13 @@
             "type": "string"
           },
           "uniqueItems": true
+        },
+        "AttachIntoDocker": {
+          "type": "string"
         }
       },
       "additionalProperties": false,
-      "required": [ "Name", "AttachAsEnvVar" ],
+      "required": [ "Name" ],
       "definitions": {
         "Connections": {
           "properties": {

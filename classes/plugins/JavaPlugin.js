@@ -80,70 +80,73 @@ class JavaPlugin extends BasePlugin {
       onceOnlyDone = true;
     }
 
-    const { Start, ExposedPort, EnvVars = [] } = userConfig.software[softwareComponentName];
-    const { Artifact } = userConfig.software[Start];
-    const ArtifactRpld = Artifact.replace('$$TMP$$', 'localrun');
+    if (userConfig.software[softwareComponentName]) {
 
-    sourceTypeBuilder.add(this, {
-      componentName: softwareComponentName,
-      defaultType: 'local', 
-      availableTypes: [
-        { typeName: 'local', defaultVersion: '' },
-        { typeName: 'docker', defaultVersion: '10-jre' }
-      ]
-    });
+      const { Start, ExposedPort, EnvVars = [] } = userConfig.software[softwareComponentName];
+      const { Artifact } = userConfig.software[Start];
+      const ArtifactRpld = Artifact.replace('$$TMP$$', 'localrun');
 
-    const pid = `javaPID${softwareComponentName}`;
-    const dcId = `dockerContainerID${softwareComponentName}`;
+      sourceTypeBuilder.add(this, {
+        componentName: softwareComponentName,
+        defaultType: 'local', 
+        availableTypes: [
+          { typeName: 'local', defaultVersion: '' },
+          { typeName: 'docker', defaultVersion: '10-jre' }
+        ]
+      });
 
-    cleanupBuilder.add({
-      pluginName: 'java',
-      componentName: softwareComponentName,
-      sourceTypes: [{
-        name: 'local',
-        stopCode: 'kill $' + pid
-      }, {
-        name: 'docker',
-        stopCode: 'docker rm -f $' + dcId
-      }]
-    });
+      const pid = `javaPID${softwareComponentName}`;
+      const dcId = `dockerContainerID${softwareComponentName}`;
 
-    const configFiles = runtimeConfiguration.getConfigFiles(softwareComponentName);
-    const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
-    const pidFile = `.${softwareComponentName}Pid`;
+      cleanupBuilder.add({
+        pluginName: 'java',
+        componentName: softwareComponentName,
+        sourceTypes: [{
+          name: 'local',
+          stopCode: 'kill $' + pid
+        }, {
+          name: 'docker',
+          stopCode: 'docker rm -f $' + dcId
+        }]
+      });
 
-    this.startBuilder.add(`
-    if [ "$${typeSourceVarName}" == "local" ]; then
-      OPWD="$(pwd)"
-      cd "$(dirname "${ArtifactRpld}")"
-      if [ ! -f "$BASE_PWD/${pidFile}" ]; then
-        if [ "$VERBOSE" == "YES" ]; then echo "nohup "./$(basename "${ArtifactRpld}")" 1>>"$BASE_PWD/localrun/${softwareComponentName}.log" 2>>"$BASE_PWD/localrun/${softwareComponentName}.log" &"; fi
-        nohup "./$(basename "${ArtifactRpld}")" 1>>"$BASE_PWD/localrun/${softwareComponentName}.log" 2>>"$BASE_PWD/localrun/${softwareComponentName}.log" &
-        ${pid}=$!
-        echo "$${pid}">"$BASE_PWD/${pidFile}"
-      else 
-        ${pid}=$(<"$BASE_PWD/${pidFile}")
+      const configFiles = runtimeConfiguration.getConfigFiles(softwareComponentName);
+      const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
+      const pidFile = `.${softwareComponentName}Pid`;
+
+      this.startBuilder.add(`
+      if [ "$${typeSourceVarName}" == "local" ]; then
+        OPWD="$(pwd)"
+        cd "$(dirname "${ArtifactRpld}")"
+        if [ ! -f "$BASE_PWD/${pidFile}" ]; then
+          if [ "$VERBOSE" == "YES" ]; then echo "nohup "./$(basename "${ArtifactRpld}")" 1>>"$BASE_PWD/localrun/${softwareComponentName}.log" 2>>"$BASE_PWD/localrun/${softwareComponentName}.log" &"; fi
+          nohup "./$(basename "${ArtifactRpld}")" 1>>"$BASE_PWD/localrun/${softwareComponentName}.log" 2>>"$BASE_PWD/localrun/${softwareComponentName}.log" &
+          ${pid}=$!
+          echo "$${pid}">"$BASE_PWD/${pidFile}"
+        else 
+          ${pid}=$(<"$BASE_PWD/${pidFile}")
+        fi
+        cd "$OPWD"
       fi
-      cd "$OPWD"
-    fi
-    if [ "$${typeSourceVarName}" == "docker" ]; then
-      #if [ -f "$BASE_PWD/${pidFile}" ] && [ "$(<"$BASE_PWD/${pidFile}")" == "download" ]; then
-      #  echo "node running but started from different source type"
-      #  exit 1
-      #fi
-      if [ ! -f "$BASE_PWD/${pidFile}" ]; then
-        ${configFiles.map(f => f.storeFileForDocker('dockerJavaExtRef')).join('\n')}
-        if [ -n "$VERBOSE" ]; then echo ".."; fi
-        ${dcId}=$(docker run --rm -d $dockerJavaExtRef -p ${ExposedPort}:${ExposedPort} \\
-            ${configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n')}  \\
-            ${EnvVars.map(p => `-e ${p}`).join(' ')} \\
-            -v "$(pwd)":/home/node/exec_env -w /home/node/exec_env openjdk:$${typeSourceVarName}_VERSION /bin/bash -c ./${ArtifactRpld})
-        echo "$${dcId}">"$BASE_PWD/${pidFile}"
-      else
-        ${dcId}=$(<"$BASE_PWD/${pidFile}")
+      if [ "$${typeSourceVarName}" == "docker" ]; then
+        #if [ -f "$BASE_PWD/${pidFile}" ] && [ "$(<"$BASE_PWD/${pidFile}")" == "download" ]; then
+        #  echo "node running but started from different source type"
+        #  exit 1
+        #fi
+        if [ ! -f "$BASE_PWD/${pidFile}" ]; then
+          ${configFiles.map(f => f.storeFileForDocker('dockerJavaExtRef')).join('\n')}
+          if [ -n "$VERBOSE" ]; then echo ".."; fi
+          ${dcId}=$(docker run --rm -d $dockerJavaExtRef -p ${ExposedPort}:${ExposedPort} \\
+              ${configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n')}  \\
+              ${EnvVars.map(p => `-e ${p}`).join(' ')} \\
+              -v "$(pwd)":/home/node/exec_env -w /home/node/exec_env openjdk:$${typeSourceVarName}_VERSION /bin/bash -c ./${ArtifactRpld})
+          echo "$${dcId}">"$BASE_PWD/${pidFile}"
+        else
+          ${dcId}=$(<"$BASE_PWD/${pidFile}")
+        fi
       fi
-    fi
-    `);
+      `);
+    }
   }
 }
 

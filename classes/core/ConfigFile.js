@@ -1,6 +1,7 @@
 
 const crypto = require('crypto');
 const fs = require('fs');
+const path = require('path');
 
 /* 
   - works only with docker (must be ignored for local, currently unsupported for download)
@@ -21,7 +22,8 @@ const fs = require('fs');
 */
 class AttachIntoDocker {
 
-  constructor(pluginName, config) {
+  constructor(pluginName, config, runtimeConfiguration) {
+    this.runtimeConfiguration = runtimeConfiguration;
     this.pluginName = pluginName;
     this.Name = config.Name;
     this.Content = config.Content;
@@ -98,7 +100,8 @@ EOT${this.TmpFolder}
 */
 class AttachAsEnvVar {
 
-  constructor(pluginName, config) {
+  constructor(pluginName, config, runtimeConfiguration) {
+    this.runtimeConfiguration = runtimeConfiguration;
     this.pluginName = pluginName;
     this.Name = config.Name;
     this.Content = config.Content ? config.Content : [];
@@ -116,7 +119,7 @@ class AttachAsEnvVar {
      - append this to the static content from Fulgensfile
     */
     if (this.LoadDefaultContent) {
-      const loadedContent = fs.readFileSync(this.LoadDefaultContent, { encoding: 'utf8' });
+      const loadedContent = fs.readFileSync(path.resolve(this.runtimeConfiguration.projectBasePath, this.LoadDefaultContent), { encoding: 'utf8' });
       loadedContent.split(/\r?\n/).map(l => {
         const connToReplace = this.Connections.find(c => c.Var == l.split(/=/)[0])
         if (connToReplace) {
@@ -183,12 +186,12 @@ EOT${this.TmpFolder}
 
 }
 
-module.exports = (pluginName, config) => {
+module.exports = (pluginName, config, runtimeConfiguration) => {
   if (config.AttachAsEnvVar) {
-    return new AttachAsEnvVar(pluginName, config);
+    return new AttachAsEnvVar(pluginName, config, runtimeConfiguration);
   }
   else if (config.AttachIntoDocker) {
-    return new AttachIntoDocker(pluginName, config);
+    return new AttachIntoDocker(pluginName, config, runtimeConfiguration);
   }
   else {
     throw Error(`Undefined type for ${pluginName} : ${JSON.stringify(config)}`);

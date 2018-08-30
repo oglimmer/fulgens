@@ -20,6 +20,7 @@ class TomcatPlugin extends BasePlugin {
     const { Artifact } = userConfig.software[Deploy];
 
     const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
+    const pidFile = `.${softwareComponentName}Pid`;
     
     runtimeConfiguration.addDependency(JavaPlugin.instance());
 
@@ -58,7 +59,7 @@ class TomcatPlugin extends BasePlugin {
                 .map(lib => `  dockerAddLibRefs+=("-v $(pwd)/${lib}:/usr/local/tomcat/lib/$(basename ${lib})")`).join('\n')
               + '\nfi');
           }
-          this.startBuilder.add(startDocker(typeSourceVarName, configFiles, softwareComponentName));
+          this.startBuilder.add(startDocker(typeSourceVarName, pidFile, configFiles, softwareComponentName));
         break;
         case 'download':
           optionsBuilderData.push('tomcat:download:[7|8|9] #download tomcat version x and run this build within it, would respect -j');
@@ -79,8 +80,8 @@ class TomcatPlugin extends BasePlugin {
                 .map(lib => `  cp ${lib} localrun/apache-tomcat-$TOMCAT_VERSION/lib/`).join('\n')
               + '\nfi');
           }
-          this.getsourceBuilder.add(getSource(typeSourceVarName));
-          this.startBuilder.add(startDownload(typeSourceVarName, configFiles));
+          this.getsourceBuilder.add(getSource(typeSourceVarName, pidFile));
+          this.startBuilder.add(startDownload(typeSourceVarName, pidFile, configFiles));
         break;
         case 'local':
           optionsBuilderData.push('tomcat:local:/usr/lib/tomcat #reuse tomcat installation from /usr/lib/tomcat, does not start/stop this tomcat');
@@ -93,7 +94,7 @@ class TomcatPlugin extends BasePlugin {
               targetPath=$${typeSourceVarName}_PATH/webapps/
             fi
           `);
-          this.startBuilder.add(startLocal(typeSourceVarName));
+          this.startBuilder.add(startLocal(typeSourceVarName, pidFile));
         break;
         default:
           throw Error(`SourceType ${s} not supported for Tomcat`);
@@ -132,9 +133,7 @@ class TomcatPlugin extends BasePlugin {
 
 module.exports = TomcatPlugin;
 
-const startDownload = (typeSourceVarName, configFiles) => {
-  const pidFile = `.${softwareComponentName}Pid`;
-  return `
+const startDownload = (typeSourceVarName, pidFile, configFiles) => `
 if [ "$${typeSourceVarName}" == "download" ]; then
   # start tomcat
   if [ ! -f "${pidFile}" ]; then
@@ -144,12 +143,9 @@ if [ "$${typeSourceVarName}" == "download" ]; then
   fi
   tailCmd="tail -f ./localrun/apache-tomcat-$TOMCAT_VERSION/logs/catalina.out"
 fi
-`
-};
+`;
 
-const startDocker = (typeSourceVarName, configFiles, softwareComponentName) => {
-  const pidFile = `.${softwareComponentName}Pid`;
-  return `
+const startDocker = (typeSourceVarName, pidFile, configFiles, softwareComponentName) => `
 if [ "$${typeSourceVarName}" == "docker" ]; then
   if [ -f "${pidFile}" ] && [ "$(<${pidFile})" == "download" ]; then
     echo "Tomcat running but started from different source type"
@@ -166,12 +162,9 @@ if [ "$${typeSourceVarName}" == "docker" ]; then
   fi
   tailCmd="docker logs -f $dockerContainerID${softwareComponentName}"
 fi
-`
-};
+`;
 
-const startLocal = typeSourceVarName => {
-  const pidFile = `.${softwareComponentName}Pid`;
-  return `
+const startLocal = (typeSourceVarName, pidFile) => `
 if [ "$${typeSourceVarName}" == "local" ]; then
   if [ -f "${pidFile}" ]; then
     echo "Tomcat running but started from different source type"
@@ -179,8 +172,7 @@ if [ "$${typeSourceVarName}" == "local" ]; then
   fi
   tailCmd="tail -f $${typeSourceVarName}_PATH/logs/catalina.out"
 fi
-`
-};
+`;
 
 const downloadCode = typeSourceVarName => `# find latest tomcat version for $${typeSourceVarName}_VERSION
   if [ "$(uname)" == "Linux" ]; then
@@ -191,9 +183,7 @@ const downloadCode = typeSourceVarName => `# find latest tomcat version for $${t
   TOMCAT_VERSION=\${TOMCAT_VERSION_PRE:10}
   TOMCAT_URL=$TOMCAT_BASE_URL/tomcat-$${typeSourceVarName}_VERSION/v$TOMCAT_VERSION/bin/apache-tomcat-$TOMCAT_VERSION.tar.gz`;
 
-const getSource = typeSourceVarName => {
-  const pidFile = `.${softwareComponentName}Pid`;
-  return `
+const getSource = (typeSourceVarName, pidFile) => `
 if [ "$${typeSourceVarName}" == "download" ]; then
   if [ -f "${pidFile}" ] && [ "$(<${pidFile})" != "download" ]; then
     echo "Tomcat running but started from different source type"
@@ -208,5 +198,4 @@ if [ "$${typeSourceVarName}" == "download" ]; then
     tar -xf /\${TMPDIR:-/tmp}/apache-tomcat-$TOMCAT_VERSION.tar -C ./localrun
   fi
 fi
-`
-};
+`;

@@ -47,7 +47,7 @@ if (!userConfig || Object.entries(userConfig).length === 0) {
   process.exit(1);
 }
 
-const rtConfig = new RuntimeConfiguration(userConfig);
+const rtConfig = new RuntimeConfiguration(userConfig, path.dirname(systemFilename));
 
 head.init(userConfig, rtConfig);
 functions.init(userConfig, rtConfig);

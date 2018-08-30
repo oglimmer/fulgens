@@ -48,10 +48,12 @@ class NodePlugin extends BasePlugin {
 
     const { Artifact, Node, EnvVars = [], ExposedPort = '3000' } = userConfig.software[softwareComponentName];
 
+    const Build = Node && Node.Build ? Node.Build : 'npm i --save-prod';
+
     this.buildBuilder.add(`
       f_build() {
         if [ "$VERBOSE" == "YES" ]; then echo "npm i --save-prod"; fi
-        npm i --save-prod
+        ${Build}
       }
       if [ "$SKIP_BUILD" != "YES" ]; then
         if [ -n "$CLEAN" ]; then

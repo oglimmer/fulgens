@@ -5,6 +5,7 @@ const JavaPlugin = require('./JavaPlugin');
 const CouchdbPlugin = require('./CouchdbPlugin');
 const MysqlPlugin = require('./MysqlPlugin');
 const NodePlugin = require('./NodePlugin');
+const RedisPlugin = require('./RedisPlugin');
 
 module.exports = name => {
     switch (name) {
@@ -20,6 +21,8 @@ module.exports = name => {
       return MysqlPlugin.instance();
     case 'node':
       return NodePlugin.instance();
+    case 'redis':
+      return RedisPlugin.instance();
     default:
     throw Error(`Unknown Plugin ${name}`);
   }

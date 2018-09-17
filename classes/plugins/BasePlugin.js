@@ -64,10 +64,10 @@ class BasePlugin {
       }
 
       if (BeforeStart) {
-        this.prestartBuilder.add(BeforeStart);
+        this.prestartBuilder.add(BeforeStart.map(l => l.replace('$$TMP$$', 'localrun')));
       }
       if (AfterStart) {
-        this.poststartBuilder.add(AfterStart);
+        this.poststartBuilder.add(AfterStart.map(l => l.replace('$$TMP$$', 'localrun')));
       }
 
       if (Dir) {

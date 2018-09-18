@@ -19,8 +19,8 @@ class NodePlugin extends BasePlugin {
     dependencycheckBuilder.add('npm --version 1>/dev/null');
 
     optionsBuilder.addDetails('t', [
-      'node:local #reuse a local node installation',
-      'node:docker:[6|8|10] #start docker image \\`node:X\\`'
+      `${softwareComponentName}:local #reuse a local node installation`,
+      `${softwareComponentName}:docker:[6|8|10] #start docker image node:X`
     ]);
 
     runtimeConfiguration.setTail('nodejs');

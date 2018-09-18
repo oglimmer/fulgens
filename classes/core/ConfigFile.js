@@ -3,6 +3,14 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
+const log = s => {
+  if (typeof s === 'string') {
+    console.error(s);
+  } else {
+    console.error(JSON.stringify(s, null, 2));
+  }
+}
+
 /* 
   - works only with docker (must be ignored for local, currently unsupported for download)
   - creates tmp dir
@@ -115,24 +123,33 @@ class AttachAsEnvVar {
 
   /*private*/ createFile() {
     /*
-     - load default content and loop over all entries finding Connection-vars and replacing them $REPLVAR???
+     - this.Content is either static content or []
+     - load default content if given and add it to this.Content
+     - loop over all entries finding Connection-vars and replacing them $REPLVAR???
+     - add Connections-vars not defined in Content or LoadDefaultContent
      - append this to the static content from Fulgensfile
     */
+    var allContent = this.Content.slice(0);
     if (this.LoadDefaultContent) {
       const loadedContent = fs.readFileSync(path.resolve(this.runtimeConfiguration.projectBasePath, this.LoadDefaultContent), { encoding: 'utf8' });
-      loadedContent.split(/\r?\n/).map(l => {
-        const connToReplace = this.Connections.find(c => c.Var == l.split(/=/)[0])
-        if (connToReplace) {
-          return `${connToReplace.Var}=$REPLVAR${connToReplace.Var.replace('.', '_')}`;
-        } else {
-          return l;
-        }
-      }).forEach(l => this.Content.push(l));
+      allContent.push(...loadedContent.split(/\r?\n/));
     }
+    var connectionsFound = {};
+    allContent = allContent.map(l => {
+      const connToReplace = this.Connections.find(c => c.Var == l.split(/=/)[0])
+      if (connToReplace) {
+        connectionsFound[connToReplace.Var] = true;
+        return `${connToReplace.Var}=$REPLVAR${connToReplace.Var.replace('.', '_')}`;
+      } else {
+        return l;
+      }
+    });
+    const justConnectionVars = this.Connections.filter(c => !connectionsFound[c.Var]).map(c => `${c.Var}=$REPLVAR${c.Var.replace('.', '_')}`);
+    allContent.push(...justConnectionVars);
     return `
   mkdir -p localrun/${this.TmpFolder}
   cat <<EOT${this.TmpFolder} > localrun/${this.TmpFolder}/${this.Name}
-${this.Content.join('\n')}
+${allContent.join('\n')}
 EOT${this.TmpFolder}
     `;
   }

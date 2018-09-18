@@ -21,8 +21,8 @@ class MysqlPlugin extends BasePlugin {
     dependencycheckBuilder.add('mysql --version 1>/dev/null');
  
     optionsBuilder.addDetails('t', [
-      'mysql:local #reuse a local, running MySQL installation, does not start/stop this MySQL',
-      'mysql:docker:[5|8] #start docker image \\`mysql:X\\`'
+      `${softwareComponentName}:local #reuse a local, running MySQL installation, does not start/stop this MySQL`,
+      `${softwareComponentName}:docker:[5|8] #start docker image mysql:X`
     ]);
 
     sourceTypeBuilder.add(this, {

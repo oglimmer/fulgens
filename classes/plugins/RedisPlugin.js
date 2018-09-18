@@ -20,8 +20,8 @@ class RedisPlugin extends BasePlugin {
     dependencycheckBuilder.add('docker --version 1>/dev/null');
     
     optionsBuilder.addDetails('t', [
-      'redis:local #reuse a local, running Redis installation, does not start/stop this Redis',
-      'redis:docker:[3|4] #start docker image \\`redis:X\\`']);
+      `${softwareComponentName}:local #reuse a local, running Redis installation, does not start/stop this Redis`,
+      `${softwareComponentName}:docker:[3|4] #start docker image redis:X`]);
 
     const configFiles = runtimeConfiguration.getConfigFiles(softwareComponentName);
 

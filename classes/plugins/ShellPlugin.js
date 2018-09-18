@@ -18,8 +18,13 @@ class ShellPlugin extends BasePlugin {
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
     super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
-    const { Start, ExposedPort, EnvVars = [] } = userConfig.software[softwareComponentName];
+    const { Start, ExposedPort, DockerImage = 'ubuntu', EnvVars = [] } = userConfig.software[softwareComponentName];
     const StartRpld = Start.replace('$$TMP$$', 'localrun');
+
+    optionsBuilder.addDetails('t', [
+      `${softwareComponentName}:local #start a local shell script`,
+      `${softwareComponentName}:docker:[latest] #start the shell script inside docker image ${DockerImage}:X`
+    ]);
 
     sourceTypeBuilder.add(this, {
       componentName: softwareComponentName,
@@ -68,11 +73,11 @@ class ShellPlugin extends BasePlugin {
       #fi
       if [ ! -f "$BASE_PWD/${pidFile}" ]; then
         ${configFiles.map(f => f.storeFileForDocker('dockerJavaExtRef')).join('\n')}
-        if [ -n "$VERBOSE" ]; then echo ".."; fi
+        if [ -n "$VERBOSE" ]; then echo "docker run --rm -d $dockerJavaExtRef -p ${ExposedPort}:${ExposedPort} ${configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n')} ${EnvVars.map(l => l.replace('$$TMP$$', 'localrun')).map(p => `-e ${p}`).join(' ')} -v $(pwd):/home/node/exec_env -w /home/node/exec_env ${DockerImage}:$${typeSourceVarName}_VERSION /bin/bash -c ./${StartRpld}"; fi
         ${dcId}=$(docker run --rm -d $dockerJavaExtRef -p ${ExposedPort}:${ExposedPort} \\
             ${configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n')}  \\
-            ${EnvVars.map(p => `-e ${p}`).join(' ')} \\
-            -v "$(pwd)":/home/node/exec_env -w /home/node/exec_env openjdk:$${typeSourceVarName}_VERSION /bin/bash -c ./${StartRpld})
+            ${EnvVars.map(l => l.replace('$$TMP$$', 'localrun')).map(p => `-e ${p}`).join(' ')} \\
+            -v "$(pwd)":/home/node/exec_env -w /home/node/exec_env ${DockerImage}:$${typeSourceVarName}_VERSION /bin/bash -c ./${StartRpld})
         echo "$${dcId}">"$BASE_PWD/${pidFile}"
       else
         ${dcId}=$(<"$BASE_PWD/${pidFile}")

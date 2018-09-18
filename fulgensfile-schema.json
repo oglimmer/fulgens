@@ -75,7 +75,8 @@
              { "$ref": "#/definitions/TomcatType" },
              { "$ref": "#/definitions/NodeType" },
              { "$ref": "#/definitions/JavaType" },
-             { "$ref": "#/definitions/RedisType" }
+             { "$ref": "#/definitions/RedisType" },
+             { "$ref": "#/definitions/ShellType" }
           ]
         }
       }
@@ -304,6 +305,11 @@
           "type": "string"
         }
       },
+      "patternProperties": {
+        "^[a-z]+.*$": {
+          "$ref": "#/definitions/ConfigFileDef"
+        }
+      },
       "required": [ "Source", "Deploy" ],
       "additionalProperties": false
     },
@@ -370,6 +376,50 @@
         }
       },
       "required": [ "Source" ],
+      "additionalProperties": false
+    },
+    "ShellType": {
+      "properties": {
+        "Source": {
+          "enum": [ "shell" ]
+        },
+        "Start": {
+          "type": "string"
+        },
+        "ExposedPort": {
+          "type": "number"
+        },
+        "EnvVars": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "BeforeStart": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "AfterStart": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      },
+      "patternProperties": {
+        "^[a-z]+.*$": {
+          "$ref": "#/definitions/ConfigFileDef"
+        }
+      },
+      "required": [ "Source", "Start" ],
       "additionalProperties": false
     },
     "ConfigFileDef": {

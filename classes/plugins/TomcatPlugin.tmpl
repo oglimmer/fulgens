@@ -1,0 +1,91 @@
+
+{{ header }}
+
+{{ preparecomp }}
+
+{{ getsource }}
+
+if [ "${{typeSourceVarName}}" == "download" ]; then
+  if [ -f "{{pidFile}}" ] && [ "$(<{{pidFile}})" != "download" ]; then
+    echo "Tomcat running but started from different source type"
+    exit 1
+  fi
+  # download tomcat
+  if [ ! -f "/${TMPDIR:-/tmp}/apache-tomcat-$TOMCAT_VERSION.tar" ]; then
+    curl -s $TOMCAT_URL | gzip -d >/${TMPDIR:-/tmp}/apache-tomcat-$TOMCAT_VERSION.tar
+  fi
+  # extract tomcat
+  if [ ! -d "./apache-tomcat-$TOMCAT_VERSION" ]; then
+    tar -xf /${TMPDIR:-/tmp}/apache-tomcat-$TOMCAT_VERSION.tar -C ./localrun
+  fi
+fi
+
+{{ prebuild }}
+
+{{ build }}
+
+{{ postbuild }}
+
+{{ prestart }}
+
+dockerAddLibRefs=()
+if [ "${{typeSourceVarName}}" == "docker" ]; then
+	{{ dockerLibsToAdd }}
+  	mkdir -p localrun/webapps
+  	targetPath=localrun/webapps/
+fi
+
+if [ "${{typeSourceVarName}}" == "download" ]; then
+	{{ downloadLibsToCopy }}
+	targetPath=localrun/apache-tomcat-$TOMCAT_VERSION/webapps/
+fi
+
+if [ "${{typeSourceVarName}}" == "local" ]; then
+  targetPath=${{typeSourceVarName}}_PATH/webapps/
+fi
+
+f_deploy() {
+	cp {{Artifact}} $targetPath
+}
+f_deploy
+
+{{ start }}
+
+if [ "${{typeSourceVarName}}" == "download" ]; then
+  # start tomcat
+  if [ ! -f "{{pidFile}}" ]; then
+    {{storeFileAndExportEnvVar}}
+    ./localrun/apache-tomcat-$TOMCAT_VERSION/bin/startup.sh
+    echo "download">{{pidFile}}
+  fi
+  tailCmd="tail -f ./localrun/apache-tomcat-$TOMCAT_VERSION/logs/catalina.out"
+fi
+
+if [ "${{typeSourceVarName}}" == "docker" ]; then
+  if [ -f "{{pidFile}}" ] && [ "$(<{{pidFile}})" == "download" ]; then
+    echo "Tomcat running but started from different source type"
+    exit 1
+  fi
+  if [ ! -f "{{pidFile}}" ]; then
+    {{storeFileForDocker}}
+    dockerContainerID{{softwareComponentName}}=$(docker run --rm -d $dockerTomcatExtRef ${dockerAddLibRefs[@]} -p 8080:8080 \
+        {{mountToDocker}} \
+        -v "$(pwd)/localrun/webapps":/usr/local/tomcat/webapps tomcat:${{typeSourceVarName}}_VERSION)
+    echo "$dockerContainerID{{softwareComponentName}}">{{pidFile}}
+  else
+    dockerContainerID{{softwareComponentName}}=$(<{{pidFile}})
+  fi
+  tailCmd="docker logs -f $dockerContainerID{{softwareComponentName}}"
+fi
+
+if [ "${{typeSourceVarName}}" == "local" ]; then
+  if [ -f "{{pidFile}}" ]; then
+    echo "Tomcat running but started from different source type"
+    exit 1
+  fi
+  tailCmd="tail -f ${{typeSourceVarName}}_PATH/logs/catalina.out"
+fi
+
+{{ poststart }}
+
+{{ leavecomp }}

@@ -1,4 +1,6 @@
 
+const nunjucks = require('nunjucks');
+
 const optionsBuilder = require('../phase/options');
 
 const Preparecomp = require('../phase/Preparecomp');
@@ -86,11 +88,23 @@ class BasePlugin {
     }
   }
 
+  nunjucksObj() {
+    return {
+      header: Strings.headerPlugin(this),
+      preparecomp: this.preparecompBuilder.build(),
+      getsource: this.getsourceBuilder.build(),
+      prebuild: this.prebuildBuilder.build(),
+      build: this.buildBuilder.build(),
+      postbuild: this.postbuildBuilder.build(),
+      prestart: this.prestartBuilder.build(),
+      start: this.startBuilder.build(),
+      poststart: this.poststartBuilder.build(),
+      leavecomp: this.leavecompBuilder.build()
+    }
+  }
+
   build() {
-    return Strings.headerPlugin(this) + this.preparecompBuilder.build() + this.getsourceBuilder.build() 
-      + this.prebuildBuilder.build() + this.buildBuilder.build() + this.postbuildBuilder.build() 
-      + this.prestartBuilder.build() + this.startBuilder.build() + this.poststartBuilder.build()
-      + this.leavecompBuilder.build();
+    return nunjucks.render('classes/plugins/BasePlugin.tmpl', this.nunjucksObj());
   }
 
 }

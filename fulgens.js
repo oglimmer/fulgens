@@ -3,6 +3,8 @@
 const path = require('path');
 const fs = require('fs');
 
+const nunjucks = require('nunjucks');
+
 const head = require('./classes/phase/head');
 const functions = require('./classes/phase/functions');
 const cleanup = require('./classes/phase/cleanup');
@@ -46,6 +48,8 @@ if (!userConfig || Object.entries(userConfig).length === 0) {
   console.error('config empty!');
   process.exit(1);
 }
+
+nunjucks.configure(path.resolve(__dirname), { autoescape: false });
 
 const rtConfig = new RuntimeConfiguration(userConfig, path.dirname(systemFilename));
 

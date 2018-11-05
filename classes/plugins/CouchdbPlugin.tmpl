@@ -1,0 +1,56 @@
+
+{{ header }}
+
+{{ preparecomp }}
+
+{{ getsource }}
+
+{{ prebuild }}
+
+{{ build }}
+
+{{ postbuild }}
+
+{{ prestart }}
+
+{{ start }}
+
+if [ "${{typeSourceVarName}}" == "docker" ]; then
+  # run in docker
+  if [ ! -f "{{pidFile}}" ]; then
+    {{writeDockerConnectionLogic}}
+    if [ "$VERBOSE" == "YES" ]; then echo "docker run --rm -d -p 5984:5984 $dockerCouchdbExtRef {{makeDockerVolume}} couchdb:${{typeSourceVarName}}_VERSION"; fi
+    {{dcId}}=$(docker run --rm -d -p 5984:5984 $dockerCouchdbExtRef \
+      {{makeDockerVolume}} couchdb:${{typeSourceVarName}}_VERSION)
+    echo "${{dcId}}">{{pidFile}}
+  else
+    {{dcId}}=$(<{{pidFile}})
+  fi
+fi
+if [ "${{typeSourceVarName}}" == "local" ]; then
+  if [ -f "{{pidFile}}" ]; then
+    echo "couchdb {{softwareComponentName}} running but started from different source type"
+    exit 1
+  fi
+fi
+
+{{ poststart }}
+
+while [ "$(curl --write-out %{http_code} --silent --output /dev/null http://localhost:5984)" != "200" ]; do
+  echo "waiting for couchdb..."
+  sleep 1
+done
+
+{% for couchDBEle in couchDBs %}
+
+if [[ "$(curl -s http://localhost:5984/{{couchDBEle.Schema}})" =~ .*"error".*"not_found".* ]]; then
+	curl -X PUT http://localhost:5984/{{couchDBEle.Schema}}
+
+	{% for e in couchDBEle.Create %}
+	curl -X POST -H "Content-Type: application/json" -d @{{e}} http://localhost:5984/{{couchDBEle.Schema}}
+	{% endfor %}
+fi
+
+{% endfor %}
+
+{{ leavecomp }}

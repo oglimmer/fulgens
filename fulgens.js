@@ -49,7 +49,9 @@ if (!userConfig || Object.entries(userConfig).length === 0) {
   process.exit(1);
 }
 
-nunjucks.configure(path.resolve(__dirname), { autoescape: false });
+var env = nunjucks.configure(path.resolve(__dirname), { autoescape: false });
+env.addFilter('map', (str, name) => str.map(e => e[name]));
+env.addFilter('debug', (str) => { console.error(str); return str; });
 
 const rtConfig = new RuntimeConfiguration(userConfig, path.dirname(systemFilename));
 
@@ -65,6 +67,9 @@ globalvariables.init(userConfig, rtConfig);
 
 if (userConfig.config.Vagrant) {
   Vagrant.add(userConfig);
+}
+if (userConfig.config.Dependencycheck) {
+  userConfig.config.Dependencycheck.forEach(c => dependencycheck.add(c));
 }
 
 Object.entries(userConfig.software).forEach(s => {

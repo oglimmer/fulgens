@@ -1,4 +1,6 @@
 
+const nunjucks = require('nunjucks');
+
 const dependencycheckBuilder = require('../phase/dependencycheck');
 const optionsBuilder = require('../phase/options');
 
@@ -7,64 +9,6 @@ const BasePlugin = require('./BasePlugin');
 const dependencyManager = require('../core/DependencyManager');
 
 const DEFAULT_DOCKER_VERSION = '3-jdk-10';
-
-const start = (Goal, GoalIgnoreClean, BeforeBuild, AfterBuild) => `
-if [ "$BUILD" == "local" ]; then
-  f_build() {
-    if [ -n "$VERBOSE" ]; then echo "pwd=$(pwd)"; echo "mvn ${GoalIgnoreClean?'':'$MVN_CLEAN'} $MVN_OPTS ${Goal}"; fi
-    ${BeforeBuild}
-    mvn ${GoalIgnoreClean?'':'$MVN_CLEAN'} $MVN_OPTS ${Goal}
-    ${AfterBuild}
-  }
-elif [[ "$BUILD" == docker* ]]; then
-  IFS=: read mainType dockerVersion <<< "$BUILD"
-  if [ -z "$dockerVersion" ]; then
-    dockerVersion=${DEFAULT_DOCKER_VERSION}
-  fi
-`;
-
-const end = `
-fi   
-if [ "$SKIP_BUILD" != "YES" ]; then
-  if [ -n "$CLEAN" ]; then
-    MVN_CLEAN=clean
-  fi
-  f_build
-fi
-`;
-
-const buildCode = (Goal, GoalIgnoreClean, BeforeBuild, AfterBuild) => {
-  if (dependencyManager.hasAnyBuildDep()) {
-    return start(Goal, GoalIgnoreClean, BeforeBuild, AfterBuild) + `
-  mkdir -p localrun/dockerbuild
-  cat <<-EOFDOCK > localrun/dockerbuild/Dockerfile
-FROM maven:$dockerVersion
-RUN apt-get update && \\\\` + dependencyManager.getAptBuild() + ` && \\\\
-  apt-get clean && \\\\
-  rm -rf /tmp/* /var/tmp/* /var/lib/apt/archive/* /var/lib/apt/lists/*
-RUN ` + dependencyManager.getNpmBuild() + `
-ENTRYPOINT ["/usr/local/bin/mvn-entrypoint.sh"]
-CMD ["mvn"]
-EOFDOCK
-  docker build --tag maven_build:$dockerVersion localrun/dockerbuild/
-  f_build() {
-    if [ -n "$VERBOSE" ]; then echo "pwd=$(pwd)"; echo "docker run --rm -v $(pwd):/usr/src/build -v $(pwd)/localrun/.m2:/root/.m2 -w /usr/src/build maven_build:$dockerVersion mvn ${GoalIgnoreClean?'':'$MVN_CLEAN'} $MVN_OPTS ${Goal}"; fi
-    ${BeforeBuild}
-    docker run --rm -v "$(pwd)":/usr/src/build -v "$(pwd)/localrun/.m2":/root/.m2 -w /usr/src/build maven_build:$dockerVersion mvn ${GoalIgnoreClean?'':'$MVN_CLEAN'} $MVN_OPTS ${Goal}
-    ${AfterBuild}
-  }
-    ` + end;
-  } else {
-    return start(Goal, GoalIgnoreClean, BeforeBuild, AfterBuild) + `
-  f_build() {
-    if [ -n "$VERBOSE" ]; then echo "pwd=$(pwd)"; echo "docker run --rm -v $(pwd):/usr/src/build -v $(pwd)/localrun/.m2:/root/.m2 -w /usr/src/build maven:$dockerVersion mvn ${GoalIgnoreClean?'':'$MVN_CLEAN'} $MVN_OPTS ${Goal}"; fi
-    ${BeforeBuild}
-    docker run --rm -v "$(pwd)":/usr/src/build -v "$(pwd)/localrun/.m2":/root/.m2 -w /usr/src/build maven:$dockerVersion mvn ${GoalIgnoreClean?'':'$MVN_CLEAN'} $MVN_OPTS ${Goal}
-    ${AfterBuild}
-  }
-    ` + end;
-  }
-}
 
 class MvnPlugin extends BasePlugin {
 
@@ -96,10 +40,17 @@ class MvnPlugin extends BasePlugin {
 
     const rpl = a => a.map(e => e.replace('$$TMP$$', 'localrun')).join('\n');
 
-    this.buildBuilder.add(buildCode(Goal, GoalIgnoreClean, rpl(BeforeBuild), rpl(AfterBuild)));
+    this.nunjucksRender = () => nunjucks.render('classes/plugins/MvnPlugin.tmpl', {
+      ...this.nunjucksObj(),
+      GoalIgnoreClean: GoalIgnoreClean ? '' : '$MVN_CLEAN',
+      Goal,
+      DEFAULT_DOCKER_VERSION,
+      dependencyManager,
+      BeforeBuild: rpl(BeforeBuild),
+      AfterBuild: rpl(AfterBuild)
+    });
   }
 
 }
 
 module.exports = MvnPlugin;
-

@@ -86,6 +86,8 @@ class BasePlugin {
         this.leavecompBuilder.add('fi');
       }
     }
+
+    this.nunjucksRender = () => nunjucks.render('classes/plugins/BasePlugin.tmpl', this.nunjucksObj());
   }
 
   nunjucksObj() {
@@ -104,7 +106,7 @@ class BasePlugin {
   }
 
   build() {
-    return nunjucks.render('classes/plugins/BasePlugin.tmpl', this.nunjucksObj());
+    return this.nunjucksRender();
   }
 
 }

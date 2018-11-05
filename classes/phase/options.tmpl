@@ -1,0 +1,48 @@
+
+usage="$(basename "$0") - Builds, deploys and run ${name}
+where:
+  -h                         show this help text
+  -s                         skip any build
+  -c [all|build]             clean local run directory, when a build is scheduled for execution it also does a full build
+  -k [component]             keep comma sperarated list of components running
+  -t [component:type:[path|version]] run component inside [docker] container, [download] component (default) or [local] use installed component from path
+  -V                         enable Verbose
+  {% for o in data %}-{{o.option}} {{o.longParam}}{{o.spaces()}}{{o.helpDesc}}
+  {% endfor %}
+
+Details:
+{% for o in dataDetails %}{% for d in o.detailsArray %} -{{o.option}} {{d}}
+{% endfor %}{% endfor %}
+"
+
+cd "$(cd "$(dirname "$0")";pwd -P)"
+BASE_PWD=$(pwd)
+
+BUILD=local
+while getopts ':hsc:k:t:V{% for o in data %}{{o.option}}{% if o.longParam %}:{% endif %}{% endfor %}' option; do
+  case "$option" in
+    h) echo "$usage"
+       exit;;
+    s) SKIP_BUILD=YES;;
+    c) 
+       CLEAN=$OPTARG
+       if [ "$CLEAN" != "all" -a "$CLEAN" != "build" ]; then
+         echo "Illegal -c parameter" && exit 1
+       fi
+       ;;
+    k) KEEP_RUNNING=$OPTARG;;
+    t) TYPE_SOURCE=$OPTARG;;
+    V) VERBOSE=YES;;
+{% for o in data %}
+    {{o.option}}) {{o.varNameToSet}}={% if o.longParam %}$OPTARG{% else %}YES{% endif %};;
+{% endfor %}
+    :) printf "missing argument for -%s\\n" "$OPTARG" >&2
+       echo "$usage" >&2
+       exit 1;;
+   \\?) printf "illegal option: -%s\\n" "$OPTARG" >&2
+       echo "$usage" >&2
+       exit 1;;
+  esac
+done
+shift $((OPTIND - 1))
+TYPE_PARAM="$1"

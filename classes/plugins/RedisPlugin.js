@@ -1,4 +1,6 @@
 
+const nunjucks = require('nunjucks');
+
 const headBuilder = require('../phase/head');
 const cleanupBuilder = require('../phase/cleanup');
 const dependencycheckBuilder = require('../phase/dependencycheck');
@@ -25,8 +27,6 @@ class RedisPlugin extends BasePlugin {
 
     const configFiles = runtimeConfiguration.getConfigFiles(softwareComponentName);
 
-    this.startBuilder.add(start(softwareComponentName, configFiles));
-
     sourceTypeBuilder.add(this, {
       componentName: softwareComponentName,
       defaultType: 'docker', 
@@ -45,34 +45,26 @@ class RedisPlugin extends BasePlugin {
       }]
     });
 
+    const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
+    const pidFile = `.${softwareComponentName}Pid`;
+    const dcId = `dockerContainerID${softwareComponentName}`;
+
+    this.nunjucksRender = () => nunjucks.render('classes/plugins/RedisPlugin.tmpl', {
+      ...this.nunjucksObj(),
+      typeSourceVarName,
+      softwareComponentName,
+      pidFile,
+      dcId,
+      writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic('dockerRedisdbExtRef')).join('\n'),
+      makeDockerVolume: configFiles.map(f => f.makeDockerVolume()).join('\n')
+    });
+
   }
 
 }
 
 module.exports = RedisPlugin;
 
-const start = (softwareComponentName, configFiles) => {
-  const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
-  const pidFile = `.${softwareComponentName}Pid`;
-  const dcId = `dockerContainerID${softwareComponentName}`;
-  return `
-if [ "$${typeSourceVarName}" == "docker" ]; then
-  # run in docker
-  if [ ! -f "${pidFile}" ]; then
-    ${configFiles.map(f => f.writeDockerConnectionLogic('dockerRedisdbExtRef')).join('\n')}
-    if [ "$VERBOSE" == "YES" ]; then echo "docker run --rm -d -p 6379:6379 $dockerRedisdbExtRef ${configFiles.map(f => f.makeDockerVolume()).join('\n')} redis:$${typeSourceVarName}_VERSION"; fi
-    ${dcId}=$(docker run --rm -d -p 6379:6379 $dockerRedisdbExtRef \\
-      ${configFiles.map(f => f.makeDockerVolume()).join('\n')} redis:$${typeSourceVarName}_VERSION)
-    echo "$${dcId}">${pidFile}
-  else
-    ${dcId}=$(<${pidFile})
-  fi
-fi
-if [ "$${typeSourceVarName}" == "local" ]; then
-  if [ -f "${pidFile}" ]; then
-    echo "redis ${softwareComponentName} running but started from different source type"
-    exit 1
-  fi
-fi
-`
-};
+
+
+

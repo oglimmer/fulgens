@@ -1,4 +1,6 @@
 
+const nunjucks = require('nunjucks');
+
 const cleanupBuilder = require('../phase/cleanup');
 const dependencycheckBuilder = require('../phase/dependencycheck');
 const optionsBuilder = require('../phase/options');
@@ -42,61 +44,23 @@ class MysqlPlugin extends BasePlugin {
         stopCode: 'docker rm -f $dockerContainerID' + softwareComponentName
       }]
     });
-
-    this.poststartBuilder.addBegin(`
-while ! mysql -uroot --protocol=tcp -e "select 1" 1>/dev/null 2>&1; do
-  echo "waiting for mysql..."
-  sleep 3
-done`);
     
-    var dockerPasswordParam = '';
-    if (Mysql && Mysql.RootPassword) {
-      this.poststartBuilder.addBegin(`export MYSQL_PWD="${Mysql.RootPassword}"`);
-      dockerPasswordParam = `-e MYSQL_ROOT_PASSWORD="${Mysql.RootPassword}"`;
-    } else {
-      dockerPasswordParam = '-e MYSQL_ALLOW_EMPTY_PASSWORD=true';
-    }
-
-    if (Mysql.Schema) {
-      // check if schema exists, otherwise create
-      this.poststartBuilder.add(`mysql -uroot --protocol=tcp -NB -e "create database if not exists ${Mysql.Schema}"`);
-      if (Mysql.Create) {
-        // run sql script
-        this.poststartBuilder.add(Mysql.Create.map(sql => `mysql -uroot --protocol=tcp ${Mysql.Schema} < ${sql}`).join('\n'));
-      }
-    }
-
     const configFiles = runtimeConfiguration.getConfigFiles(softwareComponentName);
     const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
+    const pidFile = `.${softwareComponentName}Pid`;
 
-    this.startBuilder.add(start(typeSourceVarName, softwareComponentName, configFiles, dockerPasswordParam));
+    this.nunjucksRender = () => nunjucks.render('classes/plugins/MysqlPlugin.tmpl', {
+      ...this.nunjucksObj(),
+      typeSourceVarName,
+      softwareComponentName,
+      configFiles,
+      Mysql: Mysql ? Mysql : {},
+      writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic('dockerMysqlExtRef')).join('\n'),
+      makeDockerVolume: configFiles.map(f => f.makeDockerVolume()).join('\n')
+    });
 
   }
 
 }
 
 module.exports = MysqlPlugin;
-
-const start = (typeSourceVarName, softwareComponentName, configFiles, dockerPasswordParam) => {
-  const pidFile = `.${softwareComponentName}Pid`;
-  return `
-if [ "$${typeSourceVarName}" == "docker" ]; then
-  # run in docker
-  if [ ! -f "${pidFile}" ]; then
-    ${configFiles.map(f => f.writeDockerConnectionLogic('dockerMysqlExtRef')).join('\n')}
-    if [ "$VERBOSE" == "YES" ]; then echo "docker run --rm -d -p 3306:3306 $dockerMysqlExtRef ${dockerPasswordParam} ${configFiles.map(f => f.makeDockerVolume()).join('\n')} mysql:$${typeSourceVarName}_VERSION"; fi
-    dockerContainerID${softwareComponentName}=$(docker run --rm -d -p 3306:3306 ${dockerPasswordParam} \\
-      ${configFiles.map(f => f.makeDockerVolume()).join('\n')} mysql:$${typeSourceVarName}_VERSION)
-    echo "$dockerContainerID${softwareComponentName}">${pidFile}
-  else
-    dockerContainerID${softwareComponentName}=$(<${pidFile})
-  fi
-fi
-if [ "$${typeSourceVarName}" == "local" ]; then
-  if [ -f "${pidFile}" ]; then
-    echo "mysql running but started from different source type"
-    exit 1
-  fi
-fi
-`
-};

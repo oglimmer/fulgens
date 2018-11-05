@@ -15,7 +15,11 @@ class DependencycheckBuilder extends BufferedBuilder {
   buildInternal() {
     var buffer = '';
     for (var comp in this.components) {
-      buffer += comp + " || exit 1; \n";
+      if ( /\|\|.*exit/.test(comp) ) {
+        buffer += comp + "\n";
+      } else {
+        buffer += comp + " || exit 1; \n";
+      }
     }
     return buffer;
   }

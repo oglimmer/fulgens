@@ -1,0 +1,35 @@
+
+cleanup()
+{
+  echo "****************************************************************"
+  echo "Stopping software .....please wait...."
+  echo "****************************************************************"
+
+  ALL_COMPONENTS=({{componentsCode|map('pluginName')|join(' ')|lower}})
+  for keepRunningAllElement in "${ALL_COMPONENTS[@]}"; do
+    IFS=',' read -r -a array <<< "$KEEP_RUNNING"
+    found=0
+    for keepRunningToFindeElement in "${array[@]}"; do
+      if [ "$keepRunningAllElement" == "$keepRunningToFindeElement" ]; then
+        echo "Not stopping $keepRunningAllElement!"
+        found=1
+      fi
+    done
+    if [ "$found" -eq 0 ]; then
+      {% for e in componentsCode %}
+      if [ "$keepRunningAllElement" == "{{e.pluginName|lower}}" ]; then
+        echo "Stopping $keepRunningAllElement ..."
+        {% for a in e.sourceTypes %}
+        if [ "$TYPE_SOURCE_{{e.pluginName|upper}}" == "{{a.name}}" ]; then
+         {{a.stopCode}}
+         rm -f .{{e.componentName}}Pid
+        fi
+        {% endfor %}
+      fi
+      {% endfor %}
+    fi
+  done
+
+  exit 0
+}
+

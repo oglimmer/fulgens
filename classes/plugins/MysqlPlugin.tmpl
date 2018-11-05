@@ -1,0 +1,58 @@
+
+{{ header }}
+
+{{ preparecomp }}
+
+{{ getsource }}
+
+{{ prebuild }}
+
+{{ build }}
+
+{{ postbuild }}
+
+{{ prestart }}
+
+{{ start }}
+
+if [ "${{typeSourceVarName}}" == "docker" ]; then
+  # run in docker
+  if [ ! -f "{{pidFile}}" ]; then
+    {{writeDockerConnectionLogic}}
+    if [ "$VERBOSE" == "YES" ]; then echo "docker run --rm -d -p 3306:3306 $dockerMysqlExtRef ..password.. {{makeDockerVolume}} mysql:${{typeSourceVarName}}_VERSION"; fi
+    dockerContainerID{{softwareComponentName}}=$(docker run --rm -d -p 3306:3306 \
+      {% if Mysql.RootPassword %} -e MYSQL_ROOT_PASSWORD="{{Mysql.RootPassword}}" {% else %} -e MYSQL_ALLOW_EMPTY_PASSWORD=true {% endif %} \
+      {{makeDockerVolume}} mysql:${{typeSourceVarName}}_VERSION)
+    echo "$dockerContainerID{{softwareComponentName}}">{{pidFile}}
+  else
+    dockerContainerID{{softwareComponentName}}=$(<{{pidFile}})
+  fi
+fi
+if [ "${{typeSourceVarName}}" == "local" ]; then
+  if [ -f "{{pidFile}}" ]; then
+    echo "mysql running but started from different source type"
+    exit 1
+  fi
+fi
+
+while ! mysql -uroot --protocol=tcp -e "select 1" 1>/dev/null 2>&1; do
+  echo "waiting for mysql..."
+  sleep 3
+done
+
+{% if Mysql.RootPassword %}
+	export MYSQL_PWD="{{Mysql.RootPassword}}"
+{% endif %}
+
+{% if Mysql.Schema %}
+	mysql -uroot --protocol=tcp -NB -e "create database if not exists {{Mysql.Schema}}"
+
+	{% for sql in Mysql.Create %}
+		mysql -uroot --protocol=tcp {{Mysql.Schema}} < {{sql}}
+	{% endfor %}
+
+{% endif %}
+
+{{ poststart }}
+
+{{ leavecomp }}

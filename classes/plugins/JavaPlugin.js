@@ -1,4 +1,6 @@
 
+const nunjucks = require('nunjucks');
+
 const functionsBuilder = require('../phase/functions');
 const prepareBuilder = require('../phase/prepare');
 const optionsBuilder = require('../phase/options');
@@ -114,38 +116,20 @@ class JavaPlugin extends BasePlugin {
       const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
       const pidFile = `.${softwareComponentName}Pid`;
 
-      this.startBuilder.add(`
-      if [ "$${typeSourceVarName}" == "local" ]; then
-        OPWD="$(pwd)"
-        cd "$(dirname "${ArtifactRpld}")"
-        if [ ! -f "$BASE_PWD/${pidFile}" ]; then
-          if [ "$VERBOSE" == "YES" ]; then echo "nohup "./$(basename "${ArtifactRpld}")" 1>>"$BASE_PWD/localrun/${softwareComponentName}.log" 2>>"$BASE_PWD/localrun/${softwareComponentName}.log" &"; fi
-          nohup "./$(basename "${ArtifactRpld}")" 1>>"$BASE_PWD/localrun/${softwareComponentName}.log" 2>>"$BASE_PWD/localrun/${softwareComponentName}.log" &
-          ${pid}=$!
-          echo "$${pid}">"$BASE_PWD/${pidFile}"
-        else 
-          ${pid}=$(<"$BASE_PWD/${pidFile}")
-        fi
-        cd "$OPWD"
-      fi
-      if [ "$${typeSourceVarName}" == "docker" ]; then
-        #if [ -f "$BASE_PWD/${pidFile}" ] && [ "$(<"$BASE_PWD/${pidFile}")" == "download" ]; then
-        #  echo "node running but started from different source type"
-        #  exit 1
-        #fi
-        if [ ! -f "$BASE_PWD/${pidFile}" ]; then
-          ${configFiles.map(f => f.storeFileForDocker('dockerJavaExtRef')).join('\n')}
-          if [ -n "$VERBOSE" ]; then echo ".."; fi
-          ${dcId}=$(docker run --rm -d $dockerJavaExtRef -p ${ExposedPort}:${ExposedPort} \\
-              ${configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n')}  \\
-              ${EnvVars.map(p => `-e ${p}`).join(' ')} \\
-              -v "$(pwd)":/home/node/exec_env -w /home/node/exec_env openjdk:$${typeSourceVarName}_VERSION /bin/bash -c ./${ArtifactRpld})
-          echo "$${dcId}">"$BASE_PWD/${pidFile}"
-        else
-          ${dcId}=$(<"$BASE_PWD/${pidFile}")
-        fi
-      fi
-      `);
+      this.nunjucksRender = () => nunjucks.render('classes/plugins/JavaPlugin.tmpl', {
+        ...this.nunjucksObj(),
+        typeSourceVarName,
+        ArtifactRpld,
+        pidFile,
+        softwareComponentName,
+        ExposedPort,
+        dcId,
+        pid,
+        storeFileForDocker: configFiles.map(f => f.storeFileForDocker('dockerJavaExtRef')).join('\n'),
+        mountToDocker: configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n'),
+        AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' ')
+      });
+
     }
   }
 }

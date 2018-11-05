@@ -1,4 +1,6 @@
 
+const nunjucks = require('nunjucks');
+
 const functionsBuilder = require('../phase/functions');
 const prepareBuilder = require('../phase/prepare');
 const optionsBuilder = require('../phase/options');
@@ -54,37 +56,24 @@ class ShellPlugin extends BasePlugin {
     const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
     const pidFile = `.${softwareComponentName}Pid`;
 
-    this.startBuilder.add(`
-    if [ "$${typeSourceVarName}" == "local" ]; then
-      if [ ! -f "${pidFile}" ]; then
-        if [ "$VERBOSE" == "YES" ]; then echo "nohup ${StartRpld} 1>>localrun/${softwareComponentName}.log 2>>localrun/${softwareComponentName}.log &"; fi
-        ${EnvVars.map(l => l.replace('$$TMP$$', 'localrun')).map(p => `export ${p}`).join('\n')} 
-        nohup "${StartRpld}" 1>>"localrun/${softwareComponentName}.log" 2>>"localrun/${softwareComponentName}.log" &
-        ${pid}=$!
-        echo "$${pid}">"${pidFile}"
-      else 
-        ${pid}=$(<"${pidFile}")
-      fi
-    fi
-    if [ "$${typeSourceVarName}" == "docker" ]; then
-      #if [ -f "$BASE_PWD/${pidFile}" ] && [ "$(<"$BASE_PWD/${pidFile}")" == "download" ]; then
-      #  echo "node running but started from different source type"
-      #  exit 1
-      #fi
-      if [ ! -f "$BASE_PWD/${pidFile}" ]; then
-        ${configFiles.map(f => f.storeFileForDocker('dockerJavaExtRef')).join('\n')}
-        if [ -n "$VERBOSE" ]; then echo "docker run --rm -d $dockerJavaExtRef -p ${ExposedPort}:${ExposedPort} ${configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n')} ${EnvVars.map(l => l.replace('$$TMP$$', 'localrun')).map(p => `-e ${p}`).join(' ')} -v $(pwd):/home/node/exec_env -w /home/node/exec_env ${DockerImage}:$${typeSourceVarName}_VERSION /bin/bash -c ./${StartRpld}"; fi
-        ${dcId}=$(docker run --rm -d $dockerJavaExtRef -p ${ExposedPort}:${ExposedPort} \\
-            ${configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n')}  \\
-            ${EnvVars.map(l => l.replace('$$TMP$$', 'localrun')).map(p => `-e ${p}`).join(' ')} \\
-            -v "$(pwd)":/home/node/exec_env -w /home/node/exec_env ${DockerImage}:$${typeSourceVarName}_VERSION /bin/bash -c ./${StartRpld})
-        echo "$${dcId}">"$BASE_PWD/${pidFile}"
-      else
-        ${dcId}=$(<"$BASE_PWD/${pidFile}")
-      fi
-    fi
-    `);
+    this.nunjucksRender = () => nunjucks.render('classes/plugins/ShellPlugin.tmpl', {
+      ...this.nunjucksObj(),
+      typeSourceVarName,
+      softwareComponentName,
+      pidFile,
+      StartRpld,
+      ExposedPort,
+      dcId,
+      pid,
+      DockerImage,
+      storeFileForDocker: configFiles.map(f => f.storeFileForDocker('dockerJavaExtRef')).join('\n'),
+      mountToDocker: configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n'),
+      AllEnvVarsDocker: EnvVars.map(l => l.replace('$$TMP$$', 'localrun')).map(p => `-e ${p}`).join(' '),
+      AllEnvVarsShell: EnvVars.map(l => l.replace('$$TMP$$', 'localrun')).map(p => `export ${p}`).join('\n')
+    });
+
   }
+
 }
 
 module.exports = ShellPlugin;

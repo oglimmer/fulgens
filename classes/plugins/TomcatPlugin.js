@@ -123,10 +123,6 @@ class TomcatPlugin extends BasePlugin {
 
   }
 
-  build() {
-    return this.nunjucksRender();
-  }
-
 }
 
 module.exports = TomcatPlugin;

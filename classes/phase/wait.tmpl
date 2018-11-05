@@ -1,0 +1,12 @@
+# waiting for ctrl-c
+if [ "$TAIL" == "YES" ]; then
+  $tailCmd
+else
+  echo "$tailCmd"
+  echo "<return> to rebuild, ctrl-c to stop {{ cleanupBuilder.componentsCode|map('componentName')|join(', ') }}"
+  while true; do
+    read </dev/tty
+    f_build
+    f_deploy
+  done
+fi

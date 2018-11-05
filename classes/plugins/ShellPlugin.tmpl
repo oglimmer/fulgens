@@ -1,0 +1,50 @@
+
+{{ header }}
+
+{{ preparecomp }}
+
+{{ getsource }}
+
+{{ prebuild }}
+
+{{ build }}
+
+{{ postbuild }}
+
+{{ prestart }}
+
+{{ start }}
+
+if [ "${{typeSourceVarName}}" == "local" ]; then
+  if [ ! -f "{{pidFile}}" ]; then
+    if [ "$VERBOSE" == "YES" ]; then echo "nohup {{StartRpld}} 1>>localrun/{{softwareComponentName}}.log 2>>localrun/{{softwareComponentName}}.log &"; fi
+    {{AllEnvVarsShell}}
+    nohup "{{StartRpld}}" 1>>"localrun/{{softwareComponentName}}.log" 2>>"localrun/{{softwareComponentName}}.log" &
+    {{pid}}=$!
+    echo "${{pid}}">"{{pidFile}}"
+  else 
+    {{pid}}=$(<"{{pidFile}}")
+  fi
+fi
+
+if [ "${{typeSourceVarName}}" == "docker" ]; then
+  #if [ -f "$BASE_PWD/{{pidFile}}" ] && [ "$(<"$BASE_PWD/{{pidFile}}")" == "download" ]; then
+  #  echo "node running but started from different source type"
+  #  exit 1
+  #fi
+  if [ ! -f "$BASE_PWD/{{pidFile}}" ]; then
+    {{storeFileForDocker}}
+    if [ -n "$VERBOSE" ]; then echo "docker run --rm -d $dockerJavaExtRef -p {{ExposedPort}}:{{ExposedPort}} {{mountToDocker}} {{AllEnvVarsDocker}} -v $(pwd):/home/node/exec_env -w /home/node/exec_env {{DockerImage}}:${{typeSourceVarName}}_VERSION /bin/bash -c ./{{StartRpld}}" fi
+    {{dcId}}=$(docker run --rm -d $dockerJavaExtRef -p {{ExposedPort}}:{{ExposedPort}} \
+        {{mountToDocker}}  \
+        {{AllEnvVarsDocker}} \
+        -v "$(pwd)":/home/node/exec_env -w /home/node/exec_env {{DockerImage}}:${{typeSourceVarName}}_VERSION /bin/bash -c ./{{StartRpld}})
+    echo "${{dcId}}">"$BASE_PWD/{{pidFile}}"
+  else
+    {{dcId}}=$(<"$BASE_PWD/{{pidFile}}")
+  fi
+fi
+
+{{ poststart }}
+
+{{ leavecomp }}

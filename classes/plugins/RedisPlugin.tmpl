@@ -1,0 +1,38 @@
+
+{{ header }}
+
+{{ preparecomp }}
+
+{{ getsource }}
+
+{{ prebuild }}
+
+{{ build }}
+
+{{ postbuild }}
+
+{{ prestart }}
+
+{{ start }}
+
+if [ "${{typeSourceVarName}}" == "docker" ]; then
+  # run in docker
+  if [ ! -f "{{pidFile}}" ]; then
+    {{writeDockerConnectionLogic}}
+    if [ "$VERBOSE" == "YES" ]; then echo "docker run --rm -d -p 6379:6379 $dockerRedisdbExtRef {{makeDockerVolume}} redis:${{typeSourceVarName}}_VERSION"; fi
+    {{dcId}}=$(docker run --rm -d -p 6379:6379 $dockerRedisdbExtRef {{makeDockerVolume}} redis:${{typeSourceVarName}}_VERSION)
+    echo "${{dcId}}">{{pidFile}}
+  else
+    {{dcId}}=$(<{{pidFile}})
+  fi
+fi
+if [ "${{typeSourceVarName}}" == "local" ]; then
+  if [ -f "{{pidFile}}" ]; then
+    echo "redis {{softwareComponentName}} running but started from different source type"
+    exit 1
+  fi
+fi
+
+{{ poststart }}
+
+{{ leavecomp }}

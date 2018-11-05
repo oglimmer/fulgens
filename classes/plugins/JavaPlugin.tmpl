@@ -1,0 +1,51 @@
+
+{{ header }}
+
+{{ preparecomp }}
+
+{{ getsource }}
+
+{{ prebuild }}
+
+{{ build }}
+
+{{ postbuild }}
+
+{{ prestart }}
+
+{{ start }}
+
+if [ "${{typeSourceVarName}}" == "local" ]; then
+	OPWD="$(pwd)"
+	cd "$(dirname "{{ArtifactRpld}}")"
+	if [ ! -f "$BASE_PWD/{{pidFile}}" ]; then
+	  if [ "$VERBOSE" == "YES" ]; then echo "nohup "./$(basename "{{ArtifactRpld}}")" 1>>"$BASE_PWD/localrun/{{softwareComponentName}}.log" 2>>"$BASE_PWD/localrun/{{softwareComponentName}}.log" &"; fi
+	  nohup "./$(basename "{{ArtifactRpld}}")" 1>>"$BASE_PWD/localrun/{{softwareComponentName}}.log" 2>>"$BASE_PWD/localrun/{{softwareComponentName}}.log" &
+	  {{pid}}=$!
+	  echo "${{pid}}">"$BASE_PWD/{{pidFile}}"
+	else 
+	  {{pid}}=$(<"$BASE_PWD/{{pidFile}}")
+	fi
+	cd "$OPWD"
+	fi
+	if [ "${{typeSourceVarName}}" == "docker" ]; then
+	#if [ -f "$BASE_PWD/{{pidFile}}" ] && [ "$(<"$BASE_PWD/{{pidFile}}")" == "download" ]; then
+	#  echo "node running but started from different source type"
+	#  exit 1
+	#fi
+	if [ ! -f "$BASE_PWD/{{pidFile}}" ]; then
+	  {{storeFileForDocker}}
+	  if [ -n "$VERBOSE" ]; then echo ".."; fi
+	  {{dcId}}=$(docker run --rm -d $dockerJavaExtRef -p {{ExposedPort}}:{{ExposedPort}} \
+	      {{mountToDocker}}  \
+	      {{AllEnvVarsDocker}} \
+	      -v "$(pwd)":/home/node/exec_env -w /home/node/exec_env openjdk:${{typeSourceVarName}}_VERSION /bin/bash -c ./{{ArtifactRpld}})
+	  echo "${{dcId}}">"$BASE_PWD/{{pidFile}}"
+	else
+	  {{dcId}}=$(<"$BASE_PWD/{{pidFile}}")
+	fi
+fi
+
+{{ poststart }}
+
+{{ leavecomp }}

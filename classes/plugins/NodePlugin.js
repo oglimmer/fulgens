@@ -55,7 +55,7 @@ class NodePlugin extends BasePlugin {
     const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
     const pidFile = `.${softwareComponentName}Pid`;
 
-    this.nunjucksRender = () => nunjucks.render('classes/plugins/NodePlugin.tmpl', {
+    this.build = () => nunjucks.render('classes/plugins/NodePlugin.tmpl', {
       ...this.nunjucksObj(),
       Build,
       typeSourceVarName,

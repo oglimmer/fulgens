@@ -116,7 +116,7 @@ class JavaPlugin extends BasePlugin {
       const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
       const pidFile = `.${softwareComponentName}Pid`;
 
-      this.nunjucksRender = () => nunjucks.render('classes/plugins/JavaPlugin.tmpl', {
+      this.build = () => nunjucks.render('classes/plugins/JavaPlugin.tmpl', {
         ...this.nunjucksObj(),
         typeSourceVarName,
         ArtifactRpld,
@@ -130,6 +130,8 @@ class JavaPlugin extends BasePlugin {
         AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' ')
       });
 
+    } else {
+      this.build = () => {};
     }
   }
 }

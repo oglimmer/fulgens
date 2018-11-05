@@ -38,9 +38,9 @@ class MvnPlugin extends BasePlugin {
       dependencyManager.addNpmBuild(bd.Npm);
     }
 
-    const rpl = a => a.map(e => e.replace('$$TMP$$', 'localrun')).join('\n');
+    const rpl = obj => (Array.isArray(obj)?obj:[obj]).map(e => e.replace('$$TMP$$', 'localrun')).join('\n');
 
-    this.nunjucksRender = () => nunjucks.render('classes/plugins/MvnPlugin.tmpl', {
+    this.build = () => nunjucks.render('classes/plugins/MvnPlugin.tmpl', {
       ...this.nunjucksObj(),
       GoalIgnoreClean: GoalIgnoreClean ? '' : '$MVN_CLEAN',
       Goal,

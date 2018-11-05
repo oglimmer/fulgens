@@ -1,0 +1,29 @@
+mkdir -p localrun/{{TmpFolder}}
+
+{% for sourceName, listOfSourceObjects in mapSourceToConnections %}
+if [ "$TYPE_SOURCE_{{sourceName|upper}}" == "docker" ]; then
+  {{refVarName}}="--link $dockerContainerID{{sourceName}}"
+  {% for sourceObject in listOfSourceObjects %}
+  REPLVAR{{sourceObject.VarRpl}}="{{sourceObject.ContentRpl('$dockerContainerID' + sourceObject.Source)}}"
+  {% endfor %}
+elif [ "$TYPE_SOURCE_{{sourceName|upper}}" == "local" ]; then
+  if [ "$(uname)" != "Linux" ]; then 
+    {% for sourceObject in listOfSourceObjects %}
+    REPLVAR{{sourceObject.VarRpl}}="{{sourceObject.ContentRpl('host.docker.internal')}}"
+    {% endfor %}
+  else 
+    {{refVarName}}="--net=host"
+  fi
+fi
+{% endfor %}
+
+cat <<- EOT{{TmpFolder}} > localrun/{{TmpFolder}}/{{Name}}
+{% for line in Content %}
+  {% set connToReplace = connectionsContainsKey(line) %}
+  {% if connToReplace %}
+    {{connToReplace.Var}}=$REPLVAR{{connToReplace.VarRpl}}
+  {% else %}
+    {{line}}
+  {% endif %}
+{% endfor %}
+EOT{{TmpFolder}}

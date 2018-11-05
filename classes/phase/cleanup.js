@@ -6,7 +6,7 @@ const BaseBuilder = require('./BaseBuilder');
 class CleanupBuilder extends BaseBuilder {
 
   constructor() {
-    super();
+    super('CleanupBuilder');
     this.componentsCode = [];
   }
 

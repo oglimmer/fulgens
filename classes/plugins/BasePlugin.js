@@ -1,17 +1,8 @@
 
 const nunjucks = require('nunjucks');
 
+const BufferedBuilder = require('../phase/BufferedBuilder');
 const optionsBuilder = require('../phase/options');
-
-const Preparecomp = require('../phase/Preparecomp');
-const Getsource = require('../phase/Getsource');
-const Prebuild = require('../phase/Prebuild');
-const Build = require('../phase/Build');
-const Postbuild = require('../phase/Postbuild');
-const Prestart = require('../phase/Prestart');
-const Start = require('../phase/Start');
-const Poststart = require('../phase/Poststart');
-const Leavecomp = require('../phase/Leavecomp');
 
 const Strings = require('../core/Strings');
 
@@ -19,15 +10,15 @@ class BasePlugin {
 
   register(softwareComponentName, userConfig, runtimeConfiguration) {
     this.softwareComponentName = softwareComponentName;
-    this.preparecompBuilder = new Preparecomp();
-    this.getsourceBuilder = new Getsource();
-    this.prebuildBuilder = new Prebuild();
-    this.buildBuilder = new Build();
-    this.postbuildBuilder = new Postbuild();
-    this.prestartBuilder = new Prestart();
-    this.startBuilder = new Start();
-    this.poststartBuilder = new Poststart();
-    this.leavecompBuilder = new Leavecomp();
+    this.preparecompBuilder = new BufferedBuilder('Plugin-PrepareComp');
+    this.getsourceBuilder = new BufferedBuilder('Plugin-GetSource');
+    this.prebuildBuilder = new BufferedBuilder('Plugin-PreBuild');
+    this.buildBuilder = new BufferedBuilder('Plugin-Build');
+    this.postbuildBuilder = new BufferedBuilder('Plugin-PostBuild');
+    this.prestartBuilder = new BufferedBuilder('Plugin-PreStart');
+    this.startBuilder = new BufferedBuilder('Plugin-Start');
+    this.poststartBuilder = new BufferedBuilder('Plugin-PostStart');
+    this.leavecompBuilder = new BufferedBuilder('Plugin-LeaveComp');
 
     this.preparecompBuilder.init(userConfig, runtimeConfiguration);
     this.getsourceBuilder.init(userConfig, runtimeConfiguration);
@@ -87,7 +78,9 @@ class BasePlugin {
       }
     }
 
-    this.nunjucksRender = () => nunjucks.render('classes/plugins/BasePlugin.tmpl', this.nunjucksObj());
+    this.build = () => {
+      throw `Method build for ${this.constructor.name} not implemented`;
+    }
   }
 
   nunjucksObj() {
@@ -106,7 +99,7 @@ class BasePlugin {
   }
 
   build() {
-    return this.nunjucksRender();
+    throw `Method build for ${this.constructor.name} not implemented`;
   }
 
 }

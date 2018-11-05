@@ -4,7 +4,7 @@ const BaseBuilder = require('./BaseBuilder');
 class GlobalVariablesBuilder extends BaseBuilder {
 
   constructor() {
-    super();
+    super('GlobalVariablesBuilder');
     this.varNames = [];
   }
 

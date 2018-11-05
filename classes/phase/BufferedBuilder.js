@@ -4,8 +4,8 @@ const BaseBuilder = require('./BaseBuilder');
 
 class BufferedBuilder extends BaseBuilder {
 
-  constructor() {
-    super();
+  constructor(extClassName) {
+    super(extClassName);
     this.buffer = '';
   }
 

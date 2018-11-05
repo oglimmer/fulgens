@@ -13,7 +13,7 @@ if [ -n "$VERBOSE" ]; then echo "${obj.constructor.name} // ${obj.softwareCompon
 	headerPhase: (obj) => {
 		return `
 #------------
-# ${obj.constructor.name}
+# ${obj.extClassName}
 #------------
 `;
 	}

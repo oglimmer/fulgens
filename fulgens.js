@@ -5,7 +5,6 @@ const fs = require('fs');
 
 const nunjucks = require('nunjucks');
 
-const head = require('./classes/phase/head');
 const functions = require('./classes/phase/functions');
 const cleanup = require('./classes/phase/cleanup');
 const options = require('./classes/phase/options');
@@ -52,10 +51,10 @@ if (!userConfig || Object.entries(userConfig).length === 0) {
 var env = nunjucks.configure(path.resolve(__dirname), { autoescape: false });
 env.addFilter('map', (str, name) => str.map(e => e[name]));
 env.addFilter('debug', (str) => { console.error(str); return str; });
+env.addFilter('filterNotEmpty', (str, name) => !!str[name]);
 
 const rtConfig = new RuntimeConfiguration(userConfig, path.dirname(systemFilename));
 
-head.init(userConfig, rtConfig);
 functions.init(userConfig, rtConfig);
 cleanup.init(userConfig, rtConfig);
 options.init(userConfig, rtConfig);
@@ -81,8 +80,14 @@ Object.entries(userConfig.software).forEach(s => {
 
 rtConfig.processPlugins();
 
-const output = head.build() + functions.build() + cleanup.build() + options.build() 
-  + dependencycheck.build() + clean.build() + globalvariables.build() + prepare.build() 
-  + rtConfig.buildPlugins()
-  + wait.build();
-console.log(output);
+console.log(nunjucks.render('fulgens.tmpl', {
+  functions: functions.build(),
+  cleanup: cleanup.build(),
+  options: options.build() ,
+  dependencycheck: dependencycheck.build(),
+  clean: clean.build(),
+  globalvariables: globalvariables.build(),
+  prepare: prepare.build() ,
+  rtConfig: rtConfig.buildPlugins(),
+  wait: wait.build()
+}));

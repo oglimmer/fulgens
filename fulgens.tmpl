@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+trap cleanup 2
+set -e
+
+{{ functions }}
+
+{{ cleanup }}
+
+{{ options }}
+
+{{ dependencycheck }}
+
+# clean if requested
+if [ -n "$CLEAN" ]; then
+  if [ "$CLEAN" == "all" ]; then
+    if [ "$VERBOSE" == "YES" ]; then echo "rm -rf localrun"; fi
+    rm -rf localrun
+  fi
+  {{ clean }}
+fi
+
+{{ globalvariables }}
+
+mkdir -p localrun
+
+{{ prepare }}
+
+{{ rtConfig }}
+
+{{ wait }}

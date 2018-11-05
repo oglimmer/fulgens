@@ -108,7 +108,7 @@ class TomcatPlugin extends BasePlugin {
     
     dependencycheckBuilder.add('curl --version 1>/dev/null');
         
-    this.nunjucksRender = () => nunjucks.render('classes/plugins/TomcatPlugin.tmpl', {
+    this.build = () => nunjucks.render('classes/plugins/TomcatPlugin.tmpl', {
       ...this.nunjucksObj(),
       dockerLibsToAdd,
       downloadLibsToCopy,

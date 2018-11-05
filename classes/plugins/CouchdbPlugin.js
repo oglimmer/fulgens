@@ -1,7 +1,6 @@
 
 const nunjucks = require('nunjucks');
 
-const headBuilder = require('../phase/head');
 const cleanupBuilder = require('../phase/cleanup');
 const dependencycheckBuilder = require('../phase/dependencycheck');
 const optionsBuilder = require('../phase/options');
@@ -51,7 +50,7 @@ class CouchdbPlugin extends BasePlugin {
     const pidFile = `.${softwareComponentName}Pid`;
     const dcId = `dockerContainerID${softwareComponentName}`;
 
-    this.nunjucksRender = () => nunjucks.render('classes/plugins/CouchdbPlugin.tmpl', {
+    this.build = () => nunjucks.render('classes/plugins/CouchdbPlugin.tmpl', {
       ...this.nunjucksObj(),
       typeSourceVarName,
       pidFile,

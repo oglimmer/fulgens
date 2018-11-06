@@ -1,9 +1,5 @@
 
-const nunjucks = require('nunjucks');
-
-const crypto = require('crypto');
-const fs = require('fs');
-const path = require('path');
+const BaseConfigFile = require('./BaseConfigFile');
 
 /* 
   - works only with docker (must be ignored for local, currently unsupported for download)
@@ -27,49 +23,16 @@ const path = require('path');
     AttachIntoDocker: "/etc/mysql/conf.d"
   }
 */
-class AttachIntoDocker {
+class AttachIntoDocker extends BaseConfigFile {
 
   constructor(pluginName, config, runtimeConfiguration) {
-    this.runtimeConfiguration = runtimeConfiguration;
-    this.pluginName = pluginName;
-    this.Name = config.Name;
-    this.Content = config.Content;
+    super(pluginName, config, runtimeConfiguration);
     this.AttachIntoDocker = config.AttachIntoDocker;
-    this.Connections = config.Connections ? config.Connections : [];
-    const hash = crypto.createHash('sha256');
-    hash.update(this.pluginName + this.Name);
-    this.TmpFolder = hash.digest('hex').substring(0, 8);
   }
 
+  /* docker */
   makeDockerVolume() {
     return `-v "\$(pwd)/localrun/${this.TmpFolder}:${this.AttachIntoDocker}"`;
-  }
-
-  writeDockerConnectionLogic(refVarName) {
-    // reduce an array of objects (Source, Var, Content) into a Map Key:Source, Value: array of original objects
-    const mapSourceToConnections = this.Connections.reduce((accumulator, currentValue) => {
-      
-      currentValue.VarRpl = currentValue.Var.replace('.', '_');
-      currentValue.ContentRpl = replaceStr => currentValue.Content ? currentValue.Content.replace('$$VALUE$$', replaceStr) : replaceStr;
-
-      var arrayOnSource = accumulator.get(currentValue.Source);
-      if (!arrayOnSource) {
-        arrayOnSource = [currentValue];
-        accumulator.set(currentValue.Source, arrayOnSource);
-      } else {
-        arrayOnSource.push(currentValue);
-      }
-      return accumulator;
-    }, new Map());
-
-    return nunjucks.render('classes/core/configFile/AttachIntoDocker.tmpl', {
-      TmpFolder: this.TmpFolder,
-      Name: this.Name,
-      Content: this.Content,
-      mapSourceToConnections,
-      refVarName,
-      connectionsContainsKey: line => this.Connections.find(c => c.Var == line.split(/=/)[0]),
-    });
   }
 
 }

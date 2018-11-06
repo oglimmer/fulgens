@@ -33,11 +33,10 @@ if [ "${{typeSourceVarName}}" == "docker" ]; then
   #  exit 1
   #fi
   if [ ! -f "{{pidFile}}" ]; then
-    {{storeFileForDocker}}
-    if [ -n "$VERBOSE" ]; then echo ".."; fi
+    {{writeDockerConnectionLogic}}
+    if [ -n "$VERBOSE" ]; then echo "docker run --rm -d $dockerNodeExtRef -p {{ExposedPort}}:{{ExposedPort}} {{mountToDocker}} {{AllEnvVarsDocker}} -v $(pwd):/home/node/exec_env -w /home/node/exec_env node:${{typeSourceVarName}}_VERSION node {{NodeParam}} ./{{Artifact}}"; fi
     dockerContainerID{{softwareComponentName}}=$(docker run --rm -d $dockerNodeExtRef -p {{ExposedPort}}:{{ExposedPort}} \
-        {{mountToDocker}}  \
-        {{AllEnvVarsDocker}} \
+        {{mountToDocker}} {{AllEnvVarsDocker}} \
         -v "$(pwd)":/home/node/exec_env -w /home/node/exec_env node:${{typeSourceVarName}}_VERSION node {{NodeParam}} ./{{Artifact}})
     echo "$dockerContainerID{{softwareComponentName}}">{{pidFile}}
   else
@@ -52,10 +51,11 @@ if [ "${{typeSourceVarName}}" == "local" ]; then
   #  exit 1
   #fi
   if [ ! -f "{{pidFile}}" ]; then
-      cat > localrun/noint.js <<EOF
+    cat <<-'    EOF' > localrun/noint.js
       process.on( "SIGINT", function() {} );
       require('../{{Artifact}}');
-EOF
+    EOF
+    if [ -n "$VERBOSE" ]; then echo "{{AllEnvVarsNode}} node {{NodeParam}} localrun/noint.js >localrun/noint.out 2>&1 &"; fi
     {{storeFileAndExportEnvVar}}
     {{AllEnvVarsNode}} node {{NodeParam}} localrun/noint.js >localrun/noint.out 2>&1 & 
     processId{{softwareComponentName}}=$!

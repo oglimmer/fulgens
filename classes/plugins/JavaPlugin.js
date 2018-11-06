@@ -125,7 +125,7 @@ class JavaPlugin extends BasePlugin {
         ExposedPort,
         dcId,
         pid,
-        storeFileForDocker: configFiles.map(f => f.storeFileForDocker('dockerJavaExtRef')).join('\n'),
+        writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic('dockerJavaExtRef')).join('\n'),
         mountToDocker: configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n'),
         AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' ')
       });

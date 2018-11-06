@@ -66,7 +66,7 @@ class ShellPlugin extends BasePlugin {
       dcId,
       pid,
       DockerImage,
-      storeFileForDocker: configFiles.map(f => f.storeFileForDocker('dockerJavaExtRef')).join('\n'),
+      writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic('dockerJavaExtRef')).join('\n'),
       mountToDocker: configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n'),
       AllEnvVarsDocker: EnvVars.map(l => l.replace('$$TMP$$', 'localrun')).map(p => `-e ${p}`).join(' '),
       AllEnvVarsShell: EnvVars.map(l => l.replace('$$TMP$$', 'localrun')).map(p => `export ${p}`).join('\n')

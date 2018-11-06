@@ -34,7 +34,7 @@ if [ "${{typeSourceVarName}}" == "local" ]; then
 	#  exit 1
 	#fi
 	if [ ! -f "$BASE_PWD/{{pidFile}}" ]; then
-	  {{storeFileForDocker}}
+	  {{writeDockerConnectionLogic}}
 	  if [ -n "$VERBOSE" ]; then echo ".."; fi
 	  {{dcId}}=$(docker run --rm -d $dockerJavaExtRef -p {{ExposedPort}}:{{ExposedPort}} \
 	      {{mountToDocker}}  \

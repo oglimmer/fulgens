@@ -66,7 +66,7 @@ class NodePlugin extends BasePlugin {
       configFiles,
       softwareComponentName,
       pidFile,
-      storeFileForDocker: configFiles.map(f => f.storeFileForDocker('dockerNodeExtRef')).join('\n'),
+      writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic('dockerNodeExtRef')).join('\n'),
       mountToDocker: configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n'),
       storeFileAndExportEnvVar: configFiles.map(f => f.storeFileAndExportEnvVar()).join('\n'),
       AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),

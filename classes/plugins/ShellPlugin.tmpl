@@ -33,7 +33,7 @@ if [ "${{typeSourceVarName}}" == "docker" ]; then
   #  exit 1
   #fi
   if [ ! -f "$BASE_PWD/{{pidFile}}" ]; then
-    {{storeFileForDocker}}
+    {{writeDockerConnectionLogic}}
     if [ -n "$VERBOSE" ]; then echo "docker run --rm -d $dockerJavaExtRef -p {{ExposedPort}}:{{ExposedPort}} {{mountToDocker}} {{AllEnvVarsDocker}} -v $(pwd):/home/node/exec_env -w /home/node/exec_env {{DockerImage}}:${{typeSourceVarName}}_VERSION /bin/bash -c ./{{StartRpld}}" fi
     {{dcId}}=$(docker run --rm -d $dockerJavaExtRef -p {{ExposedPort}}:{{ExposedPort}} \
         {{mountToDocker}}  \

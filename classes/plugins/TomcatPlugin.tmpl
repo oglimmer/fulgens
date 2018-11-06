@@ -67,7 +67,7 @@ if [ "${{typeSourceVarName}}" == "docker" ]; then
     exit 1
   fi
   if [ ! -f "{{pidFile}}" ]; then
-    {{storeFileForDocker}}
+    {{writeDockerConnectionLogic}}
     dockerContainerID{{softwareComponentName}}=$(docker run --rm -d $dockerTomcatExtRef ${dockerAddLibRefs[@]} -p 8080:8080 \
         {{mountToDocker}} \
         -v "$(pwd)/localrun/webapps":/usr/local/tomcat/webapps tomcat:${{typeSourceVarName}}_VERSION)

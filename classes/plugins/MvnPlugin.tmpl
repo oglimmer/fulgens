@@ -35,7 +35,7 @@ if [[ "$BUILD" == docker* ]]; then
     RUN {{dependencyManager.getNpmBuild()}}
     ENTRYPOINT ["/usr/local/bin/mvn-entrypoint.sh"]
     CMD ["mvn"]
-  EOFDOCK
+EOFDOCK
   docker build --tag maven_build:$dockerVersion localrun/dockerbuild/
   {% else %}
   dockerImage=maven

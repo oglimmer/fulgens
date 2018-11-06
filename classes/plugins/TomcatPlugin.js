@@ -117,7 +117,7 @@ class TomcatPlugin extends BasePlugin {
       softwareComponentName,
       Artifact,
       storeFileAndExportEnvVar: configFiles.map(f => f.storeFileAndExportEnvVar()).join('\n'),
-      storeFileForDocker: configFiles.map(f => f.storeFileForDocker('dockerTomcatExtRef')).join('\n'),
+      writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic('dockerTomcatExtRef')).join('\n'),
       mountToDocker: configFiles.map(f => f.mountToDocker('/usr/local/tomcat/webapps')).join('\n')
     });
 

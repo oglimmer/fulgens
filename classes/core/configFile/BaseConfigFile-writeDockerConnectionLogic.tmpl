@@ -17,13 +17,4 @@ elif [ "$TYPE_SOURCE_{{sourceName|upper}}" == "local" ]; then
 fi
 {% endfor %}
 
-cat <<- EOT{{TmpFolder}} > localrun/{{TmpFolder}}/{{Name}}
-{% for line in Content %}
-  {% set connToReplace = connectionsContainsKey(line) %}
-  {% if connToReplace %}
-    {{connToReplace.Var}}=$REPLVAR{{connToReplace.VarRpl}}
-  {% else %}
-    {{line}}
-  {% endif %}
-{% endfor %}
-EOT{{TmpFolder}}
+{{createFile()}}

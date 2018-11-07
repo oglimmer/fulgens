@@ -61,7 +61,6 @@ class NodePlugin extends BasePlugin {
       typeSourceVarName,
       Artifact,
       NodeParam,
-      EnvVars,
       ExposedPort,
       configFiles,
       softwareComponentName,

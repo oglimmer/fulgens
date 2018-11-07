@@ -8,7 +8,7 @@ const BasePlugin = require('./BasePlugin');
 
 const dependencyManager = require('../core/DependencyManager');
 
-const DEFAULT_DOCKER_VERSION = '3-jdk-10';
+const DEFAULT_DOCKER_VERSION = '3-jdk-11';
 
 class MvnPlugin extends BasePlugin {
 
@@ -25,10 +25,10 @@ class MvnPlugin extends BasePlugin {
 
     optionsBuilder.add('b', 'local|docker:version', 'BUILD',
       `build locally (default) or within a maven image on docker, the default image is ${DEFAULT_DOCKER_VERSION}`,
-      [ 'docker:[3-jdk-8|3-jdk-9|3-jdk-10] #do a docker based build, uses \\`maven:3-jdk-10\\` image',
+      [ 'docker:[3-jdk-8|3-jdk-9|3-jdk-10|3-jdk-11] #do a docker based build, uses \\`maven:3-jdk-10\\` image',
         'local #do a local build, would respect -j']);
 
-    const { Mvn, BeforeBuild = [], AfterBuild = [] } = userConfig.software[softwareComponentName];
+    const { Mvn, BeforeBuild = [], AfterBuild = [], EnvVars = [] } = userConfig.software[softwareComponentName];
     const Goal = Mvn && Mvn.Goal ? Mvn.Goal.replace('$$TMP$$', 'localrun') : 'package';
     const GoalIgnoreClean = Mvn && Mvn.GoalIgnoreClean ? true : false;
 
@@ -47,7 +47,9 @@ class MvnPlugin extends BasePlugin {
       DEFAULT_DOCKER_VERSION,
       dependencyManager,
       BeforeBuild: rpl(BeforeBuild),
-      AfterBuild: rpl(AfterBuild)
+      AfterBuild: rpl(AfterBuild),
+      AllEnvVarsDocker: 'ENV ' + EnvVars.join(' '),
+      AllEnvVarsShell: EnvVars.map(p => `export ${p}`).join('\n'),
     });
   }
 

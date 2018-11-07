@@ -29,24 +29,23 @@ if [[ "$BUILD" == docker* ]]; then
   dockerImage=maven_build
   mkdir -p localrun/dockerbuild
   cat <<- EOFDOCK > localrun/dockerbuild/Dockerfile
-    FROM maven:$dockerVersion
+    FROM {{DockerImage}}:$dockerVersion
     RUN apt-get update && \\ {{dependencyManager.getAptBuild()}} && \\
       apt-get clean && \\
       rm -rf /tmp/* /var/tmp/* /var/lib/apt/archive/* /var/lib/apt/lists/*
     RUN {{dependencyManager.getNpmBuild()}}
-    {{AllEnvVarsDocker}}
     ENTRYPOINT ["/usr/local/bin/mvn-entrypoint.sh"]
     CMD ["mvn"]
 EOFDOCK
   docker build --tag maven_build:$dockerVersion localrun/dockerbuild/
   {% else %}
-  dockerImage=maven
+  dockerImage={{DockerImage}}
   {% endif %}
 
   f_build() {
     if [ -n "$VERBOSE" ]; then echo "pwd=$(pwd)"; echo "docker run --rm -v $(pwd):/usr/src/build -v $(pwd)/localrun/.m2:/root/.m2 -w /usr/src/build $dockerImage:$dockerVersion mvn {{GoalIgnoreClean}} $MVN_OPTS {{Goal}}"; fi
     {{BeforeBuild}}
-    docker run --rm -v "$(pwd)":/usr/src/build -v "$(pwd)/localrun/.m2":/root/.m2 -w /usr/src/build $dockerImage:$dockerVersion mvn {{GoalIgnoreClean}} $MVN_OPTS {{Goal}}
+    docker run --rm {{AllEnvVarsDocker}} -v "$(pwd)":/usr/src/build -v "$(pwd)/localrun/.m2":/root/.m2 -w /usr/src/build $dockerImage:$dockerVersion mvn {{GoalIgnoreClean}} $MVN_OPTS {{Goal}}
     {{AfterBuild}}
   }
 fi   

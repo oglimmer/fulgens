@@ -28,7 +28,7 @@ class TomcatPlugin extends BasePlugin {
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
     super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
-    const { Deploy, Lib, SourceTypes = ['docker','download','local'] } = userConfig.software[softwareComponentName];
+    const { Deploy, Lib, EnvVars = [], SourceTypes = ['docker','download','local'], DockerImage = 'tomcat', ExposedPort = '8080' } = userConfig.software[softwareComponentName];
     const { Artifact } = userConfig.software[Deploy];
 
     const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
@@ -48,7 +48,7 @@ class TomcatPlugin extends BasePlugin {
     SourceTypes.forEach(s => {
       switch(s) {
         case 'docker':
-          optionsBuilderData.push(`${softwareComponentName}:docker:[7|8|9] #start docker image tomcat:X and run this build within it`);
+          optionsBuilderData.push(`${softwareComponentName}:docker:[7|8|9] #start docker image ${DockerImage}:X and run this build within it`);
           availableTypesData.push({ typeName: 'docker', defaultVersion: '9' });
           cleanupSourceTypesData.push({
             name: 'docker',
@@ -116,6 +116,10 @@ class TomcatPlugin extends BasePlugin {
       pidFile,
       softwareComponentName,
       Artifact,
+      DockerImage,
+      ExposedPort,
+      AllEnvVarsTomcat: 'JAVA_OPTS="' + EnvVars.map(p => `-D${p}`).join(' ') + '"',
+      AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
       storeFileAndExportEnvVar: configFiles.map(f => f.storeFileAndExportEnvVar()).join('\n'),
       writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic('dockerTomcatExtRef')).join('\n'),
       mountToDocker: configFiles.map(f => f.mountToDocker('/usr/local/tomcat/webapps')).join('\n')

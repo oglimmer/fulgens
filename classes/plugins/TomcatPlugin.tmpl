@@ -55,6 +55,7 @@ if [ "${{typeSourceVarName}}" == "download" ]; then
   # start tomcat
   if [ ! -f "{{pidFile}}" ]; then
     {{storeFileAndExportEnvVar}}
+    {{AllEnvVarsTomcat}}
     ./localrun/apache-tomcat-$TOMCAT_VERSION/bin/startup.sh
     echo "download">{{pidFile}}
   fi
@@ -68,9 +69,9 @@ if [ "${{typeSourceVarName}}" == "docker" ]; then
   fi
   if [ ! -f "{{pidFile}}" ]; then
     {{writeDockerConnectionLogic}}
-    dockerContainerID{{softwareComponentName}}=$(docker run --rm -d $dockerTomcatExtRef ${dockerAddLibRefs[@]} -p 8080:8080 \
-        {{mountToDocker}} \
-        -v "$(pwd)/localrun/webapps":/usr/local/tomcat/webapps tomcat:${{typeSourceVarName}}_VERSION)
+    dockerContainerID{{softwareComponentName}}=$(docker run --rm -d $dockerTomcatExtRef ${dockerAddLibRefs[@]} -p {{ExposedPort}}:{{ExposedPort}} \
+        {{mountToDocker}} {{AllEnvVarsDocker}} \
+        -v "$(pwd)/localrun/webapps":/usr/local/tomcat/webapps {{DockerImage}}:${{typeSourceVarName}}_VERSION)
     echo "$dockerContainerID{{softwareComponentName}}">{{pidFile}}
   else
     dockerContainerID{{softwareComponentName}}=$(<{{pidFile}})

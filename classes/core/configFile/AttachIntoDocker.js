@@ -31,7 +31,7 @@ class AttachIntoDocker extends BaseConfigFile {
   }
 
   /* docker */
-  makeDockerVolume() {
+  mountToDocker() {
     return `-v "\$(pwd)/localrun/${this.TmpFolder}:${this.AttachIntoDocker}"`;
   }
 

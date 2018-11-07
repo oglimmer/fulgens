@@ -17,12 +17,14 @@ class NodePlugin extends BasePlugin {
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
     super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
+    const { Start, Node, EnvVars = [], ExposedPort = '3000', BeforeBuild = [], AfterBuild = [], DockerImage = 'node' } = userConfig.software[softwareComponentName];
+
     dependencycheckBuilder.add('node --version 1>/dev/null');
     dependencycheckBuilder.add('npm --version 1>/dev/null');
 
     optionsBuilder.addDetails('t', [
       `${softwareComponentName}:local #reuse a local node installation`,
-      `${softwareComponentName}:docker:[6|8|10] #start docker image node:X`
+      `${softwareComponentName}:docker:[6|8|10] #start docker image ${DockerImage}:X`
     ]);
 
     runtimeConfiguration.setTail('nodejs');
@@ -48,7 +50,6 @@ class NodePlugin extends BasePlugin {
       }]
     });
 
-    const { Artifact, Node, EnvVars = [], ExposedPort = '3000' } = userConfig.software[softwareComponentName];
     const Build = Node && Node.Build ? Node.Build : 'npm i --save-prod';
     const configFiles = runtimeConfiguration.getConfigFiles(softwareComponentName);
     const NodeParam = Node ? Node.Param : '';
@@ -59,12 +60,15 @@ class NodePlugin extends BasePlugin {
       ...this.nunjucksObj(),
       Build,
       typeSourceVarName,
-      Artifact,
+      Start,
       NodeParam,
       ExposedPort,
       configFiles,
       softwareComponentName,
       pidFile,
+      BeforeBuild,
+      AfterBuild,
+      DockerImage,
       writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic('dockerNodeExtRef')).join('\n'),
       mountToDocker: configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n'),
       storeFileAndExportEnvVar: configFiles.map(f => f.storeFileAndExportEnvVar()).join('\n'),

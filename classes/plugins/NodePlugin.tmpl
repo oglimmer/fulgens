@@ -11,7 +11,9 @@
 
 f_build() {
   if [ "$VERBOSE" == "YES" ]; then echo "npm i --save-prod"; fi
+  {{BeforeBuild}}
   {{Build}}
+  {{AfterBuild}}
 }
 if [ "$SKIP_BUILD" != "YES" ]; then
   if [ -n "$CLEAN" ]; then
@@ -34,10 +36,10 @@ if [ "${{typeSourceVarName}}" == "docker" ]; then
   #fi
   if [ ! -f "{{pidFile}}" ]; then
     {{writeDockerConnectionLogic}}
-    if [ -n "$VERBOSE" ]; then echo "docker run --rm -d $dockerNodeExtRef -p {{ExposedPort}}:{{ExposedPort}} {{mountToDocker}} {{AllEnvVarsDocker}} -v $(pwd):/home/node/exec_env -w /home/node/exec_env node:${{typeSourceVarName}}_VERSION node {{NodeParam}} ./{{Artifact}}"; fi
+    if [ -n "$VERBOSE" ]; then echo "docker run --rm -d $dockerNodeExtRef -p {{ExposedPort}}:{{ExposedPort}} {{mountToDocker}} {{AllEnvVarsDocker}} -v $(pwd):/home/node/exec_env -w /home/node/exec_env {{DockerImage}}:${{typeSourceVarName}}_VERSION node {{NodeParam}} ./{{Start}}"; fi
     dockerContainerID{{softwareComponentName}}=$(docker run --rm -d $dockerNodeExtRef -p {{ExposedPort}}:{{ExposedPort}} \
         {{mountToDocker}} {{AllEnvVarsDocker}} \
-        -v "$(pwd)":/home/node/exec_env -w /home/node/exec_env node:${{typeSourceVarName}}_VERSION node {{NodeParam}} ./{{Artifact}})
+        -v "$(pwd)":/home/node/exec_env -w /home/node/exec_env {{DockerImage}}:${{typeSourceVarName}}_VERSION node {{NodeParam}} ./{{Start}})
     echo "$dockerContainerID{{softwareComponentName}}">{{pidFile}}
   else
     dockerContainerID{{softwareComponentName}}=$(<{{pidFile}})
@@ -53,7 +55,7 @@ if [ "${{typeSourceVarName}}" == "local" ]; then
   if [ ! -f "{{pidFile}}" ]; then
     cat <<-'    EOF' > localrun/noint.js
       process.on( "SIGINT", function() {} );
-      require('../{{Artifact}}');
+      require('../{{Start}}');
     EOF
     if [ -n "$VERBOSE" ]; then echo "{{AllEnvVarsNode}} node {{NodeParam}} localrun/noint.js >localrun/noint.out 2>&1 &"; fi
     {{storeFileAndExportEnvVar}}

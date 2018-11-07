@@ -19,9 +19,9 @@ if [ "${{typeSourceVarName}}" == "docker" ]; then
   # run in docker
   if [ ! -f "{{pidFile}}" ]; then
     {{writeDockerConnectionLogic}}
-    if [ "$VERBOSE" == "YES" ]; then echo "docker run --rm -d -p 5984:5984 $dockerCouchdbExtRef {{makeDockerVolume}} couchdb:${{typeSourceVarName}}_VERSION"; fi
-    {{dcId}}=$(docker run --rm -d -p 5984:5984 $dockerCouchdbExtRef \
-      {{makeDockerVolume}} couchdb:${{typeSourceVarName}}_VERSION)
+    if [ "$VERBOSE" == "YES" ]; then echo "docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} $dockerCouchdbExtRef {{AllEnvVarsDocker}} {{mountToDocker}} {{DockerImage}}:${{typeSourceVarName}}_VERSION"; fi
+    {{dcId}}=$(docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} $dockerCouchdbExtRef \
+      {{AllEnvVarsDocker}} {{mountToDocker}} {{DockerImage}}:${{typeSourceVarName}}_VERSION)
     echo "${{dcId}}">{{pidFile}}
   else
     {{dcId}}=$(<{{pidFile}})
@@ -36,18 +36,18 @@ fi
 
 {{ poststart }}
 
-while [ "$(curl --write-out %{http_code} --silent --output /dev/null http://localhost:5984)" != "200" ]; do
+while [ "$(curl --write-out %{http_code} --silent --output /dev/null http://localhost:{{ExposedPort}})" != "200" ]; do
   echo "waiting for couchdb..."
   sleep 1
 done
 
 {% for couchDBEle in couchDBs %}
 
-if [[ "$(curl -s http://localhost:5984/{{couchDBEle.Schema}})" =~ .*"error".*"not_found".* ]]; then
-	curl -X PUT http://localhost:5984/{{couchDBEle.Schema}}
+if [[ "$(curl -s http://localhost:{{ExposedPort}}/{{couchDBEle.Schema}})" =~ .*"error".*"not_found".* ]]; then
+	curl -X PUT http://localhost:{{ExposedPort}}/{{couchDBEle.Schema}}
 
 	{% for e in couchDBEle.Create %}
-	curl -X POST -H "Content-Type: application/json" -d @{{e}} http://localhost:5984/{{couchDBEle.Schema}}
+	curl -X POST -H "Content-Type: application/json" -d @{{e}} http://localhost:{{ExposedPort}}/{{couchDBEle.Schema}}
 	{% endfor %}
 fi
 

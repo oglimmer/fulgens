@@ -18,11 +18,13 @@ class RedisPlugin extends BasePlugin {
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
     super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
+    const { EnvVars = [], DockerImage = 'redis', ExposedPort = '6379' } = userConfig.software[softwareComponentName];
+
     dependencycheckBuilder.add('docker --version 1>/dev/null');
     
     optionsBuilder.addDetails('t', [
       `${softwareComponentName}:local #reuse a local, running Redis installation, does not start/stop this Redis`,
-      `${softwareComponentName}:docker:[3|4] #start docker image redis:X`]);
+      `${softwareComponentName}:docker:[3|4] #start docker image ${DockerImage}:X`]);
 
     const configFiles = runtimeConfiguration.getConfigFiles(softwareComponentName);
 
@@ -54,8 +56,10 @@ class RedisPlugin extends BasePlugin {
       softwareComponentName,
       pidFile,
       dcId,
+      DockerImage,
+      AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
       writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic('dockerRedisdbExtRef')).join('\n'),
-      makeDockerVolume: configFiles.map(f => f.makeDockerVolume()).join('\n')
+      mountToDocker: configFiles.map(f => f.mountToDocker()).join('\n')
     });
 
   }

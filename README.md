@@ -181,7 +181,7 @@ Example:
 software: {
 	"node": {
       Source: "node",
-      Artifact: "startServer.js",
+      Start: "startServer.js",
       ExposedPort: 8080,
       configFile: {
         Name: "citybuilder.properties",
@@ -466,13 +466,14 @@ module.exports = {
 
 # Internal documantation
 
+[Plugin overview](https://docs.google.com/spreadsheets/d/1hlUBx-VqfPDbTl2bjku6NShqFiDKP0lqODsQ2fB8GVY/edit#gid=1313054163)
+
 ## TYPE_SOURCE
 
   - docker
   - download
   - local source (for buildable software)
   - local installation (for 3rd party software)
-  - git
 
 ## Phases
 

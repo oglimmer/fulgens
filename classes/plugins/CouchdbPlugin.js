@@ -18,13 +18,13 @@ class CouchdbPlugin extends BasePlugin {
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
     super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
-    const CouchDB = userConfig.software[softwareComponentName].CouchDB;
+    const { CouchDB, EnvVars = [], DockerImage = 'couchdb', ExposedPort = '5984' } = userConfig.software[softwareComponentName];
 
     dependencycheckBuilder.add('docker --version 1>/dev/null');
     
     optionsBuilder.addDetails('t', [
       `${softwareComponentName}:local #reuse a local, running CouchDB installation, does not start/stop this CouchDB`,
-      `${softwareComponentName}:docker:[1.7|2] #start docker image couchdb:X`]);
+      `${softwareComponentName}:docker:[1.7|2] #start docker image ${DockerImage}:X`]);
 
     const configFiles = runtimeConfiguration.getConfigFiles(softwareComponentName);
 
@@ -55,10 +55,13 @@ class CouchdbPlugin extends BasePlugin {
       typeSourceVarName,
       pidFile,
       dcId,
+      DockerImage,
       softwareComponentName,
+      ExposedPort,
+      AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
       couchDBs: Array.isArray(CouchDB) ? CouchDB : (CouchDB ? [CouchDB] : []),
       writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic('dockerCouchdbExtRef')).join('\n'),
-      makeDockerVolume: configFiles.map(f => f.makeDockerVolume()).join('\n'),
+      mountToDocker: configFiles.map(f => f.mountToDocker()).join('\n'),
     });
   }
 

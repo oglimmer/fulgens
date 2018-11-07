@@ -17,14 +17,14 @@ class MysqlPlugin extends BasePlugin {
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
     super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
-    const { Mysql } = userConfig.software[softwareComponentName];
+    const { Mysql, EnvVars = [], DockerImage = 'mysql', ExposedPort = '3306' } = userConfig.software[softwareComponentName];
 
     dependencycheckBuilder.add('docker --version 1>/dev/null');
     dependencycheckBuilder.add('mysql --version 1>/dev/null');
  
     optionsBuilder.addDetails('t', [
       `${softwareComponentName}:local #reuse a local, running MySQL installation, does not start/stop this MySQL`,
-      `${softwareComponentName}:docker:[5|8] #start docker image mysql:X`
+      `${softwareComponentName}:docker:[5|8] #start docker image ${DockerImage}:X`
     ]);
 
     sourceTypeBuilder.add(this, {
@@ -54,9 +54,12 @@ class MysqlPlugin extends BasePlugin {
       typeSourceVarName,
       softwareComponentName,
       configFiles,
+      DockerImage,
+      ExposedPort,
       Mysql: Mysql ? Mysql : {},
+      AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
       writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic('dockerMysqlExtRef')).join('\n'),
-      makeDockerVolume: configFiles.map(f => f.makeDockerVolume()).join('\n')
+      mountToDocker: configFiles.map(f => f.mountToDocker()).join('\n')
     });
 
   }

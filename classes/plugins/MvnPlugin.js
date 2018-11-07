@@ -18,14 +18,14 @@ class MvnPlugin extends BasePlugin {
 
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
     super.exec(softwareComponentName, userConfig, runtimeConfiguration);
-    // May provide:
-    // const artifact = userConfig.software[softwareComponentName].Artifact;
+    
+    const { DockerImage = 'maven' } = userConfig.software[softwareComponentName];
 
     dependencycheckBuilder.add('mvn --version 1>/dev/null');
 
     optionsBuilder.add('b', 'local|docker:version', 'BUILD',
       `build locally (default) or within a maven image on docker, the default image is ${DEFAULT_DOCKER_VERSION}`,
-      [ 'docker:[3-jdk-8|3-jdk-9|3-jdk-10|3-jdk-11] #do a docker based build, uses \\`maven:3-jdk-10\\` image',
+      [ `docker:[3-jdk-8|3-jdk-9|3-jdk-10|3-jdk-11] #do a docker based build, uses ${DockerImage}:${DEFAULT_DOCKER_VERSION} image`,
         'local #do a local build, would respect -j']);
 
     const { Mvn, BeforeBuild = [], AfterBuild = [], EnvVars = [] } = userConfig.software[softwareComponentName];
@@ -45,10 +45,11 @@ class MvnPlugin extends BasePlugin {
       GoalIgnoreClean: GoalIgnoreClean ? '' : '$MVN_CLEAN',
       Goal,
       DEFAULT_DOCKER_VERSION,
+      DockerImage,
       dependencyManager,
       BeforeBuild: rpl(BeforeBuild),
       AfterBuild: rpl(AfterBuild),
-      AllEnvVarsDocker: 'ENV ' + EnvVars.join(' '),
+      AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
       AllEnvVarsShell: EnvVars.map(p => `export ${p}`).join('\n'),
     });
   }

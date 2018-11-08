@@ -13,6 +13,7 @@ cat >Fulgensfile.js <<EOF
 module.exports = {
 
   config: {
+    FulgensVersion: "1.0.0",
     Name: "example",
   },
 

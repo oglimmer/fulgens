@@ -68,6 +68,11 @@ if (!userConfig || Object.entries(userConfig).length === 0) {
   process.exit(1);
 }
 
+if (!userConfig.config.FulgensVersion || userConfig.config.FulgensVersion != '1.0.0') {
+  console.error('Missing or wrong FulgensVersion!');
+  process.exit(1);  
+}
+
 var env = nunjucks.configure(path.resolve(__dirname), { autoescape: false });
 env.addFilter('map', (str, name) => str.map(e => e[name]));
 env.addFilter('debug', (str) => { console.error(str); return str; });

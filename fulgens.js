@@ -2,8 +2,8 @@
 
 const path = require('path');
 const fs = require('fs');
-
 const nunjucks = require('nunjucks');
+const minimist = require('minimist');
 
 const functions = require('./classes/phase/functions');
 const cleanup = require('./classes/phase/cleanup');
@@ -19,22 +19,42 @@ const pluginFactory = require('./classes/plugins/factory');
 
 const RuntimeConfiguration = require('./classes/core/RuntimeConfiguration')
 
-var displayFilename;
-var systemFilename;
+var argv;
 if (process.argv[0].endsWith('node') || process.argv[0].endsWith('nodejs')) {
-  displayFilename = process.argv[2];
+  argv = minimist(process.argv.slice(2));
 } else {
-  displayFilename = process.argv[1];
+  argv = minimist(process.argv.slice(1));
 }
+
+if (argv._.length > 1) {
+  console.error('More than one filename is not allowed!');
+  process.exit(1);
+}
+
+if (argv.v) {
+  var pjson = require('./package.json');
+  console.log(`fulgens version ${pjson.version}`);
+  process.exit(1); 
+}
+if (argv.h) {
+  console.log(`usage: fulgens [-v] [-h] [<Fulgensfile>]
+
+Fulgens looks for 'Fulgensfile' or 'Fulgensfile.js' in the current directory if <Fulgensfile> is not defined.
+
+Safe the generated bash script into a file or piped it into bash via \`fulgens | bash -s -- -h\` (uses -h on the generated script)
+
+See https://www.npmjs.com/package/fulgens for more help and the definition of a Fulgensfile.`);
+  process.exit(1); 
+}
+
+var displayFilename = argv._.length > 0 ? argv._[0] : '';
 if (!displayFilename) {
   displayFilename = "./Fulgensfile";
   if (!fs.existsSync(path.resolve(displayFilename))) {
     displayFilename = "./Fulgensfile.js";
   }
-} else {
-  
 }
-systemFilename = path.resolve(displayFilename);
+const systemFilename = path.resolve(displayFilename);
 
 if (!fs.existsSync(systemFilename)) {
   console.error(`File ${displayFilename} not found!`);

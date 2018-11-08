@@ -16,7 +16,7 @@
   "definitions": {
     "config": {
       "properties": {
-        "FulgensVersion": {
+        "SchemaVersion": {
           "type": "string"
         },
         "Name": {
@@ -35,7 +35,7 @@
         }
       },
       "additionalProperties": false,
-      "required": [ "Name", "FulgensVersion" ],
+      "required": [ "Name", "SchemaVersion" ],
       "definitions": {
         "Vagrant": {
           "properties": {

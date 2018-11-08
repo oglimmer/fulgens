@@ -24,7 +24,7 @@ Create a Web project via: `mvn archetype:generate -DgroupId=de.oglimmer -Dartifa
 module.exports = {
 
   config: {
-  	FulgensVersion: "1.0.0",
+  	SchemaVersion: "1.0.0",
     Name: "example",
   },
 

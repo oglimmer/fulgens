@@ -68,8 +68,8 @@ if (!userConfig || Object.entries(userConfig).length === 0) {
   process.exit(1);
 }
 
-if (!userConfig.config.FulgensVersion || userConfig.config.FulgensVersion != '1.0.0') {
-  console.error('Missing or wrong FulgensVersion!');
+if (!userConfig.config.SchemaVersion || userConfig.config.SchemaVersion != '1.0.0') {
+  console.error('Missing or wrong SchemaVersion!');
   process.exit(1);  
 }
 

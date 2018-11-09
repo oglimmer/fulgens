@@ -15,9 +15,10 @@ Vagrant.configure("2") do |config|
   end
   config.vm.provision "shell", inline: <<-SHELL
   	{% for line in Vagrant.BeforeInstall %}{{line}}{% endfor %}
-    apt-get update
-    apt-get install -y {{Vagrant.Install}}
+    apt-get update    
+    {{dependencyManager.getAptBuild()}}
     {% for line in Vagrant.AfterInstall %}{{line}}{% endfor %}
+    {{dependencyManager.getNpmBuild()}}
     echo "Now continue with..."
     echo "\$ cd /share_host"
     echo "\$ sudo ./run_local.sh -f"

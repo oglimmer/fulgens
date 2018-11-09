@@ -33,7 +33,7 @@ if [[ "$BUILD" == docker* ]]; then
     RUN apt-get update && \\ {{dependencyManager.getAptBuild()}} && \\
       apt-get clean && \\
       rm -rf /tmp/* /var/tmp/* /var/lib/apt/archive/* /var/lib/apt/lists/*
-    RUN {{dependencyManager.getNpmBuild()}}
+    {{dependencyManager.getNpmBuild('RUN')}}
     ENTRYPOINT ["/usr/local/bin/mvn-entrypoint.sh"]
     CMD ["mvn"]
 EOFDOCK

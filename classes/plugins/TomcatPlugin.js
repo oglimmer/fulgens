@@ -118,7 +118,7 @@ class TomcatPlugin extends BasePlugin {
       Artifact,
       DockerImage,
       ExposedPort,
-      AllEnvVarsTomcat: 'JAVA_OPTS="' + EnvVars.map(p => `-D${p}`).join(' ') + '"',
+      AllEnvVarsTomcat: 'export JAVA_OPTS="$JAVA_OPTS ' + EnvVars.map(p => `-D${p}`).join(' ') + '"',
       AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
       storeFileAndExportEnvVar: configFiles.map(f => f.storeFileAndExportEnvVar()).join('\n'),
       writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic('dockerTomcatExtRef')).join('\n'),

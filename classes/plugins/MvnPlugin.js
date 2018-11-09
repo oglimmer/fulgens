@@ -6,7 +6,7 @@ const optionsBuilder = require('../phase/options');
 
 const BasePlugin = require('./BasePlugin');
 
-const dependencyManager = require('../core/DependencyManager');
+const DependencyManager = require('../core/DependencyManager');
 
 const DEFAULT_DOCKER_VERSION = '3-jdk-11';
 
@@ -28,15 +28,18 @@ class MvnPlugin extends BasePlugin {
       [ `docker:[3-jdk-8|3-jdk-9|3-jdk-10|3-jdk-11] #do a docker based build, uses ${DockerImage}:${DEFAULT_DOCKER_VERSION} image`,
         'local #do a local build, would respect -j']);
 
+    const { BuildDependencies } = userConfig.config;
+
+    const dependencyManager = new DependencyManager();
+    if (BuildDependencies) {
+      dependencyManager.addAptBuild(BuildDependencies.Apt);
+      dependencyManager.addNpmBuild(BuildDependencies.Npm);
+    }
+
     const { Mvn, BeforeBuild = [], AfterBuild = [], EnvVars = [] } = userConfig.software[softwareComponentName];
     const Goal = Mvn && Mvn.Goal ? Mvn.Goal.replace('$$TMP$$', 'localrun') : 'package';
     const GoalIgnoreClean = Mvn && Mvn.GoalIgnoreClean ? true : false;
-
-    if (Mvn && Mvn.BuildDependencies) {
-      const bd = Mvn.BuildDependencies;
-      dependencyManager.addAptBuild(bd.Apt);
-      dependencyManager.addNpmBuild(bd.Npm);
-    }
+    const AllEnvVars = [...EnvVars, ...dependencyManager.getEnvVars()];
 
     const rpl = obj => (Array.isArray(obj)?obj:[obj]).map(e => e.replace('$$TMP$$', 'localrun')).join('\n');
 
@@ -49,8 +52,8 @@ class MvnPlugin extends BasePlugin {
       dependencyManager,
       BeforeBuild: rpl(BeforeBuild),
       AfterBuild: rpl(AfterBuild),
-      AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
-      AllEnvVarsShell: EnvVars.map(p => `export ${p}`).join('\n'),
+      AllEnvVarsDocker: AllEnvVars.map(l => l.replace('$$TMP$$', 'localrun')).map(p => `-e ${p}`).join(' '),
+      AllEnvVarsShell: AllEnvVars.map(l => l.replace('$$TMP$$', 'localrun')).map(p => `export ${p}`).join('\n'),
     });
   }
 

@@ -3,9 +3,9 @@ mkdir -p localrun/{{TmpFolder}}
 
 cat <<EOT{{TmpFolder}} > localrun/{{TmpFolder}}/{{Name}}
 {% for line in allContent %}
-	{{line}}
+{{line}}
 {% endfor %}
 {% for line in justConnectionVars %}
-	{{line}}
+{{line}}
 {% endfor %}
 EOT{{TmpFolder}}

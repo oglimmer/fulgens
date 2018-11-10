@@ -6,21 +6,21 @@ cleanup()
   echo "****************************************************************"
 
   ALL_COMPONENTS=({{componentsCode|map('pluginName')|join(' ')|lower}})
-  for keepRunningAllElement in "${ALL_COMPONENTS[@]}"; do
-    IFS=',' read -r -a array <<< "$KEEP_RUNNING"
-    found=0
-    for keepRunningToFindeElement in "${array[@]}"; do
-      if [ "$keepRunningAllElement" == "$keepRunningToFindeElement" ]; then
-        echo "Not stopping $keepRunningAllElement!"
-        found=1
+  for componentToStop in "${ALL_COMPONENTS[@]}"; do
+    IFS=',' read -r -a keepRunningArray <<< "$KEEP_RUNNING"
+    componentFoundToKeepRunning=0
+    for keepRunningToFindeElement in "${keepRunningArray[@]}"; do
+      if [ "$componentToStop" == "$keepRunningToFindeElement" ]; then
+        echo "Not stopping $componentToStop!"
+        componentFoundToKeepRunning=1
       fi
     done
-    if [ "$found" -eq 0 ]; then
+    if [ "$componentFoundToKeepRunning" -eq 0 ]; then
       {% for e in componentsCode %}
-      if [ "$keepRunningAllElement" == "{{e.pluginName|lower}}" ]; then
-        echo "Stopping $keepRunningAllElement ..."
+      if [ "$componentToStop" == "{{e.pluginName|lower}}" ]; then
+        echo "Stopping $componentToStop ..."
         {% for a in e.sourceTypes %}
-        if [ "$TYPE_SOURCE_{{e.pluginName|upper}}" == "{{a.name}}" ]; then
+        if [ "$TYPE_SOURCE_{{e.componentName|upper}}" == "{{a.name}}" ]; then
          {{a.stopCode}}
          rm -f .{{e.componentName}}Pid
         fi

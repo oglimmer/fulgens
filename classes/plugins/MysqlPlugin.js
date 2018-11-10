@@ -56,6 +56,7 @@ class MysqlPlugin extends BasePlugin {
       configFiles,
       DockerImage,
       ExposedPort,
+      pidFile,
       Mysql: Mysql ? Mysql : {},
       AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
       writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic('dockerMysqlExtRef')).join('\n'),

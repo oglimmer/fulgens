@@ -19,7 +19,7 @@ if [ "${{typeSourceVarName}}" == "docker" ]; then
   # run in docker
   if [ ! -f "{{pidFile}}" ]; then
     {{writeDockerConnectionLogic}}
-    if [ "$VERBOSE" == "YES" ]; then echo "docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} $dockerMysqlExtRef ..password.. {{AllEnvVarsDocker}} {{mountToDocker}} {{DockerImage}}:${{typeSourceVarName}}_VERSION"; fi
+    if [ "$VERBOSE" == "YES" ]; then echo "docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} {% if Mysql.RootPassword %} -e MYSQL_ROOT_PASSWORD="{{Mysql.RootPassword}}" {% else %} -e MYSQL_ALLOW_EMPTY_PASSWORD=true {% endif %} {{AllEnvVarsDocker}} {{mountToDocker}} {{DockerImage}}:${{typeSourceVarName}}_VERSION"; fi
     dockerContainerID{{softwareComponentName}}=$(docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} \
       {% if Mysql.RootPassword %} -e MYSQL_ROOT_PASSWORD="{{Mysql.RootPassword}}" {% else %} -e MYSQL_ALLOW_EMPTY_PASSWORD=true {% endif %} \
       {{AllEnvVarsDocker}} \
@@ -36,14 +36,14 @@ if [ "${{typeSourceVarName}}" == "local" ]; then
   fi
 fi
 
+{% if Mysql.RootPassword %}
+  export MYSQL_PWD="{{Mysql.RootPassword}}"
+{% endif %}
+
 while ! mysql -uroot --protocol=tcp -e "select 1" 1>/dev/null 2>&1; do
   echo "waiting for mysql..."
   sleep 3
 done
-
-{% if Mysql.RootPassword %}
-	export MYSQL_PWD="{{Mysql.RootPassword}}"
-{% endif %}
 
 {% if Mysql.Schema %}
 	mysql -uroot --protocol=tcp -NB -e "create database if not exists {{Mysql.Schema}}"

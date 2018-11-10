@@ -57,6 +57,7 @@ class RedisPlugin extends BasePlugin {
       pidFile,
       dcId,
       DockerImage,
+      ExposedPort,
       AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
       writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic('dockerRedisdbExtRef')).join('\n'),
       mountToDocker: configFiles.map(f => f.mountToDocker()).join('\n')

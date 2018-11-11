@@ -29,7 +29,7 @@ class MvnPlugin extends BasePlugin {
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
     super.exec(softwareComponentName, userConfig, runtimeConfiguration);
     
-    const { JavaVersions } = userConfig.config;
+    const { JavaVersions, UseHomeM2 } = userConfig.config;
     const { DockerImage = 'maven' } = userConfig.software[softwareComponentName];
 
     var defaultDockerVersion = JavaVersions ? `3-jdk-${maxVersion(JavaVersions)}` : '3-jdk-11';
@@ -63,6 +63,7 @@ class MvnPlugin extends BasePlugin {
       defaultDockerVersion,
       DockerImage,
       dependencyManager,
+      m2Mapping: UseHomeM2 ? '"$HOME/.m2"' : '"$(pwd)/localrun/.m2"',
       BeforeBuild: rpl(BeforeBuild),
       AfterBuild: rpl(AfterBuild),
       AllEnvVarsDocker: AllEnvVars.map(l => l.replace('$$TMP$$', 'localrun')).map(p => `-e ${p}`).join(' '),

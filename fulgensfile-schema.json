@@ -33,6 +33,9 @@
           },
           "uniqueItems": true              
         },
+        "UseHomeM2": {
+          "type": "boolean"
+        },
         "BuildDependencies": {
           "$ref": "#/definitions/config/definitions/BuildDependencies"
         },

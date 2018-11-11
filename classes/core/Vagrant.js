@@ -9,7 +9,7 @@ const DependencyManager = require('../core/dependencyManager');
 class Vagrant {
 	
 	static add(userConfig) {
-		const { BuildDependencies, Vagrant } = userConfig.config;
+		const { BuildDependencies, Vagrant, UseHomeM2 } = userConfig.config;
 
 		const dependencyManager = new DependencyManager();
 		if (BuildDependencies) {
@@ -23,7 +23,8 @@ class Vagrant {
 		optionsBuilder.add('v', '', 'VAGRANT', 'start VirtualBox via vagrant, install all dependencies, ssh into the VM and run');
 		prepareBuilder.add(nunjucks.render('classes/core/Vagrant.tmpl', {
 			Vagrant,
-			dependencyManager
+			dependencyManager,
+			UseHomeM2
 		}));
 	}
 

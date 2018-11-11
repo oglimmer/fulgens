@@ -25,6 +25,7 @@ if [ "${{typeSourceVarName}}" == "local" ]; then
 	  echo "${{pid}}">"$BASE_PWD/{{pidFile}}"
 	else 
 	  {{pid}}=$(<"$BASE_PWD/{{pidFile}}")
+	  echo "Reusing already running instance ${{pid}}"
 	fi
 	cd "$OPWD"
 fi
@@ -43,6 +44,7 @@ if [ "${{typeSourceVarName}}" == "docker" ]; then
 	  echo "${{dcId}}">"$BASE_PWD/{{pidFile}}"
 	else
 	  {{dcId}}=$(<"$BASE_PWD/{{pidFile}}")
+	  echo "Reusing already running instance ${{dcId}}"
 	fi
 fi
 

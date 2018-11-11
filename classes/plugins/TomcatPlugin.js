@@ -45,16 +45,19 @@ class TomcatPlugin extends BasePlugin {
     var dockerLibsToAdd = '';
     var downloadLibsToCopy = '';
 
-    SourceTypes.forEach(s => {
-      switch(s) {
+    SourceTypes.forEach(sourceType => {
+      const sourceTypeMain = sourceType.indexOf(':') === -1 ? sourceType : sourceType.substring(0, sourceType.indexOf(':'));
+      const sourceTypeVersion = sourceType.indexOf(':') === -1 ? null : sourceType.substring(sourceType.indexOf(':') + 1);
+      switch(sourceTypeMain) {
         case 'docker':
-          optionsBuilderData.push(`${softwareComponentName}:docker:[7|8|9] #start docker image ${DockerImage}:X and run this build within it`);
-          availableTypesData.push({ typeName: 'docker', defaultVersion: '9' });
+
+          optionsBuilderData.push(`${softwareComponentName}:docker:${sourceTypeVersion?sourceTypeVersion:'[7|8|9]'} #start docker image ${DockerImage}:X and run this build within it`);
+          availableTypesData.push({ typeName: 'docker', defaultVersion: (sourceTypeVersion?sourceTypeVersion:'9') });
           cleanupSourceTypesData.push({
             name: 'docker',
             stopCode: 'docker rm -f $dockerContainerID' + softwareComponentName
           });
-          if (!SourceTypes.find(e => e === 'download')) {
+          if (!SourceTypes.find(e => e.indexOf('download') === 0)) {
             defaultTypeData = 'docker';
           }
           if (Lib) {
@@ -65,8 +68,8 @@ class TomcatPlugin extends BasePlugin {
           
         break;
         case 'download':
-          optionsBuilderData.push(`${softwareComponentName}:download:[7|8|9] #download tomcat version x and run this build within it, would respect -j`);
-          availableTypesData.push({ typeName: 'download', defaultVersion: '9', code: downloadCode(typeSourceVarName) });
+          optionsBuilderData.push(`${softwareComponentName}:download:${sourceTypeVersion?sourceTypeVersion:'[7|8|9]'} #download tomcat version x and run this build within it, would respect -j`);
+          availableTypesData.push({ typeName: 'download', defaultVersion: (sourceTypeVersion?sourceTypeVersion:'9'), code: downloadCode(typeSourceVarName) });
           cleanupSourceTypesData.push({
             name: 'download',
             stopCode: './localrun/apache-tomcat-$TOMCAT_VERSION/bin/shutdown.sh'
@@ -81,12 +84,12 @@ class TomcatPlugin extends BasePlugin {
         case 'local':
           optionsBuilderData.push(`${softwareComponentName}:local:/usr/lib/tomcat #reuse tomcat installation from /usr/lib/tomcat, does not start/stop this tomcat`);
           availableTypesData.push({ typeName: 'local', defaultVersion: '' });
-          if (!SourceTypes.find(e => e === 'download') && !SourceTypes.find(e => e === 'docker')) {
+          if (!SourceTypes.find(e => e.indexOf('download') === 0) && !SourceTypes.find(e => e.indexOf('docker') === 0)) {
             defaultTypeData = 'local';
           }          
         break;
         default:
-          throw Error(`SourceType ${s} not supported for Tomcat`);
+          throw Error(`SourceType ${sourceTypeMain} not supported for Tomcat`);
       }
     });
 

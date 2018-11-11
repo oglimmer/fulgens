@@ -27,6 +27,7 @@ if [ "${{typeSourceVarName}}" == "docker" ]; then
     echo "$dockerContainerID{{softwareComponentName}}">{{pidFile}}
   else
     dockerContainerID{{softwareComponentName}}=$(<{{pidFile}})
+    echo "Reusing already running instance $dockerContainerID{{softwareComponentName}}"
   fi
 fi
 if [ "${{typeSourceVarName}}" == "local" ]; then

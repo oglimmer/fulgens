@@ -58,6 +58,8 @@ if [ "${{typeSourceVarName}}" == "download" ]; then
     {{AllEnvVarsTomcat}}
     ./localrun/apache-tomcat-$TOMCAT_VERSION/bin/startup.sh
     echo "download">{{pidFile}}
+  else
+    echo "Reusing already running instance"
   fi
   tailCmd="tail -f ./localrun/apache-tomcat-$TOMCAT_VERSION/logs/catalina.out"
 fi
@@ -75,6 +77,7 @@ if [ "${{typeSourceVarName}}" == "docker" ]; then
     echo "$dockerContainerID{{softwareComponentName}}">{{pidFile}}
   else
     dockerContainerID{{softwareComponentName}}=$(<{{pidFile}})
+    echo "Reusing already running instance $dockerContainerID{{softwareComponentName}}"
   fi
   tailCmd="docker logs -f $dockerContainerID{{softwareComponentName}}"
 fi

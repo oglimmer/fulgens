@@ -43,6 +43,7 @@ if [ "${{typeSourceVarName}}" == "docker" ]; then
     echo "$dockerContainerID{{softwareComponentName}}">{{pidFile}}
   else
     dockerContainerID{{softwareComponentName}}=$(<{{pidFile}})
+    echo "Reusing already running instance $dockerContainerID{{softwareComponentName}}"
   fi
   tailCmd="docker logs -f $dockerContainerID{{softwareComponentName}}"
 fi
@@ -64,6 +65,7 @@ if [ "${{typeSourceVarName}}" == "local" ]; then
     echo "$processId{{softwareComponentName}}">{{pidFile}}
   else
     processId{{softwareComponentName}}=$(<{{pidFile}})
+    echo "Reusing already running instance $processId{{softwareComponentName}}"
   fi
   tailCmd="tail -f localrun/noint.out"
 fi

@@ -20,7 +20,11 @@ class BaseBuilder {
   }
 
   build() {
-    return `\n${Strings.headerPhase(this)}\n${this.buildInternal()}\n\n`;
+    const buildBuff = this.buildInternal();
+    //if (!buildBuff) {
+    //  return '';
+    //}
+    return `\n${Strings.headerPhase(this)}\n${buildBuff}\n\n`;
   }
 
   buildInternal() {

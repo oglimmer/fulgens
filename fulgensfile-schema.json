@@ -32,6 +32,17 @@
             "type": "string"
           },
           "uniqueItems": true              
+        },
+        "BuildDependencies": {
+          "$ref": "#/definitions/config/definitions/BuildDependencies"
+        },
+        "Dependencycheck": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
         }
       },
       "additionalProperties": false,
@@ -64,6 +75,27 @@
           },
           "additionalProperties": false,
           "required": [ "Box" ]
+        },
+        "BuildDependencies": {
+          "properties": {
+            "Apt": {
+              "type": "array",
+              "minItems": 0,
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            },
+            "Npm": {
+              "type": "array",
+              "minItems": 0,
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            }
+          },
+          "additionalProperties": false
         }
       }
     },
@@ -136,34 +168,10 @@
             },
             "Goal": {
               "type": "string"
-            },
-            "BuildDependencies": {
-              "$ref": "#/definitions/MvnType/definitions/MvnSubType/definitions/BuildDependencies"
             }
           },
           "additionalProperties": false,
           "definitions": {
-            "BuildDependencies": {
-              "properties": {
-                "Apt": {
-                  "type": "array",
-                  "minItems": 0,
-                  "items": {
-                    "type": "string"
-                  },
-                  "uniqueItems": true
-                },
-                "Npm": {
-                  "type": "array",
-                  "minItems": 0,
-                  "items": {
-                    "type": "string"
-                  },
-                  "uniqueItems": true
-                }
-              },
-              "additionalProperties": false
-            }
           }
         },
         "Param": {
@@ -292,7 +300,7 @@
           "type": "array",
           "minItems": 1,
           "items": {
-            "enum": ["docker", "local", "download"]
+            "type": "string"
           },
           "uniqueItems": true
         },
@@ -321,7 +329,7 @@
         "Source": {
           "enum": [ "node" ]
         },
-        "Artifact": {
+        "Start": {
           "type": "string"
         },
         "ExposedPort": {
@@ -344,7 +352,7 @@
           "$ref": "#/definitions/ConfigFileDef"
         }
       },
-      "required": [ "Source", "Artifact" ],
+      "required": [ "Source", "Start" ],
       "additionalProperties": false,
       "definitions": {
         "NodeSubType": {
@@ -391,6 +399,9 @@
         },
         "ExposedPort": {
           "type": "number"
+        },
+        "DockerImage": {
+          "type": "string"
         },
         "EnvVars": {
           "type": "array",

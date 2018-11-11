@@ -22,7 +22,7 @@ fi
 if [[ "$BUILD" == docker* ]]; then
   IFS=: read mainType dockerVersion <<< "$BUILD"
   if [ -z "$dockerVersion" ]; then
-    dockerVersion="{{DEFAULT_DOCKER_VERSION}}"
+    dockerVersion="{{defaultDockerVersion}}"
   fi
 
   {% if dependencyManager.hasAnyBuildDep() %} 
@@ -37,6 +37,7 @@ if [[ "$BUILD" == docker* ]]; then
     ENTRYPOINT ["/usr/local/bin/mvn-entrypoint.sh"]
     CMD ["mvn"]
 EOFDOCK
+  if [ -n "$VERBOSE" ]; then echo "docker build --tag maven_build:$dockerVersion localrun/dockerbuild/"; fi
   docker build --tag maven_build:$dockerVersion localrun/dockerbuild/
   {% else %}
   dockerImage={{DockerImage}}

@@ -24,8 +24,8 @@ function fixAptPackagesForOlderOS(set, debianVersion) {
 class DependencyManager {
 
   addAptDependenciesForNpm(npmName) {
+    this.aptPackages.add('nodejs');
     if (npmName === 'jasmine') {
-      this.aptPackages.add('nodejs');
       // This seems like a bug, but jamsine doesn't work without this
       this.envVars.add("OPENSSL_CONF=/etc/ssl/");            
     }
@@ -129,7 +129,7 @@ class DependencyManager {
     if (this.npmPackages.size == 0) {
       return '';
     }
-    return preFix + 'npm install -g ' + [...this.npmPackages.values()].join(' ');
+    return (preFix?`${preFix} `:'') + 'npm install -g ' + [...this.npmPackages.values()].join(' ');
   }
 
   hasAnyBuildDep() {

@@ -4,6 +4,7 @@ cleanup()
   echo "****************************************************************"
   echo "Stopping software .....please wait...."
   echo "****************************************************************"
+  set +e
 
   ALL_COMPONENTS=({{componentsCode|map('pluginName')|join(' ')|lower}})
   for componentToStop in "${ALL_COMPONENTS[@]}"; do
@@ -17,14 +18,16 @@ cleanup()
     done
     if [ "$componentFoundToKeepRunning" -eq 0 ]; then
       {% for e in componentsCode %}
-      if [ "$componentToStop" == "{{e.pluginName|lower}}" ]; then
-        echo "Stopping $componentToStop ..."
-        {% for a in e.sourceTypes %}
-        if [ "$TYPE_SOURCE_{{e.componentName|upper}}" == "{{a.name}}" ]; then
-         {{a.stopCode}}
-         rm -f .{{e.componentName}}Pid
+      if [ "$SKIP_{{e.componentName|upper}}" != "YES" ]; then
+        if [ "$componentToStop" == "{{e.pluginName|lower}}" ]; then
+          echo "Stopping $componentToStop ..."
+          {% for a in e.sourceTypes %}
+          if [ "$TYPE_SOURCE_{{e.componentName|upper}}" == "{{a.name}}" ]; then
+           {{a.stopCode}}
+           rm -f .{{e.componentName}}Pid
+          fi
+          {% endfor %}
         fi
-        {% endfor %}
       fi
       {% endfor %}
     fi

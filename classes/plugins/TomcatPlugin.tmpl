@@ -1,4 +1,6 @@
 
+if [ "$SKIP_{{softwareComponentName|upper}}" != "YES" ]; then
+
 {{ header }}
 
 {{ preparecomp }}
@@ -71,6 +73,7 @@ if [ "${{typeSourceVarName}}" == "docker" ]; then
   fi
   if [ ! -f "{{pidFile}}" ]; then
     {{writeDockerConnectionLogic}}
+    if [ "$VERBOSE" == "YES" ]; then echo "docker run --rm -d $dockerTomcatExtRef ${dockerAddLibRefs[@]} -p {{ExposedPort}}:{{ExposedPort}} {{mountToDocker}} {{AllEnvVarsDocker}} -v "$(pwd)/localrun/webapps":/usr/local/tomcat/webapps {{DockerImage}}:${{typeSourceVarName}}_VERSION"; fi
     dockerContainerID{{softwareComponentName}}=$(docker run --rm -d $dockerTomcatExtRef ${dockerAddLibRefs[@]} -p {{ExposedPort}}:{{ExposedPort}} \
         {{mountToDocker}} {{AllEnvVarsDocker}} \
         -v "$(pwd)/localrun/webapps":/usr/local/tomcat/webapps {{DockerImage}}:${{typeSourceVarName}}_VERSION)
@@ -93,3 +96,5 @@ fi
 {{ poststart }}
 
 {{ leavecomp }}
+
+fi

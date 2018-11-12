@@ -113,6 +113,6 @@ console.log(nunjucks.render('fulgens.tmpl', {
   clean: clean.build(),
   globalvariables: globalvariables.build(),
   prepare: prepare.build() ,
-  rtConfig: rtConfig.buildPlugins(),
+  plugins: rtConfig.buildPlugins(),
   wait: wait.build()
 }));

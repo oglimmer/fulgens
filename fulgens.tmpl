@@ -24,8 +24,12 @@ fi
 
 mkdir -p localrun
 
+f_deploy() {
+	echo "No plugin defined f_deploy()"
+}
+
 {{ prepare }}
 
-{{ rtConfig }}
+{{ plugins }}
 
 {{ wait }}

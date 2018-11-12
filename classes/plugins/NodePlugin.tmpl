@@ -1,4 +1,6 @@
 
+if [ "$SKIP_{{softwareComponentName|upper}}" != "YES" ]; then
+
 {{ header }}
 
 {{ preparecomp }}
@@ -70,8 +72,8 @@ if [ "${{typeSourceVarName}}" == "local" ]; then
   tailCmd="tail -f localrun/noint.out"
 fi
 
-
-
 {{ poststart }}
 
 {{ leavecomp }}
+
+fi

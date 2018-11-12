@@ -1,4 +1,6 @@
 
+if [ "$SKIP_{{softwareComponentName|upper}}" != "YES" ]; then
+
 {{ header }}
 
 {{ preparecomp }}
@@ -50,3 +52,5 @@ fi
 {{ poststart }}
 
 {{ leavecomp }}
+
+fi

@@ -5,6 +5,7 @@ where:
   -s                         skip any build
   -c [all|build]             clean local run directory, when a build is scheduled for execution it also does a full build
   -k [component]             keep comma sperarated list of components running
+  -x [component]             do not start comma sperarated list of components
   -t [component:type:[path|version]] run component inside [docker] container, [download] component (default) or [local] use installed component from path
   -V                         enable Verbose
   {% for o in data %}-{{o.option}} {{o.longParam}}{{o.spaces()}}{{o.helpDesc}}
@@ -19,7 +20,7 @@ cd "$(cd "$(dirname "$0")";pwd -P)"
 BASE_PWD=$(pwd)
 
 BUILD=local
-while getopts ':hsc:k:t:V{% for o in data %}{{o.option}}{% if o.longParam %}:{% endif %}{% endfor %}' option; do
+while getopts ':hsc:k:x:t:V{% for o in data %}{{o.option}}{% if o.longParam %}:{% endif %}{% endfor %}' option; do
   case "$option" in
     h) echo "$usage"
        exit;;
@@ -31,6 +32,7 @@ while getopts ':hsc:k:t:V{% for o in data %}{{o.option}}{% if o.longParam %}:{% 
        fi
        ;;
     k) KEEP_RUNNING=$OPTARG;;
+    x) SKIP_STARTING=$OPTARG;;
     t) TYPE_SOURCE=$OPTARG;;
     V) VERBOSE=YES;;
 {% for o in data %}
@@ -46,3 +48,9 @@ while getopts ':hsc:k:t:V{% for o in data %}{{o.option}}{% if o.longParam %}:{% 
 done
 shift $((OPTIND - 1))
 TYPE_PARAM="$1"
+
+IFS=',' read -r -a array <<< "$SKIP_STARTING"
+for comp in "${array[@]}"; do
+  comp=$(echo $comp | awk '{print toupper($0)}')
+  declare SKIP_$comp=YES
+done

@@ -47,9 +47,16 @@ class BasePlugin {
       }
 
       if (Git) {
+        var gitUrl, gitBranch = '';
+        if (Git.indexOf(' ') > -1) {
+          gitUrl = Git.substring(0, Git.indexOf(' '));
+          gitBranch = '-b ' + Git.substring(Git.indexOf(' ') + 1);
+        } else {
+          gitUrl = Git;
+        }
         this.getsourceBuilder.add(`
           if [ ! -d ".git" ]; then
-            git clone "${Git}" .
+            git clone --single-branch ${gitBranch} "${gitUrl}" .
           else
             git pull
           fi

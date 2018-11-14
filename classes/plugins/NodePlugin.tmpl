@@ -1,15 +1,11 @@
 
-if [ "$SKIP_{{softwareComponentName|upper}}" != "YES" ]; then
-
 {{ header }}
+
+if [ "$SKIP_{{softwareComponentName|upper}}" != "YES" ]; then
 
 {{ preparecomp }}
 
 {{ getsource }}
-
-{{ prebuild }}
-
-{{ build }}
 
 f_build() {
   if [ "$VERBOSE" == "YES" ]; then echo "npm i --save-prod"; fi
@@ -25,11 +21,7 @@ if [ "$SKIP_BUILD" != "YES" ]; then
   f_build        
 fi
 
-{{ postbuild }}
-
 {{ prestart }}
-
-{{ start }}
 
 if [ "${{typeSourceVarName}}" == "docker" ]; then
   #if [ -f "{{pidFile}}" ] && [ "$(<{{pidFile}})" == "download" ]; then

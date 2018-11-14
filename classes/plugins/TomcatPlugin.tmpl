@@ -1,7 +1,7 @@
 
-if [ "$SKIP_{{softwareComponentName|upper}}" != "YES" ]; then
-
 {{ header }}
+
+if [ "$SKIP_{{softwareComponentName|upper}}" != "YES" ]; then
 
 {{ preparecomp }}
 
@@ -21,12 +21,6 @@ if [ "${{typeSourceVarName}}" == "download" ]; then
     tar -xf /${TMPDIR:-/tmp}/apache-tomcat-$TOMCAT_VERSION.tar -C ./localrun
   fi
 fi
-
-{{ prebuild }}
-
-{{ build }}
-
-{{ postbuild }}
 
 {{ prestart }}
 
@@ -50,8 +44,6 @@ f_deploy() {
 	cp {{Artifact}} $targetPath
 }
 f_deploy
-
-{{ start }}
 
 if [ "${{typeSourceVarName}}" == "download" ]; then
   # start tomcat

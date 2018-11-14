@@ -14,9 +14,9 @@ class FunctionsBuilder extends BufferedBuilder {
 		}
 		this.functionNames[functionName] = true;
 		super.add(`
-	${functionName}() {
-		${functionBody}
-	}
+${functionName}() {
+	${functionBody}
+}
 `);
 	}
 

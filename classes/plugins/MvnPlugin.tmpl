@@ -5,10 +5,6 @@
 
 {{ getsource }}
 
-{{ prebuild }}
-
-{{ build }}
-
 if [ "$BUILD" == "local" ]; then
   f_build() {
     if [ -n "$VERBOSE" ]; then echo "pwd=$(pwd)"; echo "mvn {{GoalIgnoreClean}} $MVN_OPTS {{Goal}}"; fi
@@ -58,11 +54,7 @@ if [ "$SKIP_BUILD" != "YES" ]; then
   f_build
 fi  
 
-{{ postbuild }}
-
 {{ prestart }}
-
-{{ start }}
 
 {{ poststart }}
 

@@ -1,4 +1,6 @@
 
+const nunjucks = require('nunjucks');
+
 const Strings = require('../core/Strings');
 
 class BaseBuilder {
@@ -8,6 +10,9 @@ class BaseBuilder {
   }
 
   get extClassName() {
+    if (this._extClassName === false) {
+      return '';
+    }
     if (this._extClassName) {
       return this._extClassName;
     }
@@ -21,10 +26,13 @@ class BaseBuilder {
 
   build() {
     const buildBuff = this.buildInternal();
-    //if (!buildBuff) {
-    //  return '';
-    //}
-    return `\n${Strings.headerPhase(this)}\n${buildBuff}\n\n`;
+    if (!buildBuff) {
+      return '';
+    }
+    return nunjucks.render('classes/phase/BaseBuilder.tmpl', {
+      buildBuff,
+      extClassName: this.extClassName
+    });
   }
 
   buildInternal() {

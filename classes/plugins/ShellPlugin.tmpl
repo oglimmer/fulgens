@@ -1,21 +1,13 @@
 
-if [ "$SKIP_{{softwareComponentName|upper}}" != "YES" ]; then
-
 {{ header }}
+
+if [ "$SKIP_{{softwareComponentName|upper}}" != "YES" ]; then
 
 {{ preparecomp }}
 
 {{ getsource }}
 
-{{ prebuild }}
-
-{{ build }}
-
-{{ postbuild }}
-
 {{ prestart }}
-
-{{ start }}
 
 if [ "${{typeSourceVarName}}" == "local" ]; then
   if [ ! -f "{{pidFile}}" ]; then

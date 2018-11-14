@@ -12,21 +12,13 @@ class BasePlugin {
     this.softwareComponentName = softwareComponentName;
     this.preparecompBuilder = new BufferedBuilder('Plugin-PrepareComp');
     this.getsourceBuilder = new BufferedBuilder('Plugin-GetSource');
-    this.prebuildBuilder = new BufferedBuilder('Plugin-PreBuild');
-    this.buildBuilder = new BufferedBuilder('Plugin-Build');
-    this.postbuildBuilder = new BufferedBuilder('Plugin-PostBuild');
     this.prestartBuilder = new BufferedBuilder('Plugin-PreStart');
-    this.startBuilder = new BufferedBuilder('Plugin-Start');
     this.poststartBuilder = new BufferedBuilder('Plugin-PostStart');
     this.leavecompBuilder = new BufferedBuilder('Plugin-LeaveComp');
 
     this.preparecompBuilder.init(userConfig, runtimeConfiguration);
     this.getsourceBuilder.init(userConfig, runtimeConfiguration);
-    this.prebuildBuilder.init(userConfig, runtimeConfiguration);
-    this.buildBuilder.init(userConfig, runtimeConfiguration);
-    this.postbuildBuilder.init(userConfig, runtimeConfiguration);
     this.prestartBuilder.init(userConfig, runtimeConfiguration);
-    this.startBuilder.init(userConfig, runtimeConfiguration);
     this.poststartBuilder.init(userConfig, runtimeConfiguration);
     this.leavecompBuilder.init(userConfig, runtimeConfiguration);
 
@@ -92,14 +84,10 @@ class BasePlugin {
 
   nunjucksObj() {
     return {
-      header: Strings.headerPlugin(this),
+      header: Strings.headerPlugin(this.constructor.name, this.softwareComponentName),
       preparecomp: this.preparecompBuilder.build(),
       getsource: this.getsourceBuilder.build(),
-      prebuild: this.prebuildBuilder.build(),
-      build: this.buildBuilder.build(),
-      postbuild: this.postbuildBuilder.build(),
       prestart: this.prestartBuilder.build(),
-      start: this.startBuilder.build(),
       poststart: this.poststartBuilder.build(),
       leavecomp: this.leavecompBuilder.build()
     }

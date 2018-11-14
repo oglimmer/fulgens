@@ -1,24 +1,15 @@
 
-if [ "$SKIP_{{softwareComponentName|upper}}" != "YES" ]; then
-
 {{ header }}
+
+if [ "$SKIP_{{softwareComponentName|upper}}" != "YES" ]; then
 
 {{ preparecomp }}
 
 {{ getsource }}
 
-{{ prebuild }}
-
-{{ build }}
-
-{{ postbuild }}
-
 {{ prestart }}
 
-{{ start }}
-
 if [ "${{typeSourceVarName}}" == "docker" ]; then
-  # run in docker
   if [ ! -f "{{pidFile}}" ]; then
     {{writeDockerConnectionLogic}}
     if [ "$VERBOSE" == "YES" ]; then echo "docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} $dockerCouchdbExtRef {{AllEnvVarsDocker}} {{mountToDocker}} {{DockerImage}}:${{typeSourceVarName}}_VERSION"; fi

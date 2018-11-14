@@ -1,20 +1,13 @@
 
 
 module.exports = {
-	headerPlugin: (obj) => {
+	headerPlugin: (pluginName, softwareComponentName = 'dependency') => {
 		return `
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# ${obj.constructor.name} // ${obj.softwareComponentName?obj.softwareComponentName:'dependency'}
+# ${pluginName} // ${softwareComponentName}
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-if [ -n "$VERBOSE" ]; then echo "${obj.constructor.name} // ${obj.softwareComponentName?obj.softwareComponentName:'dependency'}"; fi
-`;
-	},
-
-	headerPhase: (obj) => {
-		return `
-#------------
-# ${obj.extClassName}
-#------------
+if [ -n "$VERBOSE" ]; then echo "${pluginName} // ${softwareComponentName}"; fi
 `;
 	}
+
 }

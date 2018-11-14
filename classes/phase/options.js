@@ -46,7 +46,6 @@ class OptionsBuilder extends BufferedBuilder {
   }
 
   buildInternal() {
-    console.error(this.userConfig.config.Name);
     return nunjucks.render('classes/phase/options.tmpl', {
       name: this.userConfig.config.Name,
       data: this.data,

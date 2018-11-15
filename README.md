@@ -16,6 +16,8 @@ It standardizes "run this software locally", like maven standardized "build this
 
 3.) Execute `fulgens` in the same directory as a Fulgensfile and generate a bash script you can use to build, deploy and run your software locally. Start with `fulgens | bash -s -- -h` to read the help for your generated bash script.
 
+Alternatively you can `fulgens > run_local.sh` to persist the generated bash script onto the filesystem. Here is a nice [bash pretty printer](https://github.com/mvdan/sh) as fulgens doesn't properly indent the generated script.
+
 ## A simple example / Tutorial
 
 Create a Web project via: `mvn archetype:generate -DgroupId=de.oglimmer -DartifactId=MyApp -DarchetypeArtifactId=maven-archetype-webapp -DinteractiveMode=false`. Step into the new project directory and create a minimal Fulgensfile with this content there:
@@ -24,7 +26,7 @@ Create a Web project via: `mvn archetype:generate -DgroupId=de.oglimmer -Dartifa
 module.exports = {
 
   config: {
-  	SchemaVersion: "1.0.0",
+    SchemaVersion: "1.0.0",
     Name: "example",
   },
 
@@ -49,205 +51,253 @@ Now try `./run_local.sh -f -t tomcat:docker` to run the Tomcat inside a Docker c
 
 ## Supported software
 
-To write a Fulgensfile one defines all software components needed to run a project. Supported software is
+A Fulgensfile defines all software components needed to run a project. Supported software is
 
 * java / maven
 * node
+* shell script
 * tomcat
 * mysql
 * couchdb
+* redis
 
 Futhermore Vagrant/VirtualBox is supported as well.
 
-### Build environments
+## A Fulgensfile and its anatomy
 
-### java
+A Fulgensfile may have the file extension ".js", it is recommended to name it "Fulgensfile.js".
 
-By default the script will not change JAVA_HOME. Though on macOS the script will provide a parameter to switch  Java (respectively JAVA_HOME) to 1.8, 9 or 10.
+A [json-schema.org](http://json-schema.org) compliant json-schema file can be found [here](fulgensfile-schema.json)
 
-To document the compatibility one can set JavaVersions in the config section. As said on macOS this also defines the possible values for the "-j" parameter.
+The Fulgensfile is JavaScript file defining an (JSON) object and assigning it to `module.exports`.
+
+It must contain two attributes
+
+* config
+* software
+
+This is a minimal and basic Fulgensfile:
 
 ```
-config: {
-	JavaVersions: [ "1.8", "9", "10" ]
+module.exports = {
+  config: {
+    SchemaVersion: "1.0.0",
+    Name: ".....",
+  },
+  software: {
+  }
 }
+
 ```
 
-Config param            | Type | Description
+### The root object `config`
+
+config defines overall configuration parameters.
+
+Attribute name            | Type | Description
 ----------------------- | ---- | -----------
-config.JavaVersions | array of string | Java version this project is compabile with. On macOS this value will be used with /usr/libexec/java_home
+SchemaVersion | string | Required. Must be "1.0.0"
+Name | string | Required. The name of the software
+Vagrant | object | Defines how a vagrant VM should be spun up
+JavaVersions | array of strings | If a software requires a certain version(s) of java, this attribute can document and limit those compatible versions By default the script will not change JAVA\_HOME. Though on macOS the script will provide a parameter to switch  Java (respectively JAVA\_HOME) to 1.8, 9 or 10. To document the compatibility one can set JavaVersions in the config section. As said on macOS this also defines the possible values for the "-j" parameter.Java version this project is compabile with. On macOS this value will be used with /usr/libexec/java_home
+UseHomeM2 | boolean | Default is false, if set to true ~/.m2 will be used for Vagrant and Docker environments
+BuildDependencies | object | Defines additional apt or npm packages needed for a build 
+Dependencycheck | array of strings | shell code to execute to check if a dependency or prerequisite is ok
+
+#### The object `Vagrant`
+
+Must be inside the root object config.
+
+Attribute name            | Type | Description
+----------------------- | ---- | -----------
+Box | string | Required. Vagrant box name like ubuntu/xenial64. Only Debian based systems are supported.
+Install | string | Space separated apt packages to install. E.g. "maven openjdk-8-jdk-headless docker.io"
+BeforeInstall | array of strings | shell command to execute before the apt packages from Install are installed
+AfterInstall | array of string | shell command to execute after the apt packages from Install are installed
+
+#### The object `BuildDependencies`
+
+Must be inside the root object config.
+
+Attribute name            | Type | Description
+----------------------- | ---- | -----------
+Apt | array of strings | Apt package names.
+Npm | array of strings | Npm package names. The apt package "nodejs" will be automatically added to apt if this is array as at least one element
 
 
-#### maven
+### The root object `software`
 
-Can be used to build locally or within a docker container. When doing a local build the -j JAVA_VERSION setting is respected.
+All software components will be configured under software, by adding an attribute for each component like a mysql, doing a maven build or starting a tomcat.
 
-Example:
+There are no other attributes than software components. The attribute name is the software component name and can be freely choosen. The value is an object defining the software component. The only always required attribute per software component is "Source" which defines the type of software and thus plugin to be used.
+
+Attribute name            | Type | Description
+----------------------- | ---- | -----------
+Source | strings | "java", "mvn", "node", "mysql", "couchdb", "redis", "shell"
+
+#### Defining a maven software component
+
+To build a Java project via maven, the maven plugin can be used to build locally or within a docker container. When doing a local build the -j JAVA_VERSION setting is respected.
+
+Required and mvn specific attributes:
+
+Attribute name            | Type | Description
+----------------------- | ---- | -----------
+Source | string | Required. Must be "mvn"
+Mvn | object | Optional. Defines maven specific config
+Mvn.Goal | string | Optional. Default is "package". Defines a maven goal, e.g. "install"
+
+Supported common attributes:
+
+Git, Param, Dir, dockerImage, EnvVars, BeforeBuild, AfterBuild
+
+Example software component for mvn:
 
 ```
 software: {
-
-	// Example for an external project sitting in git
-	// which is needed to be installed to build/run this software
-
-	"a_external_dependency_project": {
-	  Source: "mvn",
-	  Git: "url_to_git_repo",
-          Dir: "$$TMP$$/my-git-repo",
-	  Mvn: {
-	    Goal: "install"
-	  },
-	  Param: {
-	    Char: 'o',
-	    VariableName: 'BASH_VAR_NAME',
-	    Description: 'Use this switch to set BASH_VAR_NAME to YES'
-	  }
-	},
-
-	// Example for an external file sitting in a mvn repository
-	// which is needed to be installed to run this software
-    
-	mysqldriver: {
-	  Source: "mvn",
-          Dir: "$$TMP$$/lib",
-	  Mvn: {
-	    Goal: "dependency:copy -Dartifact=mysql:mysql-connector-java:8.0.12 -DoutputDirectory=."
-	  },
-	  Artifact: "$$TMP$$/lib/mysql-connector-java-8.0.12.jar"
-	},
-	
-	// Example how to build this project via maven
-	// Assumes the need of npm and jasmine via the build process
-	// Also creates a config file with the hostname/IP of a couchdb
-    
-	"my_mvn_build_software": {
-	  Source: "mvn",
-	  Mvn: {
-	    BuildDependencies: {
-	      Apt: [ "npm" ],
-	      Npm: [ "jasmine" ]
-	    }
-	  },
-	  Artifact: "target/my_mvn_build_software.war",
-	  "my_mvn_build_software_config": {
-	    Name: "my.properties",
-	    Connections: [ { Source:"<SOFTWARE_NAME>", Var: "couchdb.host" } ],
-	    Content: [
-	      "var1=value1",
-	      "var2=value21"
-	    ],
-	    AttachAsEnvVar: ["JAVA_OPTS", "-Dmy.properties=$$SELF_NAME$$"]
-	  },
-	  BeforeBuild: [ "..bash code run before the build.." ],
-	  AfterBuild: [ ".. bash code after the build" ]
+	foo: {
+		Source: "mvn",
+		Artifact: "target/foo.war",	
 	}
 }
 ```
-  
+
+
+#### Defining a nodejs software component
+
+To run a node.js application a local node binary can be used, it is also possible to start and run a Node application inside a docker container.
+
+Required and node specific attributes:
+
 Config param            | Type | Description
 ----------------------- | ---- | -----------
-software.COMPONENT\_NAME.Source | string | must be "mvn"
-software.COMPONENT\_NAME.Git | string | Optional, git URL to checkout or pull
-software.COMPONENT\_NAME.Dir | string | Optional. Defines the directory where the build will performed. Must be inline where the source code be found. Default is ".". 
-software.COMPONENT\_NAME.Mvn | object | Optional. Defines maven specific config
-software.COMPONENT\_NAME.Mvn.Goal | string | Optional. Default is "package". Defines a maven goal, e.g. "install"
-software.COMPONENT\_NAME.Mvn.BuildDependencies | object | Optional. Defines build dependencies for apt and npm
-software.COMPONENT\_NAME.Mvn.BuildDependencies.Apt | array of string | apt package to install for docker based builds
-software.COMPONENT\_NAME.Mvn.BuildDependencies.Npm | array of string | npm package to install for docker based builds. Make sure you have added node, nodejs or npm to the apt dependencies when using a npm package
-software.COMPONENT\_NAME.Param | object | Optional. Defines a script switch / parameter to make this software component optinal
-software.COMPONENT\_NAME.Param.Char | string with size 1 | character to use for this script parameter. Must not use h,s,c,k,t
-software.COMPONENT\_NAME.Param.VariableName | string | Shell variable name to set to YES if the parameter was given to the script
-software.COMPONENT\_NAME.Param.Description | string | A description for the help section of the script
-software.COMPONENT\_NAME.Artifact | string | Defines a file name. For web projects this is usually a war file.
-software.COMPONENT\_NAME.BeforeBuild | array of string | Optional. Bash code to execute before the build is performed
-software.COMPONENT\_NAME.AfterBuild | array of string | Optional. Bash code to execute after the build is performed
-software.COMPONENT\_NAME.CONFIG\_FILE\_NAME | object | Optional. Defines a config file e.g. a custom java.properties for the application
-software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Name | string | name of the config file on the file system
-software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Connection | object | Defines connections to other software components like database connections
-software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Connection.Source | string | Name of another software component within this Fulgensfile
-software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Connection.Var | string | A line in the form `key=value` will be added to the config file. This config defines the key, while the hostname of the software component defined via Source will define the value.
-software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Content | array of string | static content of the config file
-software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.AttachAsEnvVar | array of string size 2 | Element 0 is shell script variable name. Element 1 the value for this variable. $$SELF_NAME$$ will be replaced with the full filename of the config file
+Source | string | Required. Must be "node"
+Start | string | Required. Path to entry point javascript file
 
-### Runtime environments
+Supported common attributes:
 
-### node
+Git, Param, Dir, dockerImage, EnvVars, BeforeBuild, AfterBuild, BeforeStart, AfterStart, ExposedPort
 
-To run a node.js application a local node installation can be used, it is also possible to start and run a Node application inside a docker container.
-
-Example:
+Example software component for node:
 
 ```
 {
 software: {
-	"node": {
+	foo: {
       Source: "node",
-      Start: "startServer.js",
-      ExposedPort: 8080,
-      configFile: {
-        Name: "citybuilder.properties",
-        Connections: [
-          { Source:"couchdb", Var: "dbHost", Content: "http://$$VALUE$$:5984" },
-          { Source:"couchdb", Var: "db", Content: "http://$$VALUE$$:5984/citybuilder" },
-        ],
-        Content: [
-          "dbSchema=citybuilder",
-          "httpPort=8080",
-          "httpHost=0.0.0.0"
-        ],
-        AttachAsEnvVar: ["CITYBUILDER_PROPERTIES", "$$SELF_NAME$$"]
-      }
+      Start: "src/server/start.js"
     }
 }
 ```
 
+#### Defining a java software component
+
+A Java program can be started on the local machine or inside a docker container.
+
+Required and java specific attributes:
+
 Config param            | Type | Description
 ----------------------- | ---- | -----------
-software.COMPONENT\_NAME.Source | string | must be "node"
-software.COMPONENT\_NAME.CONFIG\_FILE\_NAME | object | Optional. Defines a config file e.g. a custom properties file for the application
-software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Name | string | name of the config file on the file system
-software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Connection | object | Defines connections to other software components like database connections
-software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Connection.Source | string | Name of another software component within this Fulgensfile
-software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Connection.Var | string | A line in the form `key=value` will be added to the config file. This config defines the key, while the hostname of the software component defined via Source will define the value.
-software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Content | array of string | static content of the config file
-software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.AttachAsEnvVar | array of string size 2 | Element 0 is shell script variable name. Element 1 the value for this variable. $$SELF_NAME$$ will be replaced with the full filename of the config file
+Source | string | Required. Must be "java"
+Start | string | Required. Name of another software component which defined an Artifact attribute, as this will be started
 
-#### tomcat
+Supported common attributes:
 
-To run a web application a fresh Tomcat can be downloaded, extracted and started, it is also possible to start and run a Tomcat instance inside a docker container. Also an existing local Tomcat installation can be reused.
+Git, Param, Dir, dockerImage, EnvVars, BeforeStart, AfterStart, ExposedPort
 
-Example:
+Example software component for java:
 
 ```
 software: {
-  "mytomcat": {
+  javaprogram: {
+    Source: "java",
+	 Start: "<<name of another software component>>"
+  }
+}
+```
+
+
+#### Defining a shell software component
+
+A shell script can be started on the local machine or inside a docker container.
+
+Required and shell specific attributes:
+
+Config param            | Type | Description
+----------------------- | ---- | -----------
+Source | string | Required. Must be "shell"
+Start | string | Required. Name of another software component which defined an Artifact attribute, as this will be started
+
+Supported common attributes:
+
+Git, Param, Dir, dockerImage, EnvVars, BeforeStart, AfterStart, ExposedPort
+
+Example software component for shell:
+
+```
+software: {
+  program: {
+    Source: "shell",
+	 Start: "<<name of another software component>>"
+  }
+}
+```
+
+
+#### Defining a tomcat to host a software component
+
+To run a web application a fresh Tomcat can be downloaded, extracted and started, it is also possible to start and run a Tomcat instance inside a docker container. Also an existing local Tomcat installation can be reused.
+
+Required and tomcat specific attributes:
+
+Config param            | Type | Description
+----------------------- | ---- | -----------
+Source | string | Required. Must be "tomcat"
+Deploy | string | Required. Name of another component. The file defined in its Artifact config will be copied to Tomcat's /webapp folder
+Lib | array of strings | Name of another component. The file defined in its Artifact config will be copied to Tomcat's /lib folder
+SourceTypes | array of strings | Optional. Default is "download", "local", "docker". This parameter can limit the option of source types.
+
+Supported common attributes:
+
+Git, Param, Dir, dockerImage, EnvVars, BeforeStart, AfterStart, ExposedPort
+
+Example software component for tomcat:
+
+```
+software: {
+  tomcatWebServer: {
     Source: "tomcat",
-    Deploy: "my_mvn_build_software",
-    Lib: [ "mysqldriver" ],
+    Deploy: "<<name of a different software compoenent>>",
+    Lib: [ "<<name of a different software compoenent>>" ],
     SourceTypes: [ "download", "local" ]
   }
 }
 ```
 
-Config param            | Type | Description
------------------------ | ---- | -----------
-software.COMPONENT\_NAME.Source | string | must be "tomcat"
-software.COMPONENT\_NAME.Deploy | string | Name of another component. The file defined in its Artifact config will be copied to Tomcat's /webapp folder
-software.COMPONENT\_NAME.Lib | array of string | Name of another component. The file defined in its Artifact config will be copied to Tomcat's /lib folder
-software.COMPONENT\_NAME.SourceTypes | array of string | Optional. Default is "download", "local", "docker". This parameter can limit the option of source types.
-
-
-### Databases
-
-#### mysql
+#### Defining a mysql database
 
 A MySQL database can be started and used inside a docker container or an existing local installation can be reused.
 
-Example:
+Required and mysql specific attributes:
+
+Config param            | Type | Description
+----------------------- | ---- | -----------
+Source | string | Required. Must be "mysql"
+Mysql | object | optional, defines the mysql specific config
+Mysql.Schema | string | Creates this schema if it doesn't exist
+Mysql.Create | array of string | sql files to execute after startup
+Mysql.RootPassword | string | Root password to set
+
+Supported common attributes:
+
+Git, Param, Dir, dockerImage, EnvVars, BeforeStart, AfterStart, ExposedPort
+
+Example software component for mysql:
+
 
 ```
 software: {
-  "myownmysql": {
+  "mysqlserver": {
     Source: "mysql",
     Mysql: {
       Schema: "my_new_schema",
@@ -255,248 +305,195 @@ software: {
         "src/mysql/initial_ddl.sql",
         "src/mysql/initial_data.sql"
      ],
-      RootPassword: "root"
-    },
-    "my_cnf_config": {
-      Name: "my.cnf",
-      Content: [
-        "[mysqld]",
-        "collation-server = utf8_unicode_ci",
-        "init-connect='SET NAMES utf8'",
-        "character-set-server = utf8"
-      ],
-      AttachIntoDocker: "/etc/mysql/conf.d" 
-    },
-    BeforeStart: [
-      ".. bash code before the mysql started.."
-    ],
-    AfterStart: [
-      ".. bash code after the mysql started.."
-    ]
-  }
+     RootPassword: "root"
+    }
 }
 ```
 
-Config param            | Type | Description
------------------------ | ---- | -----------
-software.COMPONENT\_NAME.Source | string | must be "mysql"
-software.COMPONENT\_NAME.Mysql | object | optional, defines the mysql specific config
-software.COMPONENT\_NAME.Mysql.Schema | string | Creates this schema if it doesn't exist
-software.COMPONENT\_NAME.Mysql.Create | array of string | sql files to execute after startup
-software.COMPONENT_NAME.Mysql.RootPassword | string | Root password to set
-software.COMPONENT\_NAME.CONFIG\_FILE\_NAME | object | optional, defines a config file e.g. my.cnf
-software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Name | string | name of the config file on the file system
-software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.Content | array of string | content of the config file
-software.COMPONENT\_NAME.CONFIG\_FILE\_NAME.AttachIntoDocker | string | full path and filename where the config file will be mounted inside a docker container
-software.COMPONENT\_NAME.BeforeStart | array of string | bash code executed before mysql has started
-software.COMPONENT\_NAME.AfterStart | array of string | bash code executed after mysql has started
-
-#### couchdb
+#### Defining a couchdb database
 
 A CouchDB database can be started and used inside a docker container or an existing local installation can be reused.
+
+Required and couchdb specific attributes:
+
+Config param            | Type | Description
+----------------------- | ---- | -----------
+Source | string | Required. Must be "couchdb"
+CouchDB | array of objects | optional, defines the couchdb specific config
+CouchDB.Schema | string | Creates this schema if it doesn't exist
+CouchDB.Create | array of string | json file imported after startup, usually something like views
+
+Supported common attributes:
+
+Git, Param, Dir, dockerImage, EnvVars, BeforeStart, AfterStart, ExposedPort
+
+Example software component for couchdb:
+
+```
+software: {
+  'couchdbserver': {
+    Source: "couchdb",
+    CouchDB: [{
+      Schema: "toldyouso",
+      Create: [ "src/couchdb/_design-User-view.json" ]
+    }]
+  }   
+}
+```
+
+#### Defining a redis database
+
+A Redis database can be started and used inside a docker container or an existing local installation can be reused.
+
+Required and redis specific attributes:
+
+Config param            | Type | Description
+----------------------- | ---- | -----------
+Source | string | Required. Must be "redis"
+
+Supported common attributes:
+
+Git, Param, Dir, dockerImage, EnvVars, BeforeStart, AfterStart, ExposedPort
+
+Example software component for redis:
+
+```
+software: {
+  'redisserver': {
+    Source: "redis"
+  }   
+}
+```
+
+### Common attributes
+
+Many attributes are supported by multiple types of software components.
+
+This spreadsheet shows which plugins support which parameters: [Plugin Parameter overview](https://docs.google.com/spreadsheets/d/1hlUBx-VqfPDbTl2bjku6NShqFiDKP0lqODsQ2fB8GVY/edit#gid=1313054163)
+
+
+#### Git
+
+Fulgens can clone a git repository.
+
+Config param            | Type | Description
+----------------------- | ---- | -----------
+Git | string | git URL to clone or pull. A branch name can be added after a space.
+
+#### Param
+
+A software component can be made optional. If done so a parameter must be given to the generated bash script to run the code for this software component.
+
+Config param            | Type | Description
+----------------------- | ---- | -----------
+Param | object | Defines a script switch / parameter to make this software component optinal
+Param.Char | string with size 1 | character to use for this script parameter. Must not use h,s,c,k,t
+Param.VariableName | string | Shell variable name to set to YES if the parameter was given to the script
+Param.Description | string | A description for the help section of the script
 
 Example:
 
 ```
 software: {
-  'mycouchdb': {
-    Source: "couchdb",
-    CouchDB: {
-      Schema: "toldyouso",
-      Create: [ "src/couchdb/_design-User-view.json" ]
+  barDependency: {
+    Source: "mvn",
+    Git: "https://github.com/foo/bar.git",
+    Dir: "$$TMP$$/bar-lib",
+    Mvn: {
+      Goal: "install"
+    },
+    Param: {
+      Char: "o",
+      VariableName: "BAR_LIB_ENABLED",
+      Description: "Clone, build and install bar dependency"
     }
-  }   
-}
+  }
 ```
+
+#### Dir
+
+A software component uses the same directory than the Fulgensfile by default. However the working directory can be changed by the attribute Dir.
 
 Config param            | Type | Description
 ----------------------- | ---- | -----------
-software.COMPONENT_NAME.Source | string | must be "couchdb"
-software.COMPONENT_NAME.CouchDB | object | optional, defines the couchdb specific config
-software.COMPONENT_NAME.CouchDB.Schema | string | Creates this schema if it doesn't exist
-software.COMPONENT_NAME.CouchDB.Create | array of string | json file imported after startup, usually something like views
+Dir | string | Defines the directory where the build will performed. Must be inline where the source code be found. Default is "."
+
+#### BeforeStart and AfterStart
+
+It is possible to execute shell code before or after a software component has started.
+
+Config param            | Type | Description
+----------------------- | ---- | -----------
+BeforeBuild | array of string | Bash code to execute before the component is started
+AfterBuild | array of string | Bash code to execute after the component is started
 
 
-### Vagrant
+#### DockerImage
 
-If the Fulgensfile contains a config.Vagrant section, one can start VM (VirtualBox) via Vagrant and there run the output of fulgens.
+Each software component type (plugin) has a docker image associated. This can be changed via this attribute.
 
-*Note: Only Debian based systems are supported (dependency to apt-get).*
+Config param            | Type | Description
+----------------------- | ---- | -----------
+DockerImage | string | docker image name without version
+
+#### EnvVars
+
+This attributes allows the definition of environment variables. They will be passed to the application in an appropriate manner.
+
+Config param            | Type | Description
+----------------------- | ---- | -----------
+EnvVars | array of strings | string of the type "variable\_name=variable\_value". $$TMP$$ will be replaced with the working directory of the generated file
+
+#### ExposedPort
+
+When starter a docker container the system needs to know which port a component exposes.
+
+Config param            | Type | Description
+----------------------- | ---- | -----------
+ExposedPort | number | The TCP port number this software bind to
+
+#### BeforeBuild and AfterBuild
+
+It is possible to execute shell code before or after a build (mvn/node) is done.
+
+Config param            | Type | Description
+----------------------- | ---- | -----------
+BeforeBuild | array of string | Bash code to execute before the build is performed
+AfterBuild | array of string | Bash code to execute after the build is performed
+
+
+### Config files
+
+Some software components can defines config files. This allows to override static entries as well as to replace host names at run-time.
+
+Config param            | Type | Description
+----------------------- | ---- | -----------
+Name | string | Required. Name of the config file
+Connections | object | Optional. Defines a at run-time replaced config file row
+Connections.Source | string | Required. This references another software component by its name
+Connections.Var | string | Required. Variable name of the config file row.
+Connections.Content | string | Optional. Right side part of the config file row. $$VALUE$$ will be replaced by the host name at run-time.
+Content | array of strings | Optional. key=value added to the config file
+LoadDefaultContent | string | Optional. Absolute or relative file path to a config file
+AttachAsEnvVar | array of 2 strings | Mutually exclusive to AttachIntoDocker. The config file will be attached to the application via an environment variable. The first string defines the name of the environment variable. The second string defines the value where $$SELF_NAME$$ will be replaced by the file path to the config file at run-time
+AttachIntoDocker | string | Mutually exclusive to AttachAsEnvVar. The config file will be mounted into docker via a directory. This defines the absolute path on the docker filesystem
 
 Example:
 
 ```
-  config: {
-    Vagrant: {
-      Box: 'ubuntu/xenial64'
-      Install: 'maven openjdk-8-jdk-headless npm docker.io',
-      BeforeInstall: [
-        'debconf-set-selections <<< 'mysql-server mysql-server/root_password password foobarpass''
-      ],
-      AfterInstall: [
-        'ln -s /usr/bin/nodejs /usr/bin/node',
-        'npm install -g jasmine',
-      ]
-    },
-  }
-```
-Config param            | Type | Description
------------------------ | ---- | -----------
-config.Vagrant.Box | string | Vagrant box name, must be Debian based (as it uses apt-get)
-config.Vagrant.Install | string | Package name for apt-get, comma separated
-config.Vagrant.BeforeInstall | array of string | bash code to execute inside the Vagrant VM before apt-get install gets executed.
-config.Vagrant.AfterInstall | array of string | bash code to execute inside the Vagrant VM after VM was created and started.
-
-## A Fulgensfile
-
-A Fulgensfile may have the file extension ".js".
-
-A [json-schema.org](http://json-schema.org) compliant json-schema file can be found [here](fulgensfile-schema.json)
-
-Example:
-
-```
-module.exports = {
-
-  config: {
-    Name: 'TestProject',
-    Vagrant: {
-      Box: 'ubuntu/xenial64',
-      Install: 'maven openjdk-8-jdk-headless npm docker.io',
-      AfterInstall: [
-        'ln -s /usr/bin/nodejs /usr/bin/node',
-        'npm install -g jasmine',
-      ]
-    },
-    JavaVersions: [ "1.8", "9", "10" ]
-  },
-
-  software: {
-
-    <SOFTWARE_NAME>: {
-      Source: "mvn",
-      Git: "url_to_git_repo",
-      Dir: "$$TMP$$/my-git-repo",
-      Mvn: {
-        Goal: "install"
-      },
-      Param: {
-        Char: 'o',
-        VariableName: 'BASH_VAR_NAME',
-        Description: 'Use this switch to set BASH_VAR_NAME to YES'
-      }
-    },
-    
-    mysqldriver: {
-      Source: "mvn",
-      Dir: "$$TMP$$/lib",
-      Mvn: {
-        Goal: "dependency:copy -Dartifact=mysql:mysql-connector-java:8.0.12 -DoutputDirectory=."
-      },
-      Artifact: "$$TMP$$/lib/mysql-connector-java-8.0.12.jar"
-    },
-    
-    <SOFTWARE_NAME>: {
-      Source: "mvn",
-      Mvn: {
-        BuildDependencies: {
-          Apt: [ "npm" ],
-          Npm: [ "jasmine" ]
-        }
-      },
-      Artifact: <PATH_TO_BUILD_ARTIFACT>,
-      <ANY_CONFIG_FILE>: {
-        Name: "my.properties",
-        Connections: [ { Source:"<SOFTWARE_NAME>", Var: "couchdb.host" } ],
-        Content: [
-          "var1=value1",
-          "var2=value21"
-        ],
-        AttachAsEnvVar: ["JAVA_OPTS", "-Dmy.properties=$$SELF_NAME$$"]
-      },
-      BeforeBuild: [ "..bash code run before the build.." ],
-      AfterBuild: [ ".. bash code after the build" ]
-    },
-
-    <SOFTWARE_NAME>: {
-      Source: "couchdb",
-      CouchDB: {
-        Schema: "toldyouso",
-        Create: [ "src/couchdb/_design-User-view.json" ]
-      }
-    }
-
-    <SOFTWARE_NAME>: {
-      Source: "mysql",
-      Mysql: {
-        Schema: "my_new_schema",
-        Create: [
-          "src/mysql/initial_ddl.sql",
-          "src/mysql/initial_data.sql"
-	     ],
-        RootPassword: "root"
-      },
-      <ANY_CONFIG_FILE>: {
-        Name: "my.cnf",
-        Content: [
-          "[mysqld]",
-          "collation-server = utf8_unicode_ci",
-          "init-connect='SET NAMES utf8'",
-          "character-set-server = utf8"
-        ],
-        AttachIntoDocker: "/etc/mysql/conf.d" 
-      },
-      BeforeStart: [
-        ".. bash code before the mysql strted.."
-      ],
-      AfterStart: [
-        ".. bash code after the mysql started.."
-      ]
-    },
-    
-    <SOFTWARE_NAME>: {
-      Source: "tomcat",
-      Deploy: "<SOFTWARE_NAME_REF_TO_DEPLOY>",
-      Lib: [ "mysqldriver" ],
-      SourceTypes: [ "download", "local" ]
-    }
-  }
+config: {
+    Name: "app.properties",
+    Connections: [{
+        Source:"mysql",
+        Var: "mysql.url",
+        Content: "jdbc:mysql://$$VALUE$$:3306/schema"
+    }],
+    Content: [
+        "bind=0.0.0.0",
+        "user=foobar"
+    ],
+    AttachAsEnvVar: ["JAVA_OPTS", "-Dapp.filename=$$SELF_NAME$$"]        
+    // or
+    AttachIntoDocker: "/usr/local/etc/app/local.d"
 }
 ```
-
-
-# Internal documantation
-
-[Plugin overview](https://docs.google.com/spreadsheets/d/1hlUBx-VqfPDbTl2bjku6NShqFiDKP0lqODsQ2fB8GVY/edit#gid=1313054163)
-
-## TYPE_SOURCE
-
-  - docker
-  - download
-  - local source (for buildable software)
-  - local installation (for 3rd party software)
-
-## Phases
-
-In order of execution
-
-Name | Scope | Desc
----- | ----- | ----
-HEAD | global | immutable
-FUNCTIONS | global | defines n functions
-CLEANUP | global | 1 function, components can add cleanUp logic
-OPTIONS | global | 1 function, components can text, always provided $SKIP\_BUILD, $CLEAN, $TYPE\_SOURCE
-DEPENDENCY_CHECK | global | components can add checks for dependency binaries
-CLEAN | global | using $CLEAN, inside-if, components can add cleanUp logic
-GLOBALVARIABLES | global | components can global variables
-PREPARE | global | created "localrun", Vagrant, Java version init
-PREPARE_COMP | per component | just added code (SourceType init)
-GET_SOURCE | per component | just added code
-PRE_BUILD | per component | just added code
-BUILD | per component | just added code
-POST_BUILD | per component | just added code
-PRE_START | per component | just added code
-START | per component | just added code
-POST_START | per component | just added code
-LEAVE_COMP | per component | just added code
-WAIT | global | using $tailCmd, immutable

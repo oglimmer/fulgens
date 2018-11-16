@@ -8,7 +8,7 @@ const DependencyManager = require('../core/dependencyManager');
 
 class Vagrant {
 	
-	static add(userConfig) {
+	static add(userConfig, runtimeConfig) {
 		const { BuildDependencies, Vagrant, UseHomeM2 } = userConfig.config;
 
 		const dependencyManager = new DependencyManager();
@@ -24,7 +24,8 @@ class Vagrant {
 		prepareBuilder.add(nunjucks.render('classes/core/Vagrant.tmpl', {
 			Vagrant,
 			dependencyManager,
-			UseHomeM2
+			UseHomeM2,
+			accessUrl: runtimeConfig.accessUrl
 		}));
 	}
 

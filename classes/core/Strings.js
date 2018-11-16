@@ -6,7 +6,7 @@ module.exports = {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ${pluginName} // ${softwareComponentName}
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-if [ -n "$VERBOSE" ]; then echo "${pluginName} // ${softwareComponentName}"; fi
+verbosePrint "${pluginName} // ${softwareComponentName}"
 `;
 	}
 

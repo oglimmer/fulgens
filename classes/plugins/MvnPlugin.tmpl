@@ -7,7 +7,7 @@
 
 if [ "$BUILD" == "local" ]; then
   f_build() {
-    if [ -n "$VERBOSE" ]; then echo "pwd=$(pwd)"; echo "mvn {{GoalIgnoreClean}} $MVN_OPTS {{Goal}}"; fi
+    verbosePrint "pwd=$(pwd)\nmvn {{GoalIgnoreClean}} $MVN_OPTS {{Goal}}"
     {{BeforeBuild}}
     {{AllEnvVarsShell}}
     mvn {{GoalIgnoreClean}} $MVN_OPTS {{Goal}}
@@ -33,14 +33,14 @@ if [[ "$BUILD" == docker* ]]; then
     ENTRYPOINT ["/usr/local/bin/mvn-entrypoint.sh"]
     CMD ["mvn"]
 EOFDOCK
-  if [ -n "$VERBOSE" ]; then echo "docker build --tag maven_build:$dockerVersion localrun/dockerbuild/"; fi
+  verbosePrint "docker build --tag maven_build:$dockerVersion localrun/dockerbuild/"
   docker build --tag maven_build:$dockerVersion localrun/dockerbuild/
   {% else %}
   dockerImage={{DockerImage}}
   {% endif %}
 
   f_build() {
-    if [ -n "$VERBOSE" ]; then echo "pwd=$(pwd)"; echo "docker run --rm -v $(pwd):/usr/src/build -v {{m2Mapping}}:/root/.m2 -w /usr/src/build $dockerImage:$dockerVersion mvn {{GoalIgnoreClean}} $MVN_OPTS {{Goal}}"; fi
+    verbosePrint "pwd=$(pwd)\ndocker run --rm -v $(pwd):/usr/src/build -v {{m2Mapping}}:/root/.m2 -w /usr/src/build $dockerImage:$dockerVersion mvn {{GoalIgnoreClean}} $MVN_OPTS {{Goal}}"
     {{BeforeBuild}}
     docker run --rm {{AllEnvVarsDocker}} -v "$(pwd)":/usr/src/build -v {{m2Mapping}}:/root/.m2 -w /usr/src/build $dockerImage:$dockerVersion mvn {{GoalIgnoreClean}} $MVN_OPTS {{Goal}}
     {{AfterBuild}}
@@ -52,6 +52,8 @@ if [ "$SKIP_BUILD" != "YES" ]; then
     MVN_CLEAN=clean
   fi
   f_build
+else
+  verbosePrint "Mvn build skipped."
 fi  
 
 {{ prestart }}

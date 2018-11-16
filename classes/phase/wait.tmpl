@@ -1,7 +1,12 @@
 # waiting for ctrl-c
+echo "*************************************************************"
+echo "**** SCRIPT COMPLETED, STARTUP IN PROGRESS ******************"
 if [ "$TAIL" == "YES" ]; then
+  echo "{{accessUrl}}"
+  echo "**** now tailing log: $tailCmd"
   $tailCmd
 else
+  echo "{{accessUrl}}"
   echo "$tailCmd"
   echo "<return> to rebuild, ctrl-c to stop {{ cleanupBuilder.componentsCode|map('componentName')|join(', ') }}"
   while true; do

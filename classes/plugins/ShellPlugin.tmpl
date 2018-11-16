@@ -11,7 +11,7 @@ if [ "$SKIP_{{softwareComponentName|upper}}" != "YES" ]; then
 
 if [ "${{typeSourceVarName}}" == "local" ]; then
   if [ ! -f "{{pidFile}}" ]; then
-    if [ "$VERBOSE" == "YES" ]; then echo "nohup {{StartRpld}} 1>>localrun/{{softwareComponentName}}.log 2>>localrun/{{softwareComponentName}}.log &"; fi
+    verbosePrint "nohup {{StartRpld}} 1>>localrun/{{softwareComponentName}}.log 2>>localrun/{{softwareComponentName}}.log &"
     {{AllEnvVarsShell}}
     nohup "{{StartRpld}}" 1>>"localrun/{{softwareComponentName}}.log" 2>>"localrun/{{softwareComponentName}}.log" &
     {{pid}}=$!
@@ -29,7 +29,7 @@ if [ "${{typeSourceVarName}}" == "docker" ]; then
   #fi
   if [ ! -f "$BASE_PWD/{{pidFile}}" ]; then
     {{writeDockerConnectionLogic}}
-    if [ -n "$VERBOSE" ]; then echo "docker run --rm -d $dockerJavaExtRef -p {{ExposedPort}}:{{ExposedPort}} {{mountToDocker}} {{AllEnvVarsDocker}} -v $(pwd):/home/node/exec_env -w /home/node/exec_env {{DockerImage}}:${{typeSourceVarName}}_VERSION /bin/bash -c ./{{StartRpld}}" fi
+    verbosePrint "docker run --rm -d $dockerJavaExtRef -p {{ExposedPort}}:{{ExposedPort}} {{mountToDocker}} {{AllEnvVarsDocker}} -v $(pwd):/home/node/exec_env -w /home/node/exec_env {{DockerImage}}:${{typeSourceVarName}}_VERSION /bin/bash -c ./{{StartRpld}}"
     {{dcId}}=$(docker run --rm -d $dockerJavaExtRef -p {{ExposedPort}}:{{ExposedPort}} \
         {{mountToDocker}}  \
         {{AllEnvVarsDocker}} \

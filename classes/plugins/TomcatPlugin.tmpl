@@ -46,7 +46,6 @@ f_deploy() {
 f_deploy
 
 if [ "${{typeSourceVarName}}" == "download" ]; then
-  # start tomcat
   if [ ! -f "{{pidFile}}" ]; then
     {{storeFileAndExportEnvVar}}
     {{AllEnvVarsTomcat}}
@@ -65,7 +64,7 @@ if [ "${{typeSourceVarName}}" == "docker" ]; then
   fi
   if [ ! -f "{{pidFile}}" ]; then
     {{writeDockerConnectionLogic}}
-    if [ "$VERBOSE" == "YES" ]; then echo "docker run --rm -d $dockerTomcatExtRef ${dockerAddLibRefs[@]} -p {{ExposedPort}}:{{ExposedPort}} {{mountToDocker}} {{AllEnvVarsDocker}} -v "$(pwd)/localrun/webapps":/usr/local/tomcat/webapps {{DockerImage}}:${{typeSourceVarName}}_VERSION"; fi
+    verbosePrint "docker run --rm -d $dockerTomcatExtRef ${dockerAddLibRefs[@]} -p {{ExposedPort}}:{{ExposedPort}} {{mountToDocker}} {{AllEnvVarsDocker}} -v "$(pwd)/localrun/webapps":/usr/local/tomcat/webapps {{DockerImage}}:${{typeSourceVarName}}_VERSION"
     dockerContainerID{{softwareComponentName}}=$(docker run --rm -d $dockerTomcatExtRef ${dockerAddLibRefs[@]} -p {{ExposedPort}}:{{ExposedPort}} \
         {{mountToDocker}} {{AllEnvVarsDocker}} \
         -v "$(pwd)/localrun/webapps":/usr/local/tomcat/webapps {{DockerImage}}:${{typeSourceVarName}}_VERSION)

@@ -464,7 +464,7 @@ AfterBuild | array of string | Bash code to execute after the build is performed
 
 ### Config files
 
-Some software components can defines config files. This allows to override static entries as well as to replace host names at run-time.
+In Fulgens a software components can define config files. This mechanism allows it to override or add static configuration values, as well as to replace host names in configuration files at run-time.
 
 Config param            | Type | Description
 ----------------------- | ---- | -----------

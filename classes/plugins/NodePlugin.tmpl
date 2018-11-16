@@ -8,14 +8,14 @@ if [ "$SKIP_{{softwareComponentName|upper}}" != "YES" ]; then
 {{ getsource }}
 
 f_build() {
-  if [ "$VERBOSE" == "YES" ]; then echo "npm i --save-prod"; fi
+  verbosePrint "npm i --save-prod"
   {{BeforeBuild}}
   {{Build}}
   {{AfterBuild}}
 }
 if [ "$SKIP_BUILD" != "YES" ]; then
   if [ -n "$CLEAN" ]; then
-    if [ "$VERBOSE" == "YES" ]; then echo "rm -rf node_modules/"; fi
+    verbosePrint "rm -rf node_modules/"
     rm -rf node_modules/
   fi
   f_build        
@@ -30,7 +30,7 @@ if [ "${{typeSourceVarName}}" == "docker" ]; then
   #fi
   if [ ! -f "{{pidFile}}" ]; then
     {{writeDockerConnectionLogic}}
-    if [ -n "$VERBOSE" ]; then echo "docker run --rm -d $dockerNodeExtRef -p {{ExposedPort}}:{{ExposedPort}} {{mountToDocker}} {{AllEnvVarsDocker}} -v $(pwd):/home/node/exec_env -w /home/node/exec_env {{DockerImage}}:${{typeSourceVarName}}_VERSION node {{NodeParam}} ./{{Start}}"; fi
+    verbosePrint "docker run --rm -d $dockerNodeExtRef -p {{ExposedPort}}:{{ExposedPort}} {{mountToDocker}} {{AllEnvVarsDocker}} -v $(pwd):/home/node/exec_env -w /home/node/exec_env {{DockerImage}}:${{typeSourceVarName}}_VERSION node {{NodeParam}} ./{{Start}}"
     dockerContainerID{{softwareComponentName}}=$(docker run --rm -d $dockerNodeExtRef -p {{ExposedPort}}:{{ExposedPort}} \
         {{mountToDocker}} {{AllEnvVarsDocker}} \
         -v "$(pwd)":/home/node/exec_env -w /home/node/exec_env {{DockerImage}}:${{typeSourceVarName}}_VERSION node {{NodeParam}} ./{{Start}})
@@ -52,7 +52,7 @@ if [ "${{typeSourceVarName}}" == "local" ]; then
       process.on( "SIGINT", function() {} );
       require('../{{Start}}');
     EOF
-    if [ -n "$VERBOSE" ]; then echo "{{AllEnvVarsNode}} node {{NodeParam}} localrun/noint.js >localrun/noint.out 2>&1 &"; fi
+    verbosePrint "{{AllEnvVarsNode}} node {{NodeParam}} localrun/noint.js >localrun/noint.out 2>&1 &"
     {{storeFileAndExportEnvVar}}
     {{AllEnvVarsNode}} node {{NodeParam}} localrun/noint.js >localrun/noint.out 2>&1 & 
     processId{{softwareComponentName}}=$!

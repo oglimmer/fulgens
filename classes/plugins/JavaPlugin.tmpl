@@ -13,7 +13,7 @@ if [ "${{typeSourceVarName}}" == "local" ]; then
 	OPWD="$(pwd)"
 	cd "$(dirname "{{ArtifactRpld}}")"
 	if [ ! -f "$BASE_PWD/{{pidFile}}" ]; then
-	  if [ "$VERBOSE" == "YES" ]; then echo "nohup "./$(basename "{{ArtifactRpld}}")" 1>>"$BASE_PWD/localrun/{{softwareComponentName}}.log" 2>>"$BASE_PWD/localrun/{{softwareComponentName}}.log" &"; fi
+	  verbosePrint "nohup "./$(basename "{{ArtifactRpld}}")" 1>>"$BASE_PWD/localrun/{{softwareComponentName}}.log" 2>>"$BASE_PWD/localrun/{{softwareComponentName}}.log" &"
 	  {{AllEnvVarsShell}} nohup "./$(basename "{{ArtifactRpld}}")" 1>>"$BASE_PWD/localrun/{{softwareComponentName}}.log" 2>>"$BASE_PWD/localrun/{{softwareComponentName}}.log" &
 	  {{pid}}=$!
 	  echo "${{pid}}">"$BASE_PWD/{{pidFile}}"
@@ -30,7 +30,7 @@ if [ "${{typeSourceVarName}}" == "docker" ]; then
 	#fi
 	if [ ! -f "$BASE_PWD/{{pidFile}}" ]; then
 	  {{writeDockerConnectionLogic}}
-	  if [ -n "$VERBOSE" ]; then echo "docker run --rm -d $dockerJavaExtRef -p {{ExposedPort}}:{{ExposedPort}} {{mountToDocker}} {{AllEnvVarsDocker}} -v "$(pwd)":/home/node/exec_env -w /home/node/exec_env {{DockerImage}}:${{typeSourceVarName}}_VERSION /bin/bash -c ./{{ArtifactRpld}}"; fi
+	  verbosePrint "docker run --rm -d $dockerJavaExtRef -p {{ExposedPort}}:{{ExposedPort}} {{mountToDocker}} {{AllEnvVarsDocker}} -v "$(pwd)":/home/node/exec_env -w /home/node/exec_env {{DockerImage}}:${{typeSourceVarName}}_VERSION /bin/bash -c ./{{ArtifactRpld}}"
 	  {{dcId}}=$(docker run --rm -d $dockerJavaExtRef -p {{ExposedPort}}:{{ExposedPort}} \
 	      {{mountToDocker}}  \
 	      {{AllEnvVarsDocker}} \

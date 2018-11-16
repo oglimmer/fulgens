@@ -27,7 +27,7 @@ class NodePlugin extends BasePlugin {
       `${softwareComponentName}:docker:[6|8|10] #start docker image ${DockerImage}:X`
     ]);
 
-    runtimeConfiguration.setTail('nodejs');
+    runtimeConfiguration.setTail('nodejs', `http://localhost:${ExposedPort}`);
 
     sourceTypeBuilder.add(this, {
       componentName: softwareComponentName,

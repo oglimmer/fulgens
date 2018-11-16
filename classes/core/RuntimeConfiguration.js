@@ -10,6 +10,7 @@ class RuntimeConfiguration {
     this.dependencies = {};
     this.configFiles = [];
     this.projectBasePath = projectBasePath;
+    this.accessUrl = '';
   }
 
   addPlugin(plugin, name) {
@@ -43,8 +44,9 @@ class RuntimeConfiguration {
     return this.configFiles.filter(f => f.pluginName === pluginName);
   }
 
-  setTail(tailCmdSource) {
+  setTail(tailCmdSource, accessUrl) {
     optionsBuilder.add('f', '', 'TAIL', `tail the ${tailCmdSource} log at the end`);
+    this.accessUrl = accessUrl;
   }
 }
 

@@ -31,6 +31,11 @@ class TomcatPlugin extends BasePlugin {
     const { Deploy, Lib, EnvVars = [], SourceTypes = ['docker','download','local'], DockerImage = 'tomcat', ExposedPort = '8080' } = userConfig.software[softwareComponentName];
     const { Artifact } = userConfig.software[Deploy];
 
+    var deployPath = Artifact.substring(Artifact.lastIndexOf('/') + 1, Artifact.length - 4);
+    if (deployPath.indexOf('##') > -1) {
+      deployPath = deployPath.substring(0, deployPath.indexOf('#'));
+    }
+
     const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
     const pidFile = `.${softwareComponentName}Pid`;
     
@@ -95,7 +100,7 @@ class TomcatPlugin extends BasePlugin {
 
     optionsBuilder.addDetails('t', optionsBuilderData);
 
-    runtimeConfiguration.setTail('apache catalina');
+    runtimeConfiguration.setTail('apache catalina', `http://localhost:${ExposedPort}/${deployPath}`);
 
     sourceTypeBuilder.add(this, {
       componentName: softwareComponentName,

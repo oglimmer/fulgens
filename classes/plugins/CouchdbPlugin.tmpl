@@ -12,7 +12,7 @@ if [ "$SKIP_{{softwareComponentName|upper}}" != "YES" ]; then
 if [ "${{typeSourceVarName}}" == "docker" ]; then
   if [ ! -f "{{pidFile}}" ]; then
     {{writeDockerConnectionLogic}}
-    if [ "$VERBOSE" == "YES" ]; then echo "docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} $dockerCouchdbExtRef {{AllEnvVarsDocker}} {{mountToDocker}} {{DockerImage}}:${{typeSourceVarName}}_VERSION"; fi
+    verbosePrint "docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} $dockerCouchdbExtRef {{AllEnvVarsDocker}} {{mountToDocker}} {{DockerImage}}:${{typeSourceVarName}}_VERSION"
     {{dcId}}=$(docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} $dockerCouchdbExtRef \
       {{AllEnvVarsDocker}} {{mountToDocker}} {{DockerImage}}:${{typeSourceVarName}}_VERSION)
     echo "${{dcId}}">{{pidFile}}

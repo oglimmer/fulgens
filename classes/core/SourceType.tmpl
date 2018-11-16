@@ -26,6 +26,4 @@ fi
 
 {% endfor %}
 
-if [ "$VERBOSE" == "YES" ]; then
-  echo "TYPE_SOURCE_{{componentNameUpper}} = $TYPE_SOURCE_{{componentNameUpper}} // TYPE_SOURCE_{{componentNameUpper}}_PATH = $TYPE_SOURCE_{{componentNameUpper}}_PATH // TYPE_SOURCE_{{componentNameUpper}}_VERSION = $TYPE_SOURCE_{{componentNameUpper}}_VERSION"
-fi
+verbosePrint "TYPE_SOURCE_{{componentNameUpper}} = $TYPE_SOURCE_{{componentNameUpper}} // TYPE_SOURCE_{{componentNameUpper}}_PATH = $TYPE_SOURCE_{{componentNameUpper}}_PATH // TYPE_SOURCE_{{componentNameUpper}}_VERSION = $TYPE_SOURCE_{{componentNameUpper}}_VERSION"

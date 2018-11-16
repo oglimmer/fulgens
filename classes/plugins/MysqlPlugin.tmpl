@@ -13,7 +13,7 @@ if [ "${{typeSourceVarName}}" == "docker" ]; then
   # run in docker
   if [ ! -f "{{pidFile}}" ]; then
     {{writeDockerConnectionLogic}}
-    if [ "$VERBOSE" == "YES" ]; then echo "docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} {% if Mysql.RootPassword %} -e MYSQL_ROOT_PASSWORD="{{Mysql.RootPassword}}" {% else %} -e MYSQL_ALLOW_EMPTY_PASSWORD=true {% endif %} {{AllEnvVarsDocker}} {{mountToDocker}} {{DockerImage}}:${{typeSourceVarName}}_VERSION"; fi
+    verbosePrint "docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} {% if Mysql.RootPassword %} -e MYSQL_ROOT_PASSWORD="{{Mysql.RootPassword}}" {% else %} -e MYSQL_ALLOW_EMPTY_PASSWORD=true {% endif %} {{AllEnvVarsDocker}} {{mountToDocker}} {{DockerImage}}:${{typeSourceVarName}}_VERSION"
     dockerContainerID{{softwareComponentName}}=$(docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} \
       {% if Mysql.RootPassword %} -e MYSQL_ROOT_PASSWORD="{{Mysql.RootPassword}}" {% else %} -e MYSQL_ALLOW_EMPTY_PASSWORD=true {% endif %} \
       {{AllEnvVarsDocker}} \

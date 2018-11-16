@@ -11,6 +11,8 @@ where:
   {% for o in data %}-{{o.option}} {{o.longParam}}{{o.spaces()}}{{o.helpDesc}}
   {% endfor %}
 
+Http url: {{accessUrl}}
+
 Details:
 {% for o in dataDetails %}{% for d in o.detailsArray %} -{{o.option}} {{d}}
 {% endfor %}{% endfor %}

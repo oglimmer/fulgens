@@ -90,7 +90,7 @@ wait.init(userConfig, rtConfig);
 globalvariables.init(userConfig, rtConfig);
 
 if (userConfig.config.Vagrant) {
-  Vagrant.add(userConfig);
+  Vagrant.add(userConfig, rtConfig);
 }
 if (userConfig.config.Dependencycheck) {
   userConfig.config.Dependencycheck.forEach(c => dependencycheck.add(c));

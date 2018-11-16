@@ -90,7 +90,7 @@ wait.init(userConfig, rtConfig);
 globalvariables.init(userConfig, rtConfig);
 
 if (userConfig.config.Vagrant) {
-  Vagrant.add(userConfig, rtConfig);
+  Vagrant.prepare(userConfig, rtConfig);
 }
 if (userConfig.config.Dependencycheck) {
   userConfig.config.Dependencycheck.forEach(c => dependencycheck.add(c));
@@ -104,6 +104,8 @@ Object.entries(userConfig.software).forEach(s => {
 });
 
 rtConfig.processPlugins();
+
+Vagrant.build();
 
 console.log(nunjucks.render('fulgens.tmpl', {
   functions: functions.build(),

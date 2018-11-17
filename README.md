@@ -16,7 +16,9 @@ It standardizes "run this software locally", like maven standardized "build this
 
 3.) Execute `fulgens` in the same directory as a Fulgensfile and generate a bash script you can use to build, deploy and run your software locally. Start with `fulgens | bash -s -- -h` to read the help for your generated bash script.
 
-Alternatively you can `fulgens > run_local.sh` to persist the generated bash script onto the filesystem. Here is a nice [bash pretty printer](https://github.com/mvdan/sh) as fulgens doesn't properly indent the generated script.
+Alternatively you can `fulgens > run_local.sh` to persist the generated bash script onto the filesystem.
+
+If you've [shfmt](https://github.com/mvdan/sh) in your path fulgens will format the generated output via shfmt automatically.
 
 ## A simple example / Tutorial
 

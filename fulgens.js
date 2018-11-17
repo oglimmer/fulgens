@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const nunjucks = require('nunjucks');
 const minimist = require('minimist');
+const { execFile } = require('child_process');
 
 const functions = require('./classes/phase/functions');
 const cleanup = require('./classes/phase/cleanup');
@@ -37,11 +38,16 @@ if (argv.v) {
   process.exit(1); 
 }
 if (argv.h) {
-  console.log(`usage: fulgens [-v] [-h] [<Fulgensfile>]
+  console.log(`usage: fulgens [-v] [-h] [-f] [-nf] [<Fulgensfile>]
+
+Options:
+  -v                       Display version information
+  -h                       Display help information
+  -s                       Skip formatting the generated output with shfmt (if found on path)
 
 Fulgens looks for 'Fulgensfile' or 'Fulgensfile.js' in the current directory if <Fulgensfile> is not defined.
 
-Safe the generated bash script into a file or piped it into bash via \`fulgens | bash -s -- -h\` (uses -h on the generated script)
+Save the generated bash script into a file or piped it into bash via \`fulgens | bash -s -- -h\` (uses -h on the generated script)
 
 See https://www.npmjs.com/package/fulgens for more help and the definition of a Fulgensfile.`);
   process.exit(1); 
@@ -107,7 +113,7 @@ rtConfig.processPlugins();
 
 Vagrant.build();
 
-console.log(nunjucks.render('fulgens.tmpl', {
+const renderedOutput = nunjucks.render('fulgens.tmpl', {
   functions: functions.build(),
   cleanup: cleanup.build(),
   options: options.build() ,
@@ -117,4 +123,23 @@ console.log(nunjucks.render('fulgens.tmpl', {
   prepare: prepare.build() ,
   plugins: rtConfig.buildPlugins(),
   wait: wait.build()
-}));
+})
+
+if (!argv.s) {
+  const child = execFile('shfmt', (error, stdout, stderr) => {
+    if (error) {
+      console.log(renderedOutput);
+    } else {
+      if (stderr) {
+        console.error(stderr);
+      }
+      console.log(stdout);
+    }
+  });
+  if (child.stdin) {
+    child.stdin.write(renderedOutput);
+    child.stdin.end();
+  }
+} else {
+  console.log(renderedOutput);
+}

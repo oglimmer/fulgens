@@ -18,7 +18,8 @@ const Vagrant = require('./classes/core/Vagrant');
 
 const pluginFactory = require('./classes/plugins/factory');
 
-const RuntimeConfiguration = require('./classes/core/RuntimeConfiguration')
+const RuntimeConfiguration = require('./classes/core/RuntimeConfiguration');
+const pjson = require('./package.json');
 
 var argv;
 if (process.argv[0].endsWith('node') || process.argv[0].endsWith('nodejs')) {
@@ -32,9 +33,9 @@ if (argv._.length > 1) {
   process.exit(1);
 }
 
+const fulgensVersion = pjson.version;
 if (argv.v) {
-  var pjson = require('./package.json');
-  console.log(`fulgens version ${pjson.version}`);
+  console.log(`fulgens version ${fulgensVersion}`);
   process.exit(1); 
 }
 if (argv.h) {
@@ -114,6 +115,7 @@ rtConfig.processPlugins();
 Vagrant.build();
 
 const renderedOutput = nunjucks.render('fulgens.tmpl', {
+  fulgensVersion,
   functions: functions.build(),
   cleanup: cleanup.build(),
   options: options.build() ,

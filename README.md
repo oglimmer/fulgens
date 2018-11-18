@@ -55,13 +55,14 @@ Now try `./run_local.sh -f -t tomcat:docker` to run the Tomcat inside a Docker c
 
 A Fulgensfile defines all software components needed to run a project. Supported software is
 
-* java / maven
-* node
-* shell script
-* tomcat
-* mysql
-* couchdb
-* redis
+* maven (build)
+* java (start)
+* node (start)
+* shell script (start)
+* tomcat (host war files)
+* mysql (database)
+* couchdb (database)
+* redis (database)
 
 Futhermore Vagrant/VirtualBox is supported as well.
 
@@ -499,3 +500,76 @@ config: {
     AttachIntoDocker: "/usr/local/etc/app/local.d"
 }
 ```
+
+## Example files Fulgensfile.js
+
+Many projects in [oglimmer's github](https://github.com/oglimmer) provide a Fulgensfile. Here is a list of real-world Fulgensfiles:
+
+### dsa-talent-calc-web
+
+\# Maven, dependency-build, Tomcat
+
+A Java based web application which has a dependency to a different project (which doesn't live inan official maven repository).
+
+See this [Fulgensfile.js](https://github.com/oglimmer/dsa-talent-calc-web/blob/master/Fulgensfile.js) how to clone and build the dependency before building the Java web applicaton and starting it in a local Tomcat.
+
+### deckbuilder for swlcg and swccg
+
+\# Maven, Couchdb
+
+Two very similar projects and their Fulgensfiles [Fulgensfile.js](https://github.com/oglimmer/deckbuilderswlcg/blob/master/Fulgensfile.js), [Fulgensfile.js](https://github.com/oglimmer/deckbuilderswccg/blob/master/Fulgensfile.js) building a Java project, starting an empty Couchdb before starting a Tomcat. These projects have a Dependencycheck added to their config section.
+
+### Code Your Restaruant (cyc)
+
+\# Maven, Tomcat, Java-Standalone-Backend
+
+This [Fulgensfile.js](https://github.com/oglimmer/cyc/blob/master/Fulgensfile.js) first builds a java project, then starts a Couchdb where it adds 3 views. The project consists of 2 parts, a backend server which is a plain java program and a war file hosted on a Tomcat. Both of them need config files.
+
+### Lunchy
+
+\# Maven, Mysql, Tomcat
+
+A java web applicaton using a Mysql database. The [Fulgensfile.js](https://github.com/oglimmer/lunchy/blob/master/Fulgensfile.js) builds the java project, starts the Mysql, deploys the war file to the Tomcat and starts the Tomcat.
+To use utf-8 a config file is applied to the Mysql, after the database started the schema, tables and initial data is created via 'mvn -DcreateTables=true process-resources'.
+
+### Podcast human syncer
+
+\# Node, Redis
+
+A very simple Node application, which uses a Redis database. The [Fulgensfile.js](https://github.com/oglimmer/podcast-human-syncer/blob/master/Fulgensfile.js) just starts Redis and node.
+
+### Simple Card Game
+
+\# Maven, Tomcat
+
+Most simple [Fulgensfile.js](https://github.com/oglimmer/scg/blob/master/Fulgensfile.js). Just building a project and starting it on a Tomcat.
+
+### Told You So
+
+\# Maven, Couchdb, Tomcat, config-file, before/after Build
+
+This [Fulgensfile.js](https://github.com/oglimmer/toldyouso/blob/master/Fulgensfile.js) builds a project which needs a different pom.xml for java >= 9. It also startes a Couchdb and Tomcat.
+
+### Yet Another Tower-Defnese Game (yatdg)
+
+\# Maven, Tomcat
+
+Most simple [Fulgensfile.js](https://github.com/oglimmer/yatdg/blob/master/Fulgensfile.js). Just building a project and starting it on a Tomcat.
+
+### Linky
+
+\# Maven, Node, Couchdb, config-file, before/after Build, environment variables
+
+This [Fulgensfile.js](https://github.com/oglimmer/linky/blob/master/Fulgensfile.js) starts with cloning the git repositoy of Lucene, building it and starting Lucene as a standalone java process. The a Couchdb is started and 2 schemas with initial views are created. Finally a node program is started. The Couchdb and Node have their own config files and Node is provided several environment variables.
+
+### Citybuilder
+
+\# Node, Couchdb, config-file
+
+A Couchdb and a Node program is started in this [Fulgensfile.js](https://github.com/oglimmer/citybuilder/blob/master/Fulgensfile.js).
+
+### Grid Game One (ggo)
+
+\# Maven, Tomcat, Build-Dependency
+
+Very simple [Fulgensfile.js](https://github.com/oglimmer/ggo/blob/master/Fulgensfile.js). It builds a project and starts it on a Tomcat.

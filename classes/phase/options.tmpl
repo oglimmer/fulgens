@@ -7,7 +7,7 @@ where:
   -k [component]             keep comma sperarated list of components running
   -x [component]             do not start comma sperarated list of components
   -t [component:type:[path|version]] run component inside [docker] container, [download] component (default) or [local] use installed component from path
-  -V                         enable Verbose
+  -v                         enable Verbose
   {% for o in data %}-{{o.option}} {{o.longParam}}{{o.spaces()}}{{o.helpDesc}}
   {% endfor %}
 
@@ -22,7 +22,7 @@ cd "$(cd "$(dirname "$0")";pwd -P)"
 BASE_PWD=$(pwd)
 
 BUILD=local
-while getopts ':hsc:k:x:t:V{% for o in data %}{{o.option}}{% if o.longParam %}:{% endif %}{% endfor %}' option; do
+while getopts ':hsc:k:x:t:v{% for o in data %}{{o.option}}{% if o.longParam %}:{% endif %}{% endfor %}' option; do
   case "$option" in
     h) echo "$usage"
        exit;;
@@ -36,7 +36,7 @@ while getopts ':hsc:k:x:t:V{% for o in data %}{{o.option}}{% if o.longParam %}:{
     k) KEEP_RUNNING=$OPTARG;;
     x) SKIP_STARTING=$OPTARG;;
     t) TYPE_SOURCE=$OPTARG;;
-    V) VERBOSE=YES;;
+    v) VERBOSE=YES;;
 {% for o in data %}
     {{o.option}}) {{o.varNameToSet}}={% if o.longParam %}$OPTARG{% else %}YES{% endif %};;
 {% endfor %}

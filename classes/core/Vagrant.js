@@ -22,7 +22,7 @@ class Vagrant {
 			dependencyManager.addAptBuild(Vagrant.Install.split(' '));
 		}
 
-		optionsBuilder.add('v', '', 'VAGRANT', 'start VirtualBox via vagrant, install all dependencies, ssh into the VM and run');
+		optionsBuilder.add('V', '', 'VAGRANT', 'start VirtualBox via vagrant, install all dependencies, ssh into the VM and run');
 		build = () => {
 			// must be deferred as it uses runtimeConfig.accessUrl
 			prepareBuilder.add(nunjucks.render('classes/core/Vagrant.tmpl', {

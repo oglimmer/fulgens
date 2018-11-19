@@ -24,17 +24,30 @@ class BaseConfigFile {
 
 
   /*protected*/ createFile() {
-    // this.Content is either static content or [] - make a clone
-    var allContent = this.Content.slice(0);
-    // load default content if given and add it to this.Content
+    // start with loading default content if given
+    var defaultContent = [];
     if (this.LoadDefaultContent) {
-      const loadedContent = fs.readFileSync(path.resolve(this.runtimeConfiguration.projectBasePath, this.LoadDefaultContent), { encoding: 'utf8' });
-      allContent.push(...loadedContent.split(/\r?\n/));
+      const defaultContentBlock = fs.readFileSync(path.resolve(this.runtimeConfiguration.projectBasePath, this.LoadDefaultContent.replace('$$TMP$$', 'localrun')), { encoding: 'utf8' });
+      defaultContent = defaultContentBlock.split(/\r?\n/);
     }
-    // loop over all entries finding Connection-vars and replacing them $REPLVAR???
+    // replace all variables given via this.Content
+    var staticContentFound = {};
+    const replacedDefaultContent = defaultContent.map(l => {
+      const connToReplace = this.Content.find(c => c.split(/=/)[0].trim() == l.split(/=/)[0].trim());
+      if (connToReplace) {        
+        staticContentFound[connToReplace.split(/=/)[0].trim()] = true;
+        return connToReplace;
+      } else {
+        return l;
+      }
+    });
+    // add all entries from this.Content not defined in LoadDefaultContent
+    const staticContentNotFoundYet = this.Content.filter(c => !staticContentFound[c.split(/=/)[0].trim()]);
+    const allStaticContent = [...replacedDefaultContent, ...staticContentNotFoundYet];
+    // loop over all entries so far finding Connection-vars and replacing them $REPLVAR???
     var connectionsFound = {};
-    allContent = allContent.map(l => {
-      const connToReplace = this.Connections.find(c => c.Var == l.split(/=/)[0])
+    const allContent = allStaticContent.map(l => {
+      const connToReplace = this.Connections.find(c => c.Var == l.split(/=/)[0].trim());
       if (connToReplace) {
         connectionsFound[connToReplace.Var] = true;
         return `${connToReplace.Var}=$REPLVAR${connToReplace.Var.replace('.', '_')}`;

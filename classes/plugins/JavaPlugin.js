@@ -113,7 +113,7 @@ class JavaPlugin extends BasePlugin {
         }]
       });
 
-      const configFiles = runtimeConfiguration.getConfigFiles(softwareComponentName);
+      const configFiles = runtimeConfiguration.getConfigFiles(Start);
       const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
       const pidFile = `.${softwareComponentName}Pid`;
 

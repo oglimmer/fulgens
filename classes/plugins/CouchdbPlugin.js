@@ -18,6 +18,7 @@ class CouchdbPlugin extends BasePlugin {
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
     super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
+    const { Name: systemName } = userConfig.config;
     const { CouchDB, EnvVars = [], DockerImage = 'couchdb', ExposedPort = '5984' } = userConfig.software[softwareComponentName];
 
     dependencycheckBuilder.add('docker --version 1>/dev/null');
@@ -57,10 +58,11 @@ class CouchdbPlugin extends BasePlugin {
       dcId,
       DockerImage,
       softwareComponentName,
+      systemName,
       ExposedPort,
       AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
       couchDBs: Array.isArray(CouchDB) ? CouchDB : (CouchDB ? [CouchDB] : []),
-      writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic('dockerCouchdbExtRef')).join('\n'),
+      writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic()).join('\n'),
       mountToDocker: configFiles.map(f => f.mountToDocker()).join('\n'),
     });
   }

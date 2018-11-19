@@ -17,6 +17,7 @@ class MysqlPlugin extends BasePlugin {
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
     super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
+    const { Name: systemName } = userConfig.config;
     const { Mysql, EnvVars = [], DockerImage = 'mysql', ExposedPort = '3306' } = userConfig.software[softwareComponentName];
 
     dependencycheckBuilder.add('docker --version 1>/dev/null');
@@ -53,13 +54,14 @@ class MysqlPlugin extends BasePlugin {
       ...this.nunjucksObj(),
       typeSourceVarName,
       softwareComponentName,
+      systemName,
       configFiles,
       DockerImage,
       ExposedPort,
       pidFile,
       Mysql: Mysql ? Mysql : {},
       AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
-      writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic('dockerMysqlExtRef')).join('\n'),
+      writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic()).join('\n'),
       mountToDocker: configFiles.map(f => f.mountToDocker()).join('\n')
     });
 

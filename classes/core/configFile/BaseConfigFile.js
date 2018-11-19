@@ -53,7 +53,7 @@ class BaseConfigFile {
   }
 
   /* docker */
-  writeDockerConnectionLogic(refVarName) {
+  writeDockerConnectionLogic() {
     // reduce an array of objects (Source, Var, Content) into a Map Key:Source, Value: array of original objects
     const mapSourceToConnections = this.Connections.reduce((accumulator, currentValue) => {
       
@@ -75,7 +75,6 @@ class BaseConfigFile {
       Name: this.Name,
       Content: this.Content,
       mapSourceToConnections,
-      refVarName,
       createFile: () => this.createFile()
     });
   }

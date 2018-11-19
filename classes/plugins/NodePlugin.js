@@ -17,6 +17,7 @@ class NodePlugin extends BasePlugin {
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
     super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
+    const { Name: systemName } = userConfig.config;
     const { Start, Node, EnvVars = [], ExposedPort = '3000', BeforeBuild = [], AfterBuild = [], DockerImage = 'node' } = userConfig.software[softwareComponentName];
 
     dependencycheckBuilder.add('node --version 1>/dev/null');
@@ -65,11 +66,12 @@ class NodePlugin extends BasePlugin {
       ExposedPort,
       configFiles,
       softwareComponentName,
+      systemName,
       pidFile,
       BeforeBuild,
       AfterBuild,
       DockerImage,
-      writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic('dockerNodeExtRef')).join('\n'),
+      writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic()).join('\n'),
       mountToDocker: configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n'),
       storeFileAndExportEnvVar: configFiles.map(f => f.storeFileAndExportEnvVar()).join('\n'),
       AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),

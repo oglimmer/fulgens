@@ -5,6 +5,7 @@ const fs = require('fs');
 const nunjucks = require('nunjucks');
 const minimist = require('minimist');
 const { execFile } = require('child_process');
+const crypto = require('crypto');
 
 const functions = require('./classes/phase/functions');
 const cleanup = require('./classes/phase/cleanup');
@@ -114,8 +115,12 @@ rtConfig.processPlugins();
 
 Vagrant.build();
 
+const hashFulgensfileOrigin = crypto.createHash('md5').update(fs.readFileSync(path.resolve(systemFilename)), 'utf8').digest('hex');
+
 const renderedOutput = nunjucks.render('fulgens.tmpl', {
   fulgensVersion,
+  systemName: userConfig.config.Name.toLowerCase(),
+  hashFulgensfileOrigin,
   functions: functions.build(),
   cleanup: cleanup.build(),
   options: options.build() ,

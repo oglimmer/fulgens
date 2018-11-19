@@ -20,6 +20,7 @@ class ShellPlugin extends BasePlugin {
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
     super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
+    const { Name: systemName } = userConfig.config;
     const { Start, ExposedPort, DockerImage = 'ubuntu', EnvVars = [] } = userConfig.software[softwareComponentName];
     const StartRpld = Start.replace('$$TMP$$', 'localrun');
 
@@ -60,13 +61,14 @@ class ShellPlugin extends BasePlugin {
       ...this.nunjucksObj(),
       typeSourceVarName,
       softwareComponentName,
+      systemName,
       pidFile,
       StartRpld,
       ExposedPort,
       dcId,
       pid,
       DockerImage,
-      writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic('dockerJavaExtRef')).join('\n'),
+      writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic()).join('\n'),
       mountToDocker: configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n'),
       AllEnvVarsDocker: EnvVars.map(l => l.replace('$$TMP$$', 'localrun')).map(p => `-e ${p}`).join(' '),
       AllEnvVarsShell: EnvVars.map(l => l.replace('$$TMP$$', 'localrun')).map(p => `export ${p}`).join('\n')

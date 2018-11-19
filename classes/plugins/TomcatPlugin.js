@@ -28,6 +28,7 @@ class TomcatPlugin extends BasePlugin {
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
     super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
+    const { Name: systemName } = userConfig.config;
     const { Deploy, Lib, EnvVars = [], SourceTypes = ['docker','download','local'], DockerImage = 'tomcat', ExposedPort = '8080' } = userConfig.software[softwareComponentName];
     const { Artifact } = userConfig.software[Deploy];
 
@@ -123,13 +124,14 @@ class TomcatPlugin extends BasePlugin {
       typeSourceVarName,
       pidFile,
       softwareComponentName,
+      systemName,
       Artifact,
       DockerImage,
       ExposedPort,
       AllEnvVarsTomcat: 'export JAVA_OPTS="$JAVA_OPTS ' + EnvVars.map(p => `-D${p}`).join(' ') + '"',
       AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
       storeFileAndExportEnvVar: configFiles.map(f => f.storeFileAndExportEnvVar()).join('\n'),
-      writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic('dockerTomcatExtRef')).join('\n'),
+      writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic()).join('\n'),
       mountToDocker: configFiles.map(f => f.mountToDocker('/usr/local/tomcat/webapps')).join('\n')
     });
 

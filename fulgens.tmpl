@@ -15,22 +15,55 @@ verbosePrint() {
 	fi
 }
 
+startDockerNetwork() {
+	if [ -z "$DOCKER_NETWORKED_CHECKED" ]; then
+		DOCKER_NETWORKED_CHECKED=YES
+		if ! docker network ls|grep -s "{{systemName}}net"; then
+			verbosePrint "Starting docker network {{systemName}}net"
+			docker network create -d bridge --subnet 192.168.222.0/24 --gateway 192.168.222.1 "{{systemName}}net"
+		else
+			verbosePrint "Docker network {{systemName}}net already running"
+		fi
+	fi
+}
+
 {{ cleanup }}
 
 {{ options }}
+
+if [ "$SKIP_HASH_CHECK" != "YES" ]; then
+	if which md5 1>/dev/null; then
+		declare SELF_HASH_MD5="{{hashFulgensfileOrigin}}"
+		declare SOURCE_FILES=(Fulgensfile Fulgensfile.js)
+		for SOURCE_FILE in ${SOURCE_FILES[@]}; do
+			declare SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")">/dev/null&&pwd)"
+			if [ -f "$SCRIPT_DIR/$SOURCE_FILE" ]; then
+				if [ "$SELF_HASH_MD5" != "$(md5 -q $SCRIPT_DIR/$SOURCE_FILE)" ]; then
+					echo "$SOURCE_FILE doesn not match!"
+					exit 1
+				fi
+			fi
+		done
+	fi
+fi
 
 {{ dependencycheck }}
 
 # clean if requested
 if [ -n "$CLEAN" ]; then
-  if [ "$CLEAN" == "all" ]; then
-    if [ "$VERBOSE" == "YES" ]; then echo "rm -rf localrun"; fi
-    rm -rf localrun
-  fi
-  {{ clean }}
+	if [ "$CLEAN" == "all" ]; then
+		if [ "$VERBOSE" == "YES" ]; then echo "rm -rf localrun"; fi
+		rm -rf localrun
+	fi
+  	{{ clean }}
 fi
 
 {{ globalvariables }}
+
+if [ "$(uname)" = "Linux" ]; then 
+	ADD_HOST_INTERNAL="--add-host host.docker.internal:$(ip -4 addr show scope global dev docker0 | grep inet | awk '{print $2}' | cut -d / -f 1)"
+fi
+
 
 mkdir -p localrun
 

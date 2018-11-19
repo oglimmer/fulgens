@@ -3,6 +3,7 @@ usage="$(basename "$0") - Builds, deploys and run {{name}}
 where:
   -h                         show this help text
   -s                         skip any build
+  -S                         skip consistency check against Fulgensfile
   -c [all|build]             clean local run directory, when a build is scheduled for execution it also does a full build
   -k [component]             keep comma sperarated list of components running
   -x [component]             do not start comma sperarated list of components
@@ -22,11 +23,12 @@ cd "$(cd "$(dirname "$0")";pwd -P)"
 BASE_PWD=$(pwd)
 
 BUILD=local
-while getopts ':hsc:k:x:t:v{% for o in data %}{{o.option}}{% if o.longParam %}:{% endif %}{% endfor %}' option; do
+while getopts ':hsSc:k:x:t:v{% for o in data %}{{o.option}}{% if o.longParam %}:{% endif %}{% endfor %}' option; do
   case "$option" in
     h) echo "$usage"
        exit;;
     s) SKIP_BUILD=YES;;
+    S) SKIP_HASH_CHECK=YES;;
     c) 
        CLEAN=$OPTARG
        if [ "$CLEAN" != "all" -a "$CLEAN" != "build" ]; then

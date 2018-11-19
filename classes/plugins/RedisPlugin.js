@@ -18,6 +18,7 @@ class RedisPlugin extends BasePlugin {
   exec(softwareComponentName, userConfig, runtimeConfiguration) {
     super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
+    const { Name: systemName } = userConfig.config;
     const { EnvVars = [], DockerImage = 'redis', ExposedPort = '6379' } = userConfig.software[softwareComponentName];
 
     dependencycheckBuilder.add('docker --version 1>/dev/null');
@@ -54,12 +55,13 @@ class RedisPlugin extends BasePlugin {
       ...this.nunjucksObj(),
       typeSourceVarName,
       softwareComponentName,
+      systemName,
       pidFile,
       dcId,
       DockerImage,
       ExposedPort,
       AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
-      writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic('dockerRedisdbExtRef')).join('\n'),
+      writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic()).join('\n'),
       mountToDocker: configFiles.map(f => f.mountToDocker()).join('\n')
     });
 

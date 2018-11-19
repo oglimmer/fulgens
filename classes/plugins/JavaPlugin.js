@@ -84,6 +84,7 @@ class JavaPlugin extends BasePlugin {
 
     if (userConfig.software[softwareComponentName]) {
 
+      const { Name: systemName } = userConfig.config;
       const { Start, ExposedPort, EnvVars = [], DockerImage = 'openjdk' } = userConfig.software[softwareComponentName];
       const { Artifact } = userConfig.software[Start];
       const ArtifactRpld = Artifact.replace('$$TMP$$', 'localrun');
@@ -122,11 +123,12 @@ class JavaPlugin extends BasePlugin {
         ArtifactRpld,
         pidFile,
         softwareComponentName,
+        systemName,
         ExposedPort,
         dcId,
         pid,
         DockerImage,
-        writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic('dockerJavaExtRef')).join('\n'),
+        writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic()).join('\n'),
         mountToDocker: configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n'),
         AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
         AllEnvVarsShell: EnvVars.join(' ')

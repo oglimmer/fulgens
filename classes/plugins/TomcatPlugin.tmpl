@@ -63,9 +63,11 @@ if [ "${{typeSourceVarName}}" == "docker" ]; then
     exit 1
   fi
   if [ ! -f "{{pidFile}}" ]; then
+    startDockerNetwork
     {{writeDockerConnectionLogic}}
-    verbosePrint "docker run --rm -d $dockerTomcatExtRef ${dockerAddLibRefs[@]} -p {{ExposedPort}}:{{ExposedPort}} {{mountToDocker}} {{AllEnvVarsDocker}} -v "$(pwd)/localrun/webapps":/usr/local/tomcat/webapps {{DockerImage}}:${{typeSourceVarName}}_VERSION"
-    dockerContainerID{{softwareComponentName}}=$(docker run --rm -d $dockerTomcatExtRef ${dockerAddLibRefs[@]} -p {{ExposedPort}}:{{ExposedPort}} \
+    verbosePrint "docker run --rm -d ${dockerAddLibRefs[@]} -p {{ExposedPort}}:{{ExposedPort}} --net={{systemName|lower}}net --name={{softwareComponentName}} $ADD_HOST_INTERNAL {{mountToDocker}} {{AllEnvVarsDocker}} -v "$(pwd)/localrun/webapps":/usr/local/tomcat/webapps {{DockerImage}}:${{typeSourceVarName}}_VERSION"
+    dockerContainerID{{softwareComponentName}}=$(docker run --rm -d ${dockerAddLibRefs[@]} -p {{ExposedPort}}:{{ExposedPort}} \
+        --net={{systemName|lower}}net --name={{softwareComponentName}} $ADD_HOST_INTERNAL \
         {{mountToDocker}} {{AllEnvVarsDocker}} \
         -v "$(pwd)/localrun/webapps":/usr/local/tomcat/webapps {{DockerImage}}:${{typeSourceVarName}}_VERSION)
     echo "$dockerContainerID{{softwareComponentName}}">{{pidFile}}

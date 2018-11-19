@@ -29,16 +29,18 @@ if [ "${{typeSourceVarName}}" == "docker" ]; then
 	#  exit 1
 	#fi
 	if [ ! -f "$BASE_PWD/{{pidFile}}" ]; then
-	  {{writeDockerConnectionLogic}}
-	  verbosePrint "docker run --rm -d $dockerJavaExtRef -p {{ExposedPort}}:{{ExposedPort}} {{mountToDocker}} {{AllEnvVarsDocker}} -v "$(pwd)":/home/node/exec_env -w /home/node/exec_env {{DockerImage}}:${{typeSourceVarName}}_VERSION /bin/bash -c ./{{ArtifactRpld}}"
-	  {{dcId}}=$(docker run --rm -d $dockerJavaExtRef -p {{ExposedPort}}:{{ExposedPort}} \
-	      {{mountToDocker}}  \
-	      {{AllEnvVarsDocker}} \
-	      -v "$(pwd)":/home/node/exec_env -w /home/node/exec_env {{DockerImage}}:${{typeSourceVarName}}_VERSION /bin/bash -c ./{{ArtifactRpld}})
-	  echo "${{dcId}}">"$BASE_PWD/{{pidFile}}"
+		startDockerNetwork
+		{{writeDockerConnectionLogic}}
+		verbosePrint "docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} --net={{systemName|lower}}net --name={{softwareComponentName}} $ADD_HOST_INTERNAL {{mountToDocker}} {{AllEnvVarsDocker}} -v "$(pwd)":/home/node/exec_env -w /home/node/exec_env {{DockerImage}}:${{typeSourceVarName}}_VERSION /bin/bash -c ./{{ArtifactRpld}}"
+		{{dcId}}=$(docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} \
+			--net={{systemName|lower}}net --name={{softwareComponentName}} $ADD_HOST_INTERNAL \
+			{{mountToDocker}}  \
+			{{AllEnvVarsDocker}} \
+			-v "$(pwd)":/home/node/exec_env -w /home/node/exec_env {{DockerImage}}:${{typeSourceVarName}}_VERSION /bin/bash -c ./{{ArtifactRpld}})
+		echo "${{dcId}}">"$BASE_PWD/{{pidFile}}"
 	else
-	  {{dcId}}=$(<"$BASE_PWD/{{pidFile}}")
-	  echo "Reusing already running instance ${{dcId}}"
+		{{dcId}}=$(<"$BASE_PWD/{{pidFile}}")
+		echo "Reusing already running instance ${{dcId}}"
 	fi
 fi
 

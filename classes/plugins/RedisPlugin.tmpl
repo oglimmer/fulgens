@@ -12,9 +12,12 @@ if [ "$SKIP_{{softwareComponentName|upper}}" != "YES" ]; then
 if [ "${{typeSourceVarName}}" == "docker" ]; then
   # run in docker
   if [ ! -f "{{pidFile}}" ]; then
+    startDockerNetwork
     {{writeDockerConnectionLogic}}
-    if [ "$VERBOSE" == "YES" ]; then echo "docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} $dockerRedisdbExtRef {{mountToDocker}} {{AllEnvVarsDocker}} {{DockerImage}}:${{typeSourceVarName}}_VERSION"; fi
-    {{dcId}}=$(docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} $dockerRedisdbExtRef {{mountToDocker}} {{AllEnvVarsDocker}} {{DockerImage}}:${{typeSourceVarName}}_VERSION)
+    verbosePrint "docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} --net={{systemName|lower}}net --name={{softwareComponentName}} $ADD_HOST_INTERNAL {{mountToDocker}} {{AllEnvVarsDocker}} {{DockerImage}}:${{typeSourceVarName}}_VERSION"
+    {{dcId}}=$(docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} \
+      --net={{systemName|lower}}net --name={{softwareComponentName}} $ADD_HOST_INTERNAL \
+      {{mountToDocker}} {{AllEnvVarsDocker}} {{DockerImage}}:${{typeSourceVarName}}_VERSION)
     echo "${{dcId}}">{{pidFile}}
   else
     {{dcId}}=$(<{{pidFile}})

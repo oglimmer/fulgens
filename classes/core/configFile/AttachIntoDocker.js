@@ -30,6 +30,10 @@ class AttachIntoDocker extends BaseConfigFile {
     this.AttachIntoDocker = config.AttachIntoDocker;
   }
 
+  storeFileAndExportEnvVar() {
+    return '';
+  }
+
   /* docker */
   mountToDocker() {
     return `-v "\$(pwd)/localrun/${this.TmpFolder}:${this.AttachIntoDocker}"`;

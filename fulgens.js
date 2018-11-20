@@ -117,9 +117,13 @@ Vagrant.build();
 
 const hashFulgensfileOrigin = crypto.createHash('md5').update(fs.readFileSync(path.resolve(systemFilename)), 'utf8').digest('hex');
 
+const md5Name = crypto.createHash('md5').update(userConfig.config.Name, 'utf8').digest('dec');
+const network = `10.${md5Name[1]}.${md5Name[0]}`;
+
 const renderedOutput = nunjucks.render('fulgens.tmpl', {
   fulgensVersion,
   systemName: userConfig.config.Name.toLowerCase(),
+  network,
   hashFulgensfileOrigin,
   functions: functions.build(),
   cleanup: cleanup.build(),

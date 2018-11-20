@@ -25,7 +25,7 @@ class MysqlPlugin extends BasePlugin {
  
     optionsBuilder.addDetails('t', [
       `${softwareComponentName}:local #reuse a local, running MySQL installation, does not start/stop this MySQL`,
-      `${softwareComponentName}:docker:[5|8] #start docker image ${DockerImage}:X`
+      `${softwareComponentName}:docker:[5|8] #start docker image ${DockerImage}:5 (default)`
     ]);
 
     sourceTypeBuilder.add(this, {

@@ -25,7 +25,7 @@ class RedisPlugin extends BasePlugin {
     
     optionsBuilder.addDetails('t', [
       `${softwareComponentName}:local #reuse a local, running Redis installation, does not start/stop this Redis`,
-      `${softwareComponentName}:docker:[3|4] #start docker image ${DockerImage}:X`]);
+      `${softwareComponentName}:docker:[3|4] #start docker image ${DockerImage}:4 (default)`]);
 
     const configFiles = runtimeConfiguration.getConfigFiles(softwareComponentName);
 

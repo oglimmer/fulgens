@@ -25,7 +25,7 @@ class CouchdbPlugin extends BasePlugin {
     
     optionsBuilder.addDetails('t', [
       `${softwareComponentName}:local #reuse a local, running CouchDB installation, does not start/stop this CouchDB`,
-      `${softwareComponentName}:docker:[1.7|2] #start docker image ${DockerImage}:X`]);
+      `${softwareComponentName}:docker:[1.7|2] #start docker image ${DockerImage}:1.7 (default)`]);
 
     const configFiles = runtimeConfiguration.getConfigFiles(softwareComponentName);
 

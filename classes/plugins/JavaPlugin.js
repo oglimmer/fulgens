@@ -89,12 +89,17 @@ class JavaPlugin extends BasePlugin {
       const { Artifact } = userConfig.software[Start];
       const ArtifactRpld = Artifact.replace('$$TMP$$', 'localrun');
 
+      optionsBuilder.addDetails('t', [
+        `${softwareComponentName}:local #start a local java program`,
+        `${softwareComponentName}:docker:[11-jre] #start the java program inside docker image ${DockerImage}:11-jre (default)`
+      ]);
+
       sourceTypeBuilder.add(this, {
         componentName: softwareComponentName,
         defaultType: 'local', 
         availableTypes: [
           { typeName: 'local', defaultVersion: '' },
-          { typeName: 'docker', defaultVersion: '10-jre' }
+          { typeName: 'docker', defaultVersion: '11-jre' }
         ]
       });
 

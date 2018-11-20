@@ -25,7 +25,7 @@ class NodePlugin extends BasePlugin {
 
     optionsBuilder.addDetails('t', [
       `${softwareComponentName}:local #reuse a local node installation`,
-      `${softwareComponentName}:docker:[6|8|10] #start docker image ${DockerImage}:X`
+      `${softwareComponentName}:docker:[6|8|10] #start docker image ${DockerImage}:10 (default)`
     ]);
 
     runtimeConfiguration.setTail('nodejs', `http://localhost:${ExposedPort}`);

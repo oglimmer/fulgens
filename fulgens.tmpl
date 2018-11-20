@@ -19,8 +19,8 @@ startDockerNetwork() {
 	if [ -z "$DOCKER_NETWORKED_CHECKED" ]; then
 		DOCKER_NETWORKED_CHECKED=YES
 		if ! docker network ls|grep -s "{{systemName}}net"; then
-			verbosePrint "Starting docker network {{systemName}}net"
-			docker network create -d bridge --subnet 192.168.222.0/24 --gateway 192.168.222.1 "{{systemName}}net"
+			verbosePrint "Starting docker network {{systemName}}net on {{network}}.0/24"
+			docker network create -d bridge --subnet {{network}}.0/24 --gateway {{network}}.1 "{{systemName}}net"
 		else
 			verbosePrint "Docker network {{systemName}}net already running"
 		fi

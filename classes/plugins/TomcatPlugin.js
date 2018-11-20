@@ -50,15 +50,16 @@ class TomcatPlugin extends BasePlugin {
     var defaultTypeData = 'download';
     var dockerLibsToAdd = '';
     var downloadLibsToCopy = '';
+    var defaultVersion;
 
     SourceTypes.forEach(sourceType => {
       const sourceTypeMain = sourceType.indexOf(':') === -1 ? sourceType : sourceType.substring(0, sourceType.indexOf(':'));
       const sourceTypeVersion = sourceType.indexOf(':') === -1 ? null : sourceType.substring(sourceType.indexOf(':') + 1);
       switch(sourceTypeMain) {
         case 'docker':
-
-          optionsBuilderData.push(`${softwareComponentName}:docker:${sourceTypeVersion?sourceTypeVersion:'[7|8|9]'} #start docker image ${DockerImage}:X and run this build within it`);
-          availableTypesData.push({ typeName: 'docker', defaultVersion: (sourceTypeVersion?sourceTypeVersion:'9') });
+          defaultVersion = sourceTypeVersion?sourceTypeVersion:'9';
+          optionsBuilderData.push(`${softwareComponentName}:docker:${sourceTypeVersion?sourceTypeVersion:'[7|8|9]'} #start docker image ${DockerImage}:${defaultVersion} (default) and run this build within it`);
+          availableTypesData.push({ typeName: 'docker', defaultVersion });
           cleanupSourceTypesData.push({
             name: 'docker',
             stopCode: 'docker rm -f $dockerContainerID' + softwareComponentName
@@ -74,8 +75,9 @@ class TomcatPlugin extends BasePlugin {
           
         break;
         case 'download':
-          optionsBuilderData.push(`${softwareComponentName}:download:${sourceTypeVersion?sourceTypeVersion:'[7|8|9]'} #download tomcat version x and run this build within it, would respect -j`);
-          availableTypesData.push({ typeName: 'download', defaultVersion: (sourceTypeVersion?sourceTypeVersion:'9'), code: downloadCode(typeSourceVarName) });
+          defaultVersion = sourceTypeVersion?sourceTypeVersion:'9';
+          optionsBuilderData.push(`${softwareComponentName}:download:${sourceTypeVersion?sourceTypeVersion:'[7|8|9]'} #download tomcat version ${defaultVersion} (default) and run this build within it, would respect -j`);
+          availableTypesData.push({ typeName: 'download', defaultVersion, code: downloadCode(typeSourceVarName) });
           cleanupSourceTypesData.push({
             name: 'download',
             stopCode: './localrun/apache-tomcat-$TOMCAT_VERSION/bin/shutdown.sh'

@@ -26,7 +26,7 @@ class ShellPlugin extends BasePlugin {
 
     optionsBuilder.addDetails('t', [
       `${softwareComponentName}:local #start a local shell script`,
-      `${softwareComponentName}:docker:[latest] #start the shell script inside docker image ${DockerImage}:X`
+      `${softwareComponentName}:docker:[latest] #start the shell script inside docker image ${DockerImage}:latest (default)`
     ]);
 
     sourceTypeBuilder.add(this, {

@@ -3,6 +3,7 @@ const nunjucks = require('nunjucks');
 
 const dependencycheckBuilder = require('../phase/dependencycheck');
 const optionsBuilder = require('../phase/options');
+const sourceTypeBuilder = require('../core/SourceType');
 
 const BasePlugin = require('./BasePlugin');
 
@@ -36,10 +37,19 @@ class MvnPlugin extends BasePlugin {
 
     dependencycheckBuilder.add('mvn --version 1>/dev/null');
 
-    optionsBuilder.add('b', 'local|docker:version', 'BUILD',
-      `build locally (default) or within a maven image on docker, the default image is ${defaultDockerVersion}`,
-      [ `docker:[3-jdk-8|3-jdk-9|3-jdk-10|3-jdk-11] #do a docker based build, uses ${DockerImage}:${defaultDockerVersion} image`,
-        'local #do a local build, would respect -j']);
+    optionsBuilder.addDetails('t', [
+      `${softwareComponentName}:local #build locally (default), would respect -j`,
+      `${softwareComponentName}:docker:[3-jdk-8|3-jdk-9|3-jdk-10|3-jdk-11] #do a docker based build, uses ${DockerImage}:${defaultDockerVersion} (default) image`
+    ]);
+
+    sourceTypeBuilder.add(this, {
+      componentName: softwareComponentName,
+      defaultType: 'local', 
+      availableTypes: [
+        { typeName: 'local', defaultVersion: '' },
+        { typeName: 'docker', defaultVersion: defaultDockerVersion }
+      ]
+    });
 
     const { BuildDependencies } = userConfig.config;
 
@@ -53,12 +63,15 @@ class MvnPlugin extends BasePlugin {
     const Goal = Mvn && Mvn.Goal ? Mvn.Goal.replace('$$TMP$$', 'localrun') : 'package';
     const GoalIgnoreClean = Mvn && Mvn.GoalIgnoreClean ? true : false;
     const AllEnvVars = [...EnvVars, ...dependencyManager.getEnvVars()];
+    const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
 
     const rpl = obj => (Array.isArray(obj)?obj:[obj]).map(e => e.replace('$$TMP$$', 'localrun')).join('\n');
 
     this.build = () => nunjucks.render('classes/plugins/MvnPlugin.tmpl', {
       ...this.nunjucksObj(),
       GoalIgnoreClean: GoalIgnoreClean ? '' : '$MVN_CLEAN',
+      softwareComponentName,
+      typeSourceVarName,
       Goal,
       defaultDockerVersion,
       DockerImage,

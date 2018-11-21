@@ -1,20 +1,22 @@
 
-usage="$(basename "$0") - Builds, deploys and run {{name}}
-where:
+usage="
+usage: $(basename "$0") [options] [<component(s)>]
+
+Options:
   -h                         show this help text
   -s                         skip any build
   -S                         skip consistency check against Fulgensfile
   -c [all|build]             clean local run directory, when a build is scheduled for execution it also does a full build
   -k [component]             keep comma sperarated list of components running
-  -x [component]             do not start comma sperarated list of components
   -t [component:type:[path|version]] run component inside [docker] container, [download] component (default) or [local] use installed component from path
   -v                         enable Verbose
   {% for o in data %}-{{o.option}} {{o.longParam}}{{o.spaces()}}{{o.helpDesc}}
   {% endfor %}
+Components (name:type): {% for comp in componentNames %}{{comp.Name|lower}}:{{comp.Source}} {% endfor %}
 
-Http url: {{accessUrl}}
+Url: {{accessUrl}}
 
-Details:
+Details for components:
 {% for o in dataDetails %}{% for d in o.detailsArray %} -{{o.option}} {{d}}
 {% endfor %}{% endfor %}
 "
@@ -51,10 +53,25 @@ while getopts ':hsSc:k:x:t:v{% for o in data %}{{o.option}}{% if o.longParam %}:
   esac
 done
 shift $((OPTIND - 1))
-TYPE_PARAM="$1"
 
-IFS=',' read -r -a array <<< "$SKIP_STARTING"
-for comp in "${array[@]}"; do
-  comp=$(echo $comp | awk '{print toupper($0)}')
-  declare SKIP_$comp=YES
-done
+if [ -z "$1" ]; then
+{% for comp in componentNames|map('Name') %}
+  declare START_{{comp|upper}}=YES
+{% endfor %}
+else
+  ALL_COMPONENTS=({{componentNames|map('Name')|join(' ')|upper}})
+  for comp in "$@"; do
+    compUpper=$(echo $comp | awk '{print toupper($0)}')
+    compValid=0
+    for compDefined in "${ALL_COMPONENTS[@]}"; do
+      if [ "$compDefined" = "$compUpper" ]; then
+        compValid=1
+      fi
+    done
+    if [ "$compValid" -eq 0 ]; then
+      echo "Component $comp is invalid!"
+      exit 1
+    fi
+    declare START_$compUpper=YES
+  done  
+fi

@@ -6,7 +6,7 @@ cleanup()
   echo "****************************************************************"
   set +e
 
-  ALL_COMPONENTS=({{componentsCode|map('pluginName')|join(' ')|lower}})
+  ALL_COMPONENTS=({{componentsCode|map('componentName')|join(' ')|lower}})
   for componentToStop in "${ALL_COMPONENTS[@]}"; do
     IFS=',' read -r -a keepRunningArray <<< "$KEEP_RUNNING"
     componentFoundToKeepRunning=0
@@ -18,8 +18,8 @@ cleanup()
     done
     if [ "$componentFoundToKeepRunning" -eq 0 ]; then
       {% for e in componentsCode %}
-      if [ "$SKIP_{{e.componentName|upper}}" != "YES" ]; then
-        if [ "$componentToStop" == "{{e.pluginName|lower}}" ]; then
+      if [ "$START_{{e.componentName|upper}}" = "YES" ]; then
+        if [ "$componentToStop" == "{{e.componentName|lower}}" ]; then
           echo "Stopping $componentToStop ..."
           {% for a in e.sourceTypes %}
           if [ "$TYPE_SOURCE_{{e.componentName|upper}}" == "{{a.name}}" ]; then

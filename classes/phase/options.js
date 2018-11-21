@@ -50,7 +50,8 @@ class OptionsBuilder extends BufferedBuilder {
       name: this.userConfig.config.Name,
       data: this.data,
       dataDetails: this.dataDetails,
-      accessUrl: this.runtimeConfiguration.accessUrl
+      accessUrl: this.runtimeConfiguration.accessUrl,
+      componentNames: Object.keys(this.userConfig.software).map(Name => ({Name, Source: this.userConfig.software[Name].Source}))
     });
   }
 

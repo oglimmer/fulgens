@@ -1,7 +1,7 @@
 
 {{ header }}
 
-if [ "$SKIP_{{softwareComponentName|upper}}" != "YES" ]; then
+if [ "$START_{{softwareComponentName|upper}}" = "YES" ]; then
 
 {{ preparecomp }}
 

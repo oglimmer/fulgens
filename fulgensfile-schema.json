@@ -310,14 +310,6 @@
         "Source": {
           "enum": [ "tomcat" ]
         },
-        "SourceTypes": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "type": "string"
-          },
-          "uniqueItems": true
-        },
         "Lib": {
           "type": "array",
           "minItems": 0,

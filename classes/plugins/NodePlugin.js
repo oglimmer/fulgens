@@ -23,9 +23,9 @@ class NodePlugin extends BasePlugin {
     dependencycheckBuilder.add('node --version 1>/dev/null');
     dependencycheckBuilder.add('npm --version 1>/dev/null');
 
-    optionsBuilder.addDetails('t', [
+    optionsBuilder.addDetails(softwareComponentName, 'docker:10', [
       `${softwareComponentName}:local #reuse a local node installation`,
-      `${softwareComponentName}:docker:[6|8|10] #start docker image ${DockerImage}:10 (default)`
+      `${softwareComponentName}:docker:[TAG] #start docker, default tag 10, uses image http://hub.docker.com/_/${DockerImage}`
     ]);
 
     runtimeConfiguration.setTail('nodejs', `http://localhost:${ExposedPort}`);

@@ -4,22 +4,11 @@ const nunjucks = require('nunjucks');
 const dependencycheckBuilder = require('../phase/dependencycheck');
 const optionsBuilder = require('../phase/options');
 const sourceTypeBuilder = require('../core/SourceType');
+const { maxVersion } = require('../core/Strings');
 
 const BasePlugin = require('./BasePlugin');
 
 const DependencyManager = require('../core/DependencyManager');
-
-function maxVersion(versionsArray) {
-  // find the greatest java version: string-to-float, sort, get last number
-  const numberArray = versionsArray.map(e => parseFloat(e));
-  numberArray.sort();
-  const lastVal = numberArray[numberArray.length - 1];
-  // java versions are 1.6, 1.7, 1.8, 9, 10, 11, but we need 6, 7, 8, 9, 10, 11
-  if (lastVal < 2) {
-    return (lastVal - 1) * 10;
-  }
-  return lastVal;
-}
 
 class MvnPlugin extends BasePlugin {
 
@@ -33,13 +22,13 @@ class MvnPlugin extends BasePlugin {
     const { JavaVersions, UseHomeM2 } = userConfig.config;
     const { DockerImage = 'maven' } = userConfig.software[softwareComponentName];
 
-    var defaultDockerVersion = JavaVersions ? `3-jdk-${maxVersion(JavaVersions)}` : '3-jdk-11';
+    var defaultDockerVersion = maxVersion(JavaVersions);
 
     dependencycheckBuilder.add('mvn --version 1>/dev/null');
 
-    optionsBuilder.addDetails('t', [
-      `${softwareComponentName}:local #build locally (default), would respect -j`,
-      `${softwareComponentName}:docker:[3-jdk-8|3-jdk-9|3-jdk-10|3-jdk-11] #do a docker based build, uses ${DockerImage}:${defaultDockerVersion} (default) image`
+    optionsBuilder.addDetails(softwareComponentName, 'local', [
+      `${softwareComponentName}:local #build local and respect -j`,
+      `${softwareComponentName}:docker:[TAG] #docker based build, default tag: ${defaultDockerVersion}, uses image http://hub.docker.com/_/${DockerImage}`
     ]);
 
     sourceTypeBuilder.add(this, {

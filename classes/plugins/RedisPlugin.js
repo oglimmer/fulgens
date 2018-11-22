@@ -23,9 +23,9 @@ class RedisPlugin extends BasePlugin {
 
     dependencycheckBuilder.add('docker --version 1>/dev/null');
     
-    optionsBuilder.addDetails('t', [
+    optionsBuilder.addDetails(softwareComponentName, 'docker:4', [
       `${softwareComponentName}:local #reuse a local, running Redis installation, does not start/stop this Redis`,
-      `${softwareComponentName}:docker:[3|4] #start docker image ${DockerImage}:4 (default)`]);
+      `${softwareComponentName}:docker:[3|4] #start docker, default tag 4, uses image http://hub.docker.com/_/${DockerImage}`]);
 
     const configFiles = runtimeConfiguration.getConfigFiles(softwareComponentName);
 

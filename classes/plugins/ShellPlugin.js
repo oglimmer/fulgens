@@ -24,9 +24,9 @@ class ShellPlugin extends BasePlugin {
     const { Start, ExposedPort, DockerImage = 'ubuntu', EnvVars = [] } = userConfig.software[softwareComponentName];
     const StartRpld = Start.replace('$$TMP$$', 'localrun');
 
-    optionsBuilder.addDetails('t', [
+    optionsBuilder.addDetails(softwareComponentName, 'docker:latest', [
       `${softwareComponentName}:local #start a local shell script`,
-      `${softwareComponentName}:docker:[latest] #start the shell script inside docker image ${DockerImage}:latest (default)`
+      `${softwareComponentName}:docker:[latest] #start inside docker, default tag latest, uses image http://hub.docker.com/_/${DockerImage}`
     ]);
 
     sourceTypeBuilder.add(this, {

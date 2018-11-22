@@ -16,8 +16,10 @@ class Option {
 }
 
 class OptionDetails {
-  constructor(option, detailsArray) {
-    this.option = option;
+  constructor(componentName, Source, DefaultType, detailsArray) {
+    this.componentName = componentName;
+    this.Source = Source;
+    this.DefaultType = DefaultType;
     this.detailsArray = detailsArray;
   }
 }
@@ -30,24 +32,27 @@ class OptionsBuilder extends BufferedBuilder {
     this.dataDetails = [];
   }
 
-  add(option, longParam, varNameToSet, helpDesc, detailsArray) {
+  add(option, longParam, varNameToSet, helpDesc) {
     if (this.data.find(e => e.option === option)) {
       // only accept an option once
       return;
     }
     this.data.push(new Option(option, longParam, varNameToSet, helpDesc));
-    if (detailsArray) {
-      this.dataDetails.push(new OptionDetails(option, detailsArray));
-    }
   }
 
-  addDetails(option, detailsArray) {
-    this.dataDetails.push(new OptionDetails(option, detailsArray));
+  addDetails(componentName, DefaultType, detailsArray) {
+    const op = this.dataDetails.find(e => e.componentName === componentName);
+    if (op) {
+      detailsArray.forEach(e => op.detailsArray.push(e));
+    } else {
+      const { Source } = this.userConfig.software[componentName];
+      const newOp = new OptionDetails(componentName, Source, DefaultType, detailsArray);
+      this.dataDetails.push(newOp);
+    }
   }
 
   buildInternal() {
     return nunjucks.render('classes/phase/options.tmpl', {
-      name: this.userConfig.config.Name,
       data: this.data,
       dataDetails: this.dataDetails,
       accessUrl: this.runtimeConfiguration.accessUrl,

@@ -21,11 +21,13 @@ class CouchdbPlugin extends BasePlugin {
     const { Name: systemName } = userConfig.config;
     const { CouchDB, EnvVars = [], DockerImage = 'couchdb', ExposedPort = '5984' } = userConfig.software[softwareComponentName];
 
+    const defaultVersion = '1.7';
+
     dependencycheckBuilder.add('docker --version 1>/dev/null');
     
-    optionsBuilder.addDetails('t', [
+    optionsBuilder.addDetails(softwareComponentName, 'docker:' + defaultVersion, [
       `${softwareComponentName}:local #reuse a local, running CouchDB installation, does not start/stop this CouchDB`,
-      `${softwareComponentName}:docker:[1.7|2] #start docker image ${DockerImage}:1.7 (default)`]);
+      `${softwareComponentName}:docker:[TAG] #start docker, default tag ${defaultVersion}, uses image from http://hub.docker.com/_/${DockerImage}`]);
 
     const configFiles = runtimeConfiguration.getConfigFiles(softwareComponentName);
 
@@ -33,7 +35,7 @@ class CouchdbPlugin extends BasePlugin {
       componentName: softwareComponentName,
       defaultType: 'docker', 
       availableTypes: [
-        { typeName: 'docker', defaultVersion: '1.7' },
+        { typeName: 'docker', defaultVersion },
         { typeName: 'local', defaultVersion: '' }
       ]
     });

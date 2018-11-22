@@ -8,18 +8,16 @@ Options:
   -S                         skip consistency check against Fulgensfile
   -c [all|build]             clean local run directory, when a build is scheduled for execution it also does a full build
   -k [component]             keep comma sperarated list of components running
-  -t [component:type:[path|version]] run component inside [docker] container, [download] component (default) or [local] use installed component from path
+  -t [component:type:[path|version]] run component inside [docker] container, [download] component or [local] use installed component from path
   -v                         enable Verbose
   {% for o in data %}-{{o.option}} {{o.longParam}}{{o.spaces()}}{{o.helpDesc}}
   {% endfor %}
-Components (name:type): {% for comp in componentNames %}{{comp.Name|lower}}:{{comp.Source}} {% endfor %}
-
 Url: {{accessUrl}}
 
 Details for components:
-{% for o in dataDetails %}{% for d in o.detailsArray %} -{{o.option}} {{d}}
-{% endfor %}{% endfor %}
-"
+{% for o in dataDetails %}{{o.componentName}} {Source:\"{{o.Source}}\", Default-Type:\"{{o.DefaultType}}\"}{% for d in o.detailsArray %}
+  -t {{d}}{% endfor %}
+{% endfor %}"
 
 cd "$(cd "$(dirname "$0")";pwd -P)"
 BASE_PWD=$(pwd)

@@ -7,7 +7,7 @@ const optionsBuilder = require('../phase/options');
 const cleanupBuilder = require('../phase/cleanup');
 const sourceTypeBuilder = require('../core/SourceType');
 const dependencycheckBuilder = require('../phase/dependencycheck');
-
+const { maxVersion } = require('../core/Strings');
 
 const BasePlugin = require('./BasePlugin');
 
@@ -72,8 +72,7 @@ class JavaPlugin extends BasePlugin {
         prepareBuilder.add(`if [ "$(uname)" == "Darwin" ]; then export JAVA_HOME=$(/usr/libexec/java_home -v ${userConfig.config.JavaVersions[0]}); fi`);
       } else {
         optionsBuilder.add('j', 'version', 'JAVA_VERSION',
-          `macOS only: set/overwrite JAVA_HOME to a specific version, needs to be in format for /usr/libexec/java_home`, 
-          [ 'version #can use any locally installed JDK, see /usr/libexec/java_home -V' ]);
+          `macOS only: set/overwrite JAVA_HOME to a specific locally installed version, use format from/for: /usr/libexec/java_home [-V]`);
         prepareBuilder.add(prepare);
       }
 
@@ -84,14 +83,16 @@ class JavaPlugin extends BasePlugin {
 
     if (userConfig.software[softwareComponentName]) {
 
-      const { Name: systemName } = userConfig.config;
+      const { Name: systemName, JavaVersions } = userConfig.config;
       const { Start, ExposedPort, EnvVars = [], DockerImage = 'openjdk' } = userConfig.software[softwareComponentName];
       const { Artifact } = userConfig.software[Start];
       const ArtifactRpld = Artifact.replace('$$TMP$$', 'localrun');
 
-      optionsBuilder.addDetails('t', [
+      const defaultTag = maxVersion(JavaVersions) + '-jre';
+
+      optionsBuilder.addDetails(softwareComponentName, 'docker:' + defaultTag, [
         `${softwareComponentName}:local #start a local java program`,
-        `${softwareComponentName}:docker:[11-jre] #start the java program inside docker image ${DockerImage}:11-jre (default)`
+        `${softwareComponentName}:docker:[TAG] #start inside docker, default tag ${defaultTag}, uses image http://hub.docker.com/_/${DockerImage}`
       ]);
 
       sourceTypeBuilder.add(this, {
@@ -99,7 +100,7 @@ class JavaPlugin extends BasePlugin {
         defaultType: 'local', 
         availableTypes: [
           { typeName: 'local', defaultVersion: '' },
-          { typeName: 'docker', defaultVersion: '11-jre' }
+          { typeName: 'docker', defaultVersion: defaultTag }
         ]
       });
 

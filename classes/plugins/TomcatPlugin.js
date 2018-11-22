@@ -50,7 +50,7 @@ class TomcatPlugin extends BasePlugin {
     var defaultTypeData = 'download';
     var dockerLibsToAdd = '';
     var downloadLibsToCopy = '';
-    var defaultVersion;
+    var defaultVersion, fullDefaultVersion;
 
     SourceTypes.forEach(sourceType => {
       const sourceTypeMain = sourceType.indexOf(':') === -1 ? sourceType : sourceType.substring(0, sourceType.indexOf(':'));
@@ -58,7 +58,7 @@ class TomcatPlugin extends BasePlugin {
       switch(sourceTypeMain) {
         case 'docker':
           defaultVersion = sourceTypeVersion?sourceTypeVersion:'9';
-          optionsBuilderData.push(`${softwareComponentName}:docker:${sourceTypeVersion?sourceTypeVersion:'[7|8|9]'} #start docker image ${DockerImage}:${defaultVersion} (default) and run this build within it`);
+          optionsBuilderData.push(`${softwareComponentName}:docker:[TAG] #start docker, default tag ${defaultVersion}, uses image http://hub.docker.com/_/${DockerImage}`);
           availableTypesData.push({ typeName: 'docker', defaultVersion });
           cleanupSourceTypesData.push({
             name: 'docker',
@@ -66,6 +66,7 @@ class TomcatPlugin extends BasePlugin {
           });
           if (!SourceTypes.find(e => e.indexOf('download') === 0)) {
             defaultTypeData = 'docker';
+            fullDefaultVersion = `docker:${defaultVersion}`;
           }
           if (Lib) {
             dockerLibsToAdd = Lib.map(lib => userConfig.software[lib].Artifact)
@@ -76,7 +77,8 @@ class TomcatPlugin extends BasePlugin {
         break;
         case 'download':
           defaultVersion = sourceTypeVersion?sourceTypeVersion:'9';
-          optionsBuilderData.push(`${softwareComponentName}:download:${sourceTypeVersion?sourceTypeVersion:'[7|8|9]'} #download tomcat version ${defaultVersion} (default) and run this build within it, would respect -j`);
+          fullDefaultVersion = `download:${defaultVersion}`;
+          optionsBuilderData.push(`${softwareComponentName}:download:${sourceTypeVersion?sourceTypeVersion:'[7|8|9]'} #start fresh downloaded tomcat, default version ${defaultVersion} and respect -j`);
           availableTypesData.push({ typeName: 'download', defaultVersion, code: downloadCode(typeSourceVarName) });
           cleanupSourceTypesData.push({
             name: 'download',
@@ -90,10 +92,11 @@ class TomcatPlugin extends BasePlugin {
           
         break;
         case 'local':
-          optionsBuilderData.push(`${softwareComponentName}:local:/usr/lib/tomcat #reuse tomcat installation from /usr/lib/tomcat, does not start/stop this tomcat`);
+          optionsBuilderData.push(`${softwareComponentName}:local:TOMCAT_HOME_PATH #reuse tomcat installation from TOMCAT_HOME_PATH, does not start/stop this tomcat`);
           availableTypesData.push({ typeName: 'local', defaultVersion: '' });
           if (!SourceTypes.find(e => e.indexOf('download') === 0) && !SourceTypes.find(e => e.indexOf('docker') === 0)) {
             defaultTypeData = 'local';
+            fullDefaultVersion = 'local';
           }          
         break;
         default:
@@ -101,7 +104,7 @@ class TomcatPlugin extends BasePlugin {
       }
     });
 
-    optionsBuilder.addDetails('t', optionsBuilderData);
+    optionsBuilder.addDetails(softwareComponentName, fullDefaultVersion, optionsBuilderData);
 
     runtimeConfiguration.setTail('apache catalina', `http://localhost:${ExposedPort}/${deployPath}`);
 

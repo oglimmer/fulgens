@@ -15,7 +15,7 @@ Options:
 Url: {{accessUrl}}
 
 Details for components:
-{% for o in dataDetails %}{{o.componentName}} {Source:\"{{o.Source}}\", Default-Type:\"{{o.DefaultType}}\"}{% for d in o.detailsArray %}
+{% for o in dataDetails %}{{o.componentName}} {Source:\"{{o.Source}}\", Default-Type:\"{{o.DefaultType}}\"{% if o.VersionInfo %}, Version-Info: \"{{o.VersionInfo}}\"{% endif %}}{% for d in o.detailsArray %}
   -t {{d}}{% endfor %}
 {% endfor %}"
 

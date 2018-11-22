@@ -21,11 +21,13 @@ class RedisPlugin extends BasePlugin {
     const { Name: systemName } = userConfig.config;
     const { EnvVars = [], DockerImage = 'redis', ExposedPort = '6379' } = userConfig.software[softwareComponentName];
 
+    const defaultVersion = ((userConfig.versions || {})[softwareComponentName] || {}).Docker || 'latest';
+
     dependencycheckBuilder.add('docker --version 1>/dev/null');
     
-    optionsBuilder.addDetails(softwareComponentName, 'docker:4', [
+    optionsBuilder.addDetails(softwareComponentName, 'docker:' + defaultVersion, [
       `${softwareComponentName}:local #reuse a local, running Redis installation, does not start/stop this Redis`,
-      `${softwareComponentName}:docker:[3|4] #start docker, default tag 4, uses image http://hub.docker.com/_/${DockerImage}`]);
+      `${softwareComponentName}:docker:[3|4] #start docker, default tag ${defaultVersion}, uses image http://hub.docker.com/_/${DockerImage}`]);
 
     const configFiles = runtimeConfiguration.getConfigFiles(softwareComponentName);
 
@@ -33,7 +35,7 @@ class RedisPlugin extends BasePlugin {
       componentName: softwareComponentName,
       defaultType: 'docker', 
       availableTypes: [
-        { typeName: 'docker', defaultVersion: '4' },
+        { typeName: 'docker', defaultVersion },
         { typeName: 'local', defaultVersion: '' }
       ]
     });

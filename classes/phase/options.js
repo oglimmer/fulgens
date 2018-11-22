@@ -16,10 +16,11 @@ class Option {
 }
 
 class OptionDetails {
-  constructor(componentName, Source, DefaultType, detailsArray) {
+  constructor(componentName, Source, DefaultType, VersionInfo, detailsArray) {
     this.componentName = componentName;
     this.Source = Source;
     this.DefaultType = DefaultType;
+    this.VersionInfo = VersionInfo;
     this.detailsArray = detailsArray;
   }
 }
@@ -46,7 +47,9 @@ class OptionsBuilder extends BufferedBuilder {
       detailsArray.forEach(e => op.detailsArray.push(e));
     } else {
       const { Source } = this.userConfig.software[componentName];
-      const newOp = new OptionDetails(componentName, Source, DefaultType, detailsArray);
+      const TestedWith = ((this.userConfig.versions || {})[componentName] || {}).TestedWith;
+      var VersionInfo = TestedWith ? `Tested with ${TestedWith}` : '';
+      const newOp = new OptionDetails(componentName, Source, DefaultType, VersionInfo, detailsArray);
       this.dataDetails.push(newOp);
     }
   }

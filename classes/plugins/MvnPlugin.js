@@ -4,7 +4,6 @@ const nunjucks = require('nunjucks');
 const dependencycheckBuilder = require('../phase/dependencycheck');
 const optionsBuilder = require('../phase/options');
 const sourceTypeBuilder = require('../core/SourceType');
-const { maxVersion } = require('../core/Strings');
 
 const BasePlugin = require('./BasePlugin');
 
@@ -22,13 +21,13 @@ class MvnPlugin extends BasePlugin {
     const { JavaVersions, UseHomeM2 } = userConfig.config;
     const { DockerImage = 'maven' } = userConfig.software[softwareComponentName];
 
-    var defaultDockerVersion = maxVersion(JavaVersions);
+    const defaultVersion = ((userConfig.versions || {})[softwareComponentName] || {}).Docker || 'latest';
 
     dependencycheckBuilder.add('mvn --version 1>/dev/null');
 
     optionsBuilder.addDetails(softwareComponentName, 'local', [
       `${softwareComponentName}:local #build local and respect -j`,
-      `${softwareComponentName}:docker:[TAG] #docker based build, default tag: ${defaultDockerVersion}, uses image http://hub.docker.com/_/${DockerImage}`
+      `${softwareComponentName}:docker:[TAG] #docker based build, default tag: ${defaultVersion}, uses image http://hub.docker.com/_/${DockerImage}`
     ]);
 
     sourceTypeBuilder.add(this, {
@@ -36,7 +35,7 @@ class MvnPlugin extends BasePlugin {
       defaultType: 'local', 
       availableTypes: [
         { typeName: 'local', defaultVersion: '' },
-        { typeName: 'docker', defaultVersion: defaultDockerVersion }
+        { typeName: 'docker', defaultVersion }
       ]
     });
 
@@ -62,7 +61,6 @@ class MvnPlugin extends BasePlugin {
       softwareComponentName,
       typeSourceVarName,
       Goal,
-      defaultDockerVersion,
       DockerImage,
       dependencyManager,
       m2Mapping: UseHomeM2 ? '"$HOME/.m2"' : '"$(pwd)/localrun/.m2"',

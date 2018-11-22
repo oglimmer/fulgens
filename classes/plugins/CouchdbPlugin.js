@@ -21,7 +21,7 @@ class CouchdbPlugin extends BasePlugin {
     const { Name: systemName } = userConfig.config;
     const { CouchDB, EnvVars = [], DockerImage = 'couchdb', ExposedPort = '5984' } = userConfig.software[softwareComponentName];
 
-    const defaultVersion = '1.7';
+    const defaultVersion = ((userConfig.versions || {})[softwareComponentName] || {}).Docker || 'latest';
 
     dependencycheckBuilder.add('docker --version 1>/dev/null');
     

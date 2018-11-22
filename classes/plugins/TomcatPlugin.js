@@ -32,6 +32,9 @@ class TomcatPlugin extends BasePlugin {
     const { Deploy, Lib, EnvVars = [], SourceTypes = ['docker','download','local'], DockerImage = 'tomcat', ExposedPort = '8080' } = userConfig.software[softwareComponentName];
     const { Artifact } = userConfig.software[Deploy];
 
+    const defaultDockerVersion = ((userConfig.versions || {})[softwareComponentName] || {}).Docker || 'latest';
+    const defaultDownloadVersion = ((userConfig.versions || {})[softwareComponentName] || {}).Download || '9';
+
     var deployPath = Artifact.substring(Artifact.lastIndexOf('/') + 1, Artifact.length - 4);
     if (deployPath.indexOf('##') > -1) {
       deployPath = deployPath.substring(0, deployPath.indexOf('#'));
@@ -47,70 +50,46 @@ class TomcatPlugin extends BasePlugin {
     var optionsBuilderData = [];
     var availableTypesData = [];
     var cleanupSourceTypesData = [];
-    var defaultTypeData = 'download';
     var dockerLibsToAdd = '';
     var downloadLibsToCopy = '';
-    var defaultVersion, fullDefaultVersion;
 
-    SourceTypes.forEach(sourceType => {
-      const sourceTypeMain = sourceType.indexOf(':') === -1 ? sourceType : sourceType.substring(0, sourceType.indexOf(':'));
-      const sourceTypeVersion = sourceType.indexOf(':') === -1 ? null : sourceType.substring(sourceType.indexOf(':') + 1);
-      switch(sourceTypeMain) {
-        case 'docker':
-          defaultVersion = sourceTypeVersion?sourceTypeVersion:'9';
-          optionsBuilderData.push(`${softwareComponentName}:docker:[TAG] #start docker, default tag ${defaultVersion}, uses image http://hub.docker.com/_/${DockerImage}`);
-          availableTypesData.push({ typeName: 'docker', defaultVersion });
-          cleanupSourceTypesData.push({
-            name: 'docker',
-            stopCode: 'docker rm -f $dockerContainerID' + softwareComponentName
-          });
-          if (!SourceTypes.find(e => e.indexOf('download') === 0)) {
-            defaultTypeData = 'docker';
-            fullDefaultVersion = `docker:${defaultVersion}`;
-          }
-          if (Lib) {
-            dockerLibsToAdd = Lib.map(lib => userConfig.software[lib].Artifact)
-                .map(lib => lib.replace('$$TMP$$', 'localrun'))
-                .map(lib => `  dockerAddLibRefs+=("-v $(pwd)/${lib}:/usr/local/tomcat/lib/$(basename ${lib})")`).join('\n');
-          }
-          
-        break;
-        case 'download':
-          defaultVersion = sourceTypeVersion?sourceTypeVersion:'9';
-          fullDefaultVersion = `download:${defaultVersion}`;
-          optionsBuilderData.push(`${softwareComponentName}:download:${sourceTypeVersion?sourceTypeVersion:'[7|8|9]'} #start fresh downloaded tomcat, default version ${defaultVersion} and respect -j`);
-          availableTypesData.push({ typeName: 'download', defaultVersion, code: downloadCode(typeSourceVarName) });
-          cleanupSourceTypesData.push({
-            name: 'download',
-            stopCode: './localrun/apache-tomcat-$TOMCAT_VERSION/bin/shutdown.sh'
-          });
-          if (Lib) {
-            downloadLibsToCopy = Lib.map(lib => userConfig.software[lib].Artifact)
-                .map(lib => lib.replace('$$TMP$$', 'localrun'))
-                .map(lib => `  cp ${lib} localrun/apache-tomcat-$TOMCAT_VERSION/lib/`).join('\n');
-          }
-          
-        break;
-        case 'local':
-          optionsBuilderData.push(`${softwareComponentName}:local:TOMCAT_HOME_PATH #reuse tomcat installation from TOMCAT_HOME_PATH, does not start/stop this tomcat`);
-          availableTypesData.push({ typeName: 'local', defaultVersion: '' });
-          if (!SourceTypes.find(e => e.indexOf('download') === 0) && !SourceTypes.find(e => e.indexOf('docker') === 0)) {
-            defaultTypeData = 'local';
-            fullDefaultVersion = 'local';
-          }          
-        break;
-        default:
-          throw Error(`SourceType ${sourceTypeMain} not supported for Tomcat`);
-      }
+    // docker
+    optionsBuilderData.push(`${softwareComponentName}:docker:[TAG] #start docker, default tag ${defaultDockerVersion}, uses image http://hub.docker.com/_/${DockerImage}`);
+    availableTypesData.push({ typeName: 'docker', defaultVersion: defaultDockerVersion });
+    cleanupSourceTypesData.push({
+      name: 'docker',
+      stopCode: 'docker rm -f $dockerContainerID' + softwareComponentName
     });
+    if (Lib) {
+      dockerLibsToAdd = Lib.map(lib => userConfig.software[lib].Artifact)
+          .map(lib => lib.replace('$$TMP$$', 'localrun'))
+          .map(lib => `  dockerAddLibRefs+=("-v $(pwd)/${lib}:/usr/local/tomcat/lib/$(basename ${lib})")`).join('\n');
+    }
+    
+    // download      
+    optionsBuilderData.push(`${softwareComponentName}:download:[7|8|9] #start fresh downloaded tomcat, default version ${defaultDownloadVersion} and respect -j`);
+    availableTypesData.push({ typeName: 'download', defaultVersion: defaultDownloadVersion, code: downloadCode(typeSourceVarName) });
+    cleanupSourceTypesData.push({
+      name: 'download',
+      stopCode: './localrun/apache-tomcat-$TOMCAT_VERSION/bin/shutdown.sh'
+    });
+    if (Lib) {
+      downloadLibsToCopy = Lib.map(lib => userConfig.software[lib].Artifact)
+          .map(lib => lib.replace('$$TMP$$', 'localrun'))
+          .map(lib => `  cp ${lib} localrun/apache-tomcat-$TOMCAT_VERSION/lib/`).join('\n');
+    }
+          
+    // local
+    optionsBuilderData.push(`${softwareComponentName}:local:TOMCAT_HOME_PATH #reuse tomcat installation from TOMCAT_HOME_PATH, does not start/stop this tomcat`);
+    availableTypesData.push({ typeName: 'local', defaultVersion: '' });
 
-    optionsBuilder.addDetails(softwareComponentName, fullDefaultVersion, optionsBuilderData);
+    optionsBuilder.addDetails(softwareComponentName, `download:${defaultDownloadVersion}`, optionsBuilderData);
 
     runtimeConfiguration.setTail('apache catalina', `http://localhost:${ExposedPort}/${deployPath}`);
 
     sourceTypeBuilder.add(this, {
       componentName: softwareComponentName,
-      defaultType: defaultTypeData, 
+      defaultType: 'download', 
       availableTypes: availableTypesData
     });
 

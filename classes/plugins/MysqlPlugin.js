@@ -20,19 +20,21 @@ class MysqlPlugin extends BasePlugin {
     const { Name: systemName } = userConfig.config;
     const { Mysql, EnvVars = [], DockerImage = 'mysql', ExposedPort = '3306' } = userConfig.software[softwareComponentName];
 
+    const defaultVersion = ((userConfig.versions || {})[softwareComponentName] || {}).Docker || 'latest';
+
     dependencycheckBuilder.add('docker --version 1>/dev/null');
     dependencycheckBuilder.add('mysql --version 1>/dev/null');
  
-    optionsBuilder.addDetails(softwareComponentName, 'docker:5', [
+    optionsBuilder.addDetails(softwareComponentName, 'docker:' + defaultVersion, [
       `${softwareComponentName}:local #reuse a local, running MySQL installation, does not start/stop this MySQL`,
-      `${softwareComponentName}:docker:[TAG] #start docker, default tag 5, uses image http://hub.docker.com/_/${DockerImage}`
+      `${softwareComponentName}:docker:[TAG] #start docker, default tag ${defaultVersion}, uses image http://hub.docker.com/_/${DockerImage}`
     ]);
 
     sourceTypeBuilder.add(this, {
       componentName: softwareComponentName,
       defaultType: 'docker', 
       availableTypes: [
-        { typeName: 'docker', defaultVersion: '5' },
+        { typeName: 'docker', defaultVersion },
         { typeName: 'local', defaultVersion: '' }
       ]
     });

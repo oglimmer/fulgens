@@ -24,9 +24,11 @@ class ShellPlugin extends BasePlugin {
     const { Start, ExposedPort, DockerImage = 'ubuntu', EnvVars = [] } = userConfig.software[softwareComponentName];
     const StartRpld = Start.replace('$$TMP$$', 'localrun');
 
-    optionsBuilder.addDetails(softwareComponentName, 'docker:latest', [
+    const defaultVersion = ((userConfig.versions || {})[softwareComponentName] || {}).Docker || 'latest';
+
+    optionsBuilder.addDetails(softwareComponentName, 'docker' + defaultVersion, [
       `${softwareComponentName}:local #start a local shell script`,
-      `${softwareComponentName}:docker:[latest] #start inside docker, default tag latest, uses image http://hub.docker.com/_/${DockerImage}`
+      `${softwareComponentName}:docker:[latest] #start inside docker, default tag ${defaultVersion}, uses image http://hub.docker.com/_/${DockerImage}`
     ]);
 
     sourceTypeBuilder.add(this, {
@@ -34,7 +36,7 @@ class ShellPlugin extends BasePlugin {
       defaultType: 'local', 
       availableTypes: [
         { typeName: 'local', defaultVersion: '' },
-        { typeName: 'docker', defaultVersion: 'latest' }
+        { typeName: 'docker', defaultVersion }
       ]
     });
 

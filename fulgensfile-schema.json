@@ -8,6 +8,9 @@
     "config": { 
       "$ref": "#/definitions/config"
     },
+    "versions": { 
+      "$ref": "#/definitions/versions"
+    },
     "software": { 
       "$ref": "#/definitions/softwareType"
     }
@@ -24,14 +27,6 @@
         },
         "Vagrant": {
           "$ref": "#/definitions/config/definitions/Vagrant"
-        },
-        "JavaVersions": {
-          "type": "array",
-          "minItems": 0,
-          "items": {
-            "type": "string"
-          },
-          "uniqueItems": true              
         },
         "UseHomeM2": {
           "type": "boolean"
@@ -101,6 +96,22 @@
           "additionalProperties": false
         }
       }
+    },
+    "versions": {
+      "patternProperties": {
+        ".*":  {
+          "properties": {
+            "Docker": {
+              "type": "string"
+            },
+            "TestedWith": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     },
     "softwareType": {
       "patternProperties": {

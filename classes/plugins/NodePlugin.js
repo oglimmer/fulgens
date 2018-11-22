@@ -20,12 +20,14 @@ class NodePlugin extends BasePlugin {
     const { Name: systemName } = userConfig.config;
     const { Start, Node, EnvVars = [], ExposedPort = '3000', BeforeBuild = [], AfterBuild = [], DockerImage = 'node' } = userConfig.software[softwareComponentName];
 
+    const defaultVersion = ((userConfig.versions || {})[softwareComponentName] || {}).Docker || 'latest';
+
     dependencycheckBuilder.add('node --version 1>/dev/null');
     dependencycheckBuilder.add('npm --version 1>/dev/null');
 
-    optionsBuilder.addDetails(softwareComponentName, 'docker:10', [
+    optionsBuilder.addDetails(softwareComponentName, 'docker:' + defaultVersion, [
       `${softwareComponentName}:local #reuse a local node installation`,
-      `${softwareComponentName}:docker:[TAG] #start docker, default tag 10, uses image http://hub.docker.com/_/${DockerImage}`
+      `${softwareComponentName}:docker:[TAG] #start docker, default tag ${defaultVersion}, uses image http://hub.docker.com/_/${DockerImage}`
     ]);
 
     runtimeConfiguration.setTail('nodejs', `http://localhost:${ExposedPort}`);
@@ -34,7 +36,7 @@ class NodePlugin extends BasePlugin {
       componentName: softwareComponentName,
       defaultType: 'local', 
       availableTypes: [
-        { typeName: 'docker', defaultVersion: '10' },
+        { typeName: 'docker', defaultVersion },
         { typeName: 'local', defaultVersion: '' }
       ]
     });

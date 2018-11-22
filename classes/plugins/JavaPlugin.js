@@ -7,7 +7,6 @@ const optionsBuilder = require('../phase/options');
 const cleanupBuilder = require('../phase/cleanup');
 const sourceTypeBuilder = require('../core/SourceType');
 const dependencycheckBuilder = require('../phase/dependencycheck');
-const { maxVersion } = require('../core/Strings');
 
 const BasePlugin = require('./BasePlugin');
 
@@ -88,11 +87,11 @@ class JavaPlugin extends BasePlugin {
       const { Artifact } = userConfig.software[Start];
       const ArtifactRpld = Artifact.replace('$$TMP$$', 'localrun');
 
-      const defaultTag = maxVersion(JavaVersions) + '-jre';
+      const defaultVersion = ((userConfig.versions || {})[softwareComponentName] || {}).Docker || 'latest';
 
-      optionsBuilder.addDetails(softwareComponentName, 'docker:' + defaultTag, [
+      optionsBuilder.addDetails(softwareComponentName, 'docker:' + defaultVersion, [
         `${softwareComponentName}:local #start a local java program`,
-        `${softwareComponentName}:docker:[TAG] #start inside docker, default tag ${defaultTag}, uses image http://hub.docker.com/_/${DockerImage}`
+        `${softwareComponentName}:docker:[TAG] #start inside docker, default tag ${defaultVersion}, uses image http://hub.docker.com/_/${DockerImage}`
       ]);
 
       sourceTypeBuilder.add(this, {
@@ -100,7 +99,7 @@ class JavaPlugin extends BasePlugin {
         defaultType: 'local', 
         availableTypes: [
           { typeName: 'local', defaultVersion: '' },
-          { typeName: 'docker', defaultVersion: defaultTag }
+          { typeName: 'docker', defaultVersion }
         ]
       });
 

@@ -2,6 +2,7 @@
 const nunjucks = require('nunjucks');
 
 const BufferedBuilder = require('./BufferedBuilder');
+const Strings = require('../core/Strings');
 
 class Option {
   constructor(option, longParam, varNameToSet, helpDesc) {
@@ -47,9 +48,10 @@ class OptionsBuilder extends BufferedBuilder {
       detailsArray.forEach(e => op.detailsArray.push(e));
     } else {
       const { Source } = this.userConfig.software[componentName];
-      const TestedWith = ((this.userConfig.versions || {})[componentName] || {}).TestedWith;
-      var VersionInfo = TestedWith ? `Tested with ${TestedWith}` : '';
-      const newOp = new OptionDetails(componentName, Source, DefaultType, VersionInfo, detailsArray);
+      const { TestedWith, KnownMax } = ((this.userConfig.versions || {})[componentName] || {});
+      const TestedWithInfo = TestedWith ? `Tested with ${TestedWith}` : '';
+      const KnownMaxInfo = KnownMax ? `Max ${KnownMax}` : '';
+      const newOp = new OptionDetails(componentName, Source, DefaultType, Strings.addWithDeli(TestedWithInfo, KnownMaxInfo), detailsArray);
       this.dataDetails.push(newOp);
     }
   }

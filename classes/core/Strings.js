@@ -10,4 +10,8 @@ verbosePrint "${pluginName} // ${softwareComponentName}"
 `;
 	},
 
+	addWithDeli: (...args) => {
+		return args.filter(val => val.length > 0).join(', ');
+	}
+
 }

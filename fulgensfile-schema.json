@@ -106,6 +106,9 @@
             },
             "TestedWith": {
               "type": "string"
+            },
+            "KnownMax": {
+              "type": "string"
             }
           },
           "additionalProperties": false

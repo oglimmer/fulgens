@@ -2,10 +2,7 @@
 mkdir -p localrun/{{TmpFolder}}
 
 cat <<EOT{{TmpFolder}} > localrun/{{TmpFolder}}/{{Name}}
-{% for line in allContent %}
-{{line}}
-{% endfor %}
-{% for line in justConnectionVars %}
+{% for line in content %}
 {{line}}
 {% endfor %}
 EOT{{TmpFolder}}

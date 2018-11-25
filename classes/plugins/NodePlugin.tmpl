@@ -31,6 +31,7 @@ if [ "${{typeSourceVarName}}" == "docker" ]; then
   if [ ! -f "{{pidFile}}" ]; then
     startDockerNetwork
     {{writeDockerConnectionLogic}}
+    {{writeConfigFiles}}
     verbosePrint "docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} --net={{systemName|lower}}net --name={{softwareComponentName}} $ADD_HOST_INTERNAL {{mountToDocker}} {{AllEnvVarsDocker}} -v $(pwd):/home/node/exec_env -w /home/node/exec_env {{DockerImage}}:${{typeSourceVarName}}_VERSION node {{NodeParam}} ./{{Start}}"
     dockerContainerID{{softwareComponentName}}=$(docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} \
         --net={{systemName|lower}}net --name={{softwareComponentName}} $ADD_HOST_INTERNAL \
@@ -50,10 +51,10 @@ if [ "${{typeSourceVarName}}" == "local" ]; then
   #  exit 1
   #fi
   if [ ! -f "{{pidFile}}" ]; then
-    cat <<-'    EOF' > localrun/noint.js
+    cat <<-EOF > localrun/noint.js
       process.on( "SIGINT", function() {} );
       require('../{{Start}}');
-    EOF
+EOF
     verbosePrint "{{AllEnvVarsNode}} node {{NodeParam}} localrun/noint.js >localrun/noint.out 2>&1 &"
     {{storeFileAndExportEnvVar}}
     {{AllEnvVarsNode}} node {{NodeParam}} localrun/noint.js >localrun/noint.out 2>&1 & 

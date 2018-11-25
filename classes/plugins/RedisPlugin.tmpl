@@ -14,6 +14,7 @@ if [ "${{typeSourceVarName}}" == "docker" ]; then
   if [ ! -f "{{pidFile}}" ]; then
     startDockerNetwork
     {{writeDockerConnectionLogic}}
+    {{writeConfigFiles}}
     verbosePrint "docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} --net={{systemName|lower}}net --name={{softwareComponentName}} $ADD_HOST_INTERNAL {{mountToDocker}} {{AllEnvVarsDocker}} {{DockerImage}}:${{typeSourceVarName}}_VERSION"
     {{dcId}}=$(docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} \
       --net={{systemName|lower}}net --name={{softwareComponentName}} $ADD_HOST_INTERNAL \

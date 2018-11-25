@@ -1,15 +1,8 @@
-mkdir -p localrun/{{TmpFolder}}
 
-{% for sourceName, listOfSourceObjects in mapSourceToConnections %}
+{% for sourceName in allSources %}
 if [ "$TYPE_SOURCE_{{sourceName|upper}}" == "docker" ]; then
-  {% for sourceObject in listOfSourceObjects %}
-  REPLVAR{{sourceObject.VarRpl}}="{{sourceObject.ContentRpl(sourceObject.Source)}}"
-  {% endfor %}
+  REPLVAR_{{pluginName|upper}}_{{sourceName|upper}}="{{sourceName}}"
 elif [ "$TYPE_SOURCE_{{sourceName|upper}}" == "local" ]; then
-  {% for sourceObject in listOfSourceObjects %}
-  REPLVAR{{sourceObject.VarRpl}}="{{sourceObject.ContentRpl('host.docker.internal')}}"
-  {% endfor %}
+  REPLVAR_{{pluginName|upper}}_{{sourceName|upper}}="host.docker.internal"
 fi
 {% endfor %}
-
-{{createFile()}}

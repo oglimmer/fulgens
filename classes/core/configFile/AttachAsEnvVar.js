@@ -12,11 +12,12 @@ const BaseConfigFile = require('./BaseConfigFile');
   config is like: {
     Name: "java.properties",
     Content: [
-      "toldyouso.domain=http://localhost:8080/toldyouso"
+      { Line: "toldyouso.domain=http://localhost:8080/toldyouso" },
+      { Line: "toldyouso.password=foobar", Regexp: "toldyouso.password=" }
     ],
     Connections: [{
       Source:"couchdb",
-      Var: "couchdb.host"
+      Line: "couchdb.host=$$VALUE$$"
     }],
     LoadDefaultContent: 'src/main/resources/default.properties',
     AttachAsEnvVar: ["JAVA_OPTS", "-Dtoldyouso.properties=$$SELF_NAME$$"]
@@ -32,11 +33,15 @@ class AttachAsEnvVar extends BaseConfigFile {
   /* download & local */
   storeFileAndExportEnvVar() {
     const fContent = c => c.Content ? `${c.Content.replace('$$VALUE$$', 'localhost')}` : 'localhost';
-    const fVar = c => c.Var.replace('.', '_');
     const attachVarName = this.AttachAsEnvVar[0];
     const attachVarValue = this.AttachAsEnvVar[1].replace('$$SELF_NAME$$', `localrun/${this.TmpFolder}/${this.Name}`);
     return `
-      ${this.Connections.map(c => `REPLVAR${fVar(c)}="${fContent(c)}"`).join('\n')}
+      ${this.Connections.reduce((acc, val) => {
+        if (!acc.find(e => e.Source === val.Source)) {
+          acc.push(val);
+        }
+        return acc;
+      }, []).map(c => `REPLVAR_${this.pluginName.toUpperCase()}_${c.Source.toUpperCase()}="${fContent(c)}"`).join('\n')}
       ${this.createFile()}
   export ${attachVarName}="${attachVarValue}"
     `;

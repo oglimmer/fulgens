@@ -62,6 +62,20 @@ class BasePlugin {
         this.poststartBuilder.add(AfterStart.map(l => l.replace('$$TMP$$', 'localrun')));
       }
 
+      if (((userConfig.versions || {})[softwareComponentName] || {}).JavaLocal) {
+        optionsBuilder.addDetails(softwareComponentName, 'local', [
+          `${softwareComponentName}:local #On macOS: Java version overwritten to ${userConfig.versions[softwareComponentName].JavaLocal}`
+        ]);
+        this.prestartBuilder.add(`if [ "$(uname)" = "Darwin" ]; then
+          ORIGINAL_JAVA_HOME="$JAVA_HOME"
+          export JAVA_HOME=$(/usr/libexec/java_home -v ${userConfig.versions[softwareComponentName].JavaLocal})
+        elif [ "$(jdk_version)" != "${Strings.normalizeJavaVersion(userConfig.versions[softwareComponentName].JavaLocal)}" ]; then
+          echo "ERROR: the local Java version is different to the one defined in Fulgensfile.version for this component!"
+          exit 1
+        fi`);
+        this.leavecompBuilder.add('if [ "$(uname)" == "Darwin" ]; then export JAVA_HOME="$ORIGINAL_JAVA_HOME"; fi');
+      }      
+
       if (Dir) {
         this.preparecompBuilder.add(`  mkdir -p ${Dir.replace('$$TMP$$', 'localrun')}`);
         this.preparecompBuilder.add(`

@@ -7,6 +7,7 @@ const optionsBuilder = require('../phase/options');
 const cleanupBuilder = require('../phase/cleanup');
 const sourceTypeBuilder = require('../core/SourceType');
 const dependencycheckBuilder = require('../phase/dependencycheck');
+const BaseConfigFile = require('../core/configFile/BaseConfigFile');
 
 const BasePlugin = require('./BasePlugin');
 
@@ -63,85 +64,79 @@ class JavaPlugin extends BasePlugin {
     return new JavaPlugin();
   }
 
-  exec(softwareComponentName, userConfig, runtimeConfiguration) {
-    super.exec(softwareComponentName, userConfig, runtimeConfiguration);
-
+  static addAsDependency() {
     if(!onceOnlyDone) {
-      if (userConfig.config.JavaVersions && userConfig.config.JavaVersions.length === 1) {
-        prepareBuilder.add(`if [ "$(uname)" == "Darwin" ]; then export JAVA_HOME=$(/usr/libexec/java_home -v ${userConfig.config.JavaVersions[0]}); fi`);
-      } else {
-        optionsBuilder.add('j', 'version', 'JAVA_VERSION',
-          `macOS only: set/overwrite JAVA_HOME to a specific locally installed version, use format from/for: /usr/libexec/java_home [-V]`);
-        prepareBuilder.add(prepare);
-      }
-
+      optionsBuilder.add('j', 'version', 'JAVA_VERSION',
+        `macOS only: set/overwrite JAVA_HOME to a specific locally installed version, use format from/for: /usr/libexec/java_home [-V]`);
+      prepareBuilder.add(prepare);
       functionsBuilder.add('jdk_version', functionBodyCheckJDKVersion);
       dependencycheckBuilder.add('java -version 2>/dev/null');
       onceOnlyDone = true;
-    }
+    }    
+  }
 
-    if (userConfig.software[softwareComponentName]) {
+  exec(softwareComponentName, userConfig, runtimeConfiguration) {
+    super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
-      const { Name: systemName, JavaVersions } = userConfig.config;
-      const { Start, ExposedPort, EnvVars = [], DockerImage = 'openjdk' } = userConfig.software[softwareComponentName];
-      const { Artifact } = userConfig.software[Start];
-      const ArtifactRpld = Artifact.replace('$$TMP$$', 'localrun');
+    const { Name: systemName, JavaVersions } = userConfig.config;
+    const { Start, ExposedPort, EnvVars = [], DockerImage = 'openjdk' } = userConfig.software[softwareComponentName];
+    const { Artifact } = userConfig.software[Start];
+    const ArtifactRpld = Artifact.replace('$$TMP$$', 'localrun');
 
-      const defaultVersion = ((userConfig.versions || {})[softwareComponentName] || {}).Docker || 'latest';
+    const defaultVersion = ((userConfig.versions || {})[softwareComponentName] || {}).Docker || 'latest';
 
-      optionsBuilder.addDetails(softwareComponentName, 'docker:' + defaultVersion, [
-        `${softwareComponentName}:local #start a local java program`,
-        `${softwareComponentName}:docker:[TAG] #start inside docker, default tag ${defaultVersion}, uses image http://hub.docker.com/_/${DockerImage}`
-      ]);
+    JavaPlugin.addAsDependency();
 
-      sourceTypeBuilder.add(this, {
-        componentName: softwareComponentName,
-        defaultType: 'local', 
-        availableTypes: [
-          { typeName: 'local', defaultVersion: '' },
-          { typeName: 'docker', defaultVersion }
-        ]
-      });
+    optionsBuilder.addDetails(softwareComponentName, 'docker:' + defaultVersion, [
+      `${softwareComponentName}:local #start a local java program`,
+      `${softwareComponentName}:docker:[TAG] #start inside docker, default tag ${defaultVersion}, uses image http://hub.docker.com/_/${DockerImage}`
+    ]);
 
-      const pid = `javaPID${softwareComponentName}`;
-      const dcId = `dockerContainerID${softwareComponentName}`;
+    sourceTypeBuilder.add(this, {
+      componentName: softwareComponentName,
+      defaultType: 'local', 
+      availableTypes: [
+        { typeName: 'local', defaultVersion: '' },
+        { typeName: 'docker', defaultVersion }
+      ]
+    });
 
-      cleanupBuilder.add({
-        pluginName: 'java',
-        componentName: softwareComponentName,
-        sourceTypes: [{
-          name: 'local',
-          stopCode: 'kill $' + pid
-        }, {
-          name: 'docker',
-          stopCode: 'docker rm -f $' + dcId
-        }]
-      });
+    const pid = `javaPID${softwareComponentName}`;
+    const dcId = `dockerContainerID${softwareComponentName}`;
 
-      const configFiles = runtimeConfiguration.getConfigFiles(Start);
-      const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
-      const pidFile = `.${softwareComponentName}Pid`;
+    cleanupBuilder.add({
+      pluginName: 'java',
+      componentName: softwareComponentName,
+      sourceTypes: [{
+        name: 'local',
+        stopCode: 'kill $' + pid
+      }, {
+        name: 'docker',
+        stopCode: 'docker rm -f $' + dcId
+      }]
+    });
 
-      this.build = () => nunjucks.render('classes/plugins/JavaPlugin.tmpl', {
-        ...this.nunjucksObj(),
-        typeSourceVarName,
-        ArtifactRpld,
-        pidFile,
-        softwareComponentName,
-        systemName,
-        ExposedPort,
-        dcId,
-        pid,
-        DockerImage,
-        writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic()).join('\n'),
-        mountToDocker: configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n'),
-        AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
-        AllEnvVarsShell: EnvVars.join(' ')
-      });
+    const configFiles = runtimeConfiguration.getConfigFiles(Start);
+    const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
+    const pidFile = `.${softwareComponentName}Pid`;
 
-    } else {
-      this.build = () => {};
-    }
+    this.build = () => nunjucks.render('classes/plugins/JavaPlugin.tmpl', {
+      ...this.nunjucksObj(),
+      typeSourceVarName,
+      ArtifactRpld,
+      pidFile,
+      softwareComponentName,
+      systemName,
+      ExposedPort,
+      dcId,
+      pid,
+      DockerImage,
+      writeConfigFiles: configFiles.map(f => f.createFile()).join('\n'),
+      writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(softwareComponentName, configFiles),
+      mountToDocker: configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n'),
+      AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
+      AllEnvVarsShell: EnvVars.join(' ')
+    });
   }
 }
 

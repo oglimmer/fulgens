@@ -20,14 +20,14 @@ const BaseConfigFile = require('./BaseConfigFile');
       Regexp: "_fti=",
       Line: "_fti={couch_httpd_proxy, handle_proxy_req, <<\\\"http://$$VALUE$$:5985\\\">>}"
     }],
-    AttachIntoDocker: "/etc/mysql/conf.d"
+    AttachIntoDockerAsFile: "/etc/mysql/conf.d"
   }
 */
-class AttachIntoDocker extends BaseConfigFile {
+class AttachIntoDockerAsFile extends BaseConfigFile {
 
   constructor(pluginName, config, runtimeConfiguration) {
     super(pluginName, config, runtimeConfiguration);
-    this.AttachIntoDocker = config.AttachIntoDocker;
+    this.AttachIntoDockerAsFile = config.AttachIntoDockerAsFile;
   }
 
   storeFileAndExportEnvVar() {
@@ -36,9 +36,9 @@ class AttachIntoDocker extends BaseConfigFile {
 
   /* docker */
   mountToDocker() {
-    return `-v "\$(pwd)/localrun/${this.TmpFolder}:${this.AttachIntoDocker}"`;
+    return `-v "\$(pwd)/localrun/${this.TmpFolder}/${this.Name}:${this.AttachIntoDockerAsFile}"`;
   }
 
 }
 
-module.exports = AttachIntoDocker;
+module.exports = AttachIntoDockerAsFile;

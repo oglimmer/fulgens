@@ -7,7 +7,7 @@ const optionsBuilder = require('../phase/options');
 const cleanupBuilder = require('../phase/cleanup');
 const sourceTypeBuilder = require('../core/SourceType');
 const dependencycheckBuilder = require('../phase/dependencycheck');
-
+const BaseConfigFile = require('../core/configFile/BaseConfigFile');
 
 const BasePlugin = require('./BasePlugin');
 
@@ -26,7 +26,7 @@ class ShellPlugin extends BasePlugin {
 
     const defaultVersion = ((userConfig.versions || {})[softwareComponentName] || {}).Docker || 'latest';
 
-    optionsBuilder.addDetails(softwareComponentName, 'docker' + defaultVersion, [
+    optionsBuilder.addDetails(softwareComponentName, 'local', [
       `${softwareComponentName}:local #start a local shell script`,
       `${softwareComponentName}:docker:[latest] #start inside docker, default tag ${defaultVersion}, uses image http://hub.docker.com/_/${DockerImage}`
     ]);
@@ -70,8 +70,9 @@ class ShellPlugin extends BasePlugin {
       dcId,
       pid,
       DockerImage,
-      writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic()).join('\n'),
-      mountToDocker: configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n'),
+      writeConfigFiles: configFiles.map(f => f.createFile()).join('\n'),
+      writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(softwareComponentName, configFiles),
+      mountToDocker: configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join(' '),
       AllEnvVarsDocker: EnvVars.map(l => l.replace('$$TMP$$', 'localrun')).map(p => `-e ${p}`).join(' '),
       AllEnvVarsShell: EnvVars.map(l => l.replace('$$TMP$$', 'localrun')).map(p => `export ${p}`).join('\n')
     });

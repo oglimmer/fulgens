@@ -5,6 +5,7 @@ const cleanupBuilder = require('../phase/cleanup');
 const dependencycheckBuilder = require('../phase/dependencycheck');
 const optionsBuilder = require('../phase/options');
 const sourceTypeBuilder = require('../core/SourceType');
+const BaseConfigFile = require('../core/configFile/BaseConfigFile');
 
 const BasePlugin = require('./BasePlugin');
 
@@ -63,7 +64,8 @@ class MysqlPlugin extends BasePlugin {
       pidFile,
       Mysql: Mysql ? Mysql : {},
       AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
-      writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic()).join('\n'),
+      writeConfigFiles: configFiles.map(f => f.createFile()).join('\n'),
+      writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(softwareComponentName, configFiles),
       mountToDocker: configFiles.map(f => f.mountToDocker()).join('\n')
     });
 

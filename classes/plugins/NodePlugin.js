@@ -5,6 +5,7 @@ const cleanupBuilder = require('../phase/cleanup');
 const dependencycheckBuilder = require('../phase/dependencycheck');
 const optionsBuilder = require('../phase/options');
 const sourceTypeBuilder = require('../core/SourceType');
+const BaseConfigFile = require('../core/configFile/BaseConfigFile');
 
 const BasePlugin = require('./BasePlugin');
 
@@ -73,7 +74,8 @@ class NodePlugin extends BasePlugin {
       BeforeBuild,
       AfterBuild,
       DockerImage,
-      writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic()).join('\n'),
+      writeConfigFiles: configFiles.map(f => f.createFile()).join('\n'),
+      writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(softwareComponentName, configFiles),
       mountToDocker: configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n'),
       storeFileAndExportEnvVar: configFiles.map(f => f.storeFileAndExportEnvVar()).join('\n'),
       AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),

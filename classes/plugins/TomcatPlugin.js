@@ -5,6 +5,7 @@ const cleanupBuilder = require('../phase/cleanup');
 const dependencycheckBuilder = require('../phase/dependencycheck');
 const optionsBuilder = require('../phase/options');
 const sourceTypeBuilder = require('../core/SourceType');
+const BaseConfigFile = require('../core/configFile/BaseConfigFile');
 
 const BasePlugin = require('./BasePlugin');
 const JavaPlugin = require('./JavaPlugin');
@@ -43,9 +44,9 @@ class TomcatPlugin extends BasePlugin {
     const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
     const pidFile = `.${softwareComponentName}Pid`;
     
-    runtimeConfiguration.addDependency(JavaPlugin.instance());
+    JavaPlugin.addAsDependency();
 
-    const configFiles = runtimeConfiguration.getConfigFiles(Deploy);
+    const configFiles = [...runtimeConfiguration.getConfigFiles(Deploy), ...runtimeConfiguration.getConfigFiles(softwareComponentName)];
 
     var optionsBuilderData = [];
     var availableTypesData = [];
@@ -115,7 +116,8 @@ class TomcatPlugin extends BasePlugin {
       AllEnvVarsTomcat: 'export JAVA_OPTS="$JAVA_OPTS ' + EnvVars.map(p => `-D${p}`).join(' ') + '"',
       AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
       storeFileAndExportEnvVar: configFiles.map(f => f.storeFileAndExportEnvVar()).join('\n'),
-      writeDockerConnectionLogic: configFiles.map(f => f.writeDockerConnectionLogic()).join('\n'),
+      writeConfigFiles: configFiles.map(f => f.createFile()).join('\n'),
+      writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(softwareComponentName, configFiles),
       mountToDocker: configFiles.map(f => f.mountToDocker('/usr/local/tomcat/webapps')).join('\n')
     });
 

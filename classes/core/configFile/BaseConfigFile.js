@@ -1,4 +1,5 @@
 
+const assert = require('assert');
 const nunjucks = require('nunjucks');
 
 const crypto = require('crypto');
@@ -9,6 +10,8 @@ const path = require('path');
 class BaseConfigFile {
 
   constructor(pluginName, config, runtimeConfiguration) {
+    assert.strictEqual(true, pluginName.length > 0, 'pluginName must not be empty');
+    assert.strictEqual(true, config.Name.length > 0, 'config.Name must not be empty');
     this.runtimeConfiguration = runtimeConfiguration;
     this.pluginName = pluginName;
     
@@ -22,73 +25,68 @@ class BaseConfigFile {
     this.TmpFolder = hash.digest('hex').substring(0, 8);
   }
 
-
-  /*protected*/ createFile() {
+  createFile() {
     // start with loading default content if given
-    var defaultContent = [];
+    var content = [];
     if (this.LoadDefaultContent) {
-      const defaultContentBlock = fs.readFileSync(path.resolve(this.runtimeConfiguration.projectBasePath, this.LoadDefaultContent.replace('$$TMP$$', 'localrun')), { encoding: 'utf8' });
-      defaultContent = defaultContentBlock.split(/\r?\n/);
+      const filename = path.resolve(this.runtimeConfiguration.projectBasePath, this.LoadDefaultContent.replace('$$TMP$$', 'localrun'));
+      if (!fs.existsSync(filename)) {
+        throw `${filename} not found`;
+      }
+      const contentBlock = fs.readFileSync(filename, { encoding: 'utf8' });
+      content = contentBlock.split(/\r?\n/);
+      content = content.map(l => l.replace('$', '\\$'));
     }
-    // replace all variables given via this.Content
-    var staticContentFound = {};
-    const replacedDefaultContent = defaultContent.map(l => {
-      const connToReplace = this.Content.find(c => c.split(/=/)[0].trim() == l.split(/=/)[0].trim());
-      if (connToReplace) {        
-        staticContentFound[connToReplace.split(/=/)[0].trim()] = true;
-        return connToReplace;
+    // replace all variables given via this.Content (Regexp, Line)
+    this.Content.forEach(contentLine => {
+      const { Regexp, Line } = contentLine;
+      if (!Regexp) {
+        content.push(Line);
       } else {
-        return l;
+        const regExObj = new RegExp(Regexp);
+        const index = content.findIndex(l => regExObj.test(l));
+        if (index === -1) {
+          content.push(Line);
+        } else {
+          content[index] = Line;
+        }
       }
     });
-    // add all entries from this.Content not defined in LoadDefaultContent
-    const staticContentNotFoundYet = this.Content.filter(c => !staticContentFound[c.split(/=/)[0].trim()]);
-    const allStaticContent = [...replacedDefaultContent, ...staticContentNotFoundYet];
-    // loop over all entries so far finding Connection-vars and replacing them $REPLVAR???
-    var connectionsFound = {};
-    const allContent = allStaticContent.map(l => {
-      const connToReplace = this.Connections.find(c => c.Var == l.split(/=/)[0].trim());
-      if (connToReplace) {
-        connectionsFound[connToReplace.Var] = true;
-        return `${connToReplace.Var}=$REPLVAR${connToReplace.Var.replace('.', '_')}`;
+    // replace all variables given via this.Connections (Regexp, Line, Source), replace $$VALUE$$ with $REPLVAR{SOURCE_NAME}
+    this.Connections.forEach(connectionLine => {
+      const { Regexp, Line, Source } = connectionLine;
+      const replacedLine = Line.replace('$$VALUE$$', `$REPLVAR_${this.pluginName.toUpperCase()}_${Source.toUpperCase()}`);
+      if (!Regexp) {
+        content.push(replacedLine);
       } else {
-        return l;
+        const regExObj = new RegExp(Regexp);
+        const index = content.findIndex(l => regExObj.test(l));        
+        if (index === -1) {
+          content.push(replacedLine);
+        } else {
+          content[index] = replacedLine;
+        }
       }
     });
-    // Create array with all Connections-vars not defined in Content or LoadDefaultContent
-    const justConnectionVars = this.Connections.filter(c => !connectionsFound[c.Var]).map(c => `${c.Var}=$REPLVAR${c.Var.replace('.', '_')}`);    
     return nunjucks.render('classes/core/configFile/BaseConfigFile-createFile.tmpl', {
       TmpFolder: this.TmpFolder,
       Name: this.Name,
-      allContent,
-      justConnectionVars
+      content
     });
   }
 
   /* docker */
-  writeDockerConnectionLogic() {
-    // reduce an array of objects (Source, Var, Content) into a Map Key:Source, Value: array of original objects
-    const mapSourceToConnections = this.Connections.reduce((accumulator, currentValue) => {
-      
-      currentValue.VarRpl = currentValue.Var.replace('.', '_');
-      currentValue.ContentRpl = replaceStr => currentValue.Content ? currentValue.Content.replace('$$VALUE$$', replaceStr) : replaceStr;
-
-      var arrayOnSource = accumulator.get(currentValue.Source);
-      if (!arrayOnSource) {
-        arrayOnSource = [currentValue];
-        accumulator.set(currentValue.Source, arrayOnSource);
-      } else {
-        arrayOnSource.push(currentValue);
-      }
+  static writeDockerConnectionLogic(pluginName, configFilesArray) {
+    // step 1, flatten the configFilesArray to an array of connections from all configFiles
+    const allSources = configFilesArray.reduce((accumulator, currentValue) => accumulator.concat(currentValue.Connections), [])
+      // step 2 reduce an array of connection objects (Source, Var, Content) into a Set of Source
+      .map(c => c.Source).reduce((accumulator, currentValue) => {
+      accumulator.add(currentValue);
       return accumulator;
-    }, new Map());
-
+    }, new Set());
     return nunjucks.render('classes/core/configFile/BaseConfigFile-writeDockerConnectionLogic.tmpl', {
-      TmpFolder: this.TmpFolder,
-      Name: this.Name,
-      Content: this.Content,
-      mapSourceToConnections,
-      createFile: () => this.createFile()
+      pluginName,
+      allSources
     });
   }
 

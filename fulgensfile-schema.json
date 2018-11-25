@@ -104,6 +104,12 @@
             "Docker": {
               "type": "string"
             },
+            "JavaLocal": {
+              "type": "string"
+            },
+            "Download": {
+              "type": "string"
+            },
             "TestedWith": {
               "type": "string"
             },
@@ -470,7 +476,7 @@
           "type": "array",
           "minItems": 0,
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/ConfigFileDef/definitions/Content"
           },
           "uniqueItems": true
         },
@@ -488,6 +494,9 @@
         },
         "AttachIntoDocker": {
           "type": "string"
+        },
+        "AttachIntoDockerAsFile": {
+          "type": "string"
         }
       },
       "additionalProperties": false,
@@ -498,15 +507,27 @@
             "Source": {
               "type": "string"
             },
-            "Var": {
+            "Regexp": {
               "type": "string"
             },
-            "Content": {
+            "Line": {
               "type": "string"
             }
           },
           "additionalProperties": false,
-          "required": [ "Source", "Var" ]
+          "required": [ "Source", "Line" ]
+        },
+        "Content": {
+          "properties": {
+            "Regexp": {
+              "type": "string"
+            },
+            "Line": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "required": [ "Line" ]
         }
       }
     }

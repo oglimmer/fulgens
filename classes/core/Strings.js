@@ -10,8 +10,8 @@ verbosePrint "${pluginName} // ${softwareComponentName}"
 `;
 	},
 
-	addWithDeli: (...args) => {
-		return args.filter(val => val.length > 0).join(', ');
-	}
+	normalizeJavaVersion: version => version < 2 ? (version - 1) * 10 : version,
+
+	addWithDeli: (...args) => args.filter(val => val.length > 0).join(', ')
 
 }

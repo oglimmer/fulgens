@@ -7,6 +7,9 @@ if [ "$START_{{softwareComponentName|upper}}" = "YES" ]; then
 
 {{ getsource }}
 
+{# prestart must come before the build code, as it might set JAVA_HOME in BasePlugin #}
+{{ prestart }}
+
 if [ "${{typeSourceVarName}}" == "local" ]; then
   f_build() {
     verbosePrint "pwd=$(pwd)\nmvn {{GoalIgnoreClean}} $MVN_OPTS {{Goal}}"
@@ -53,8 +56,6 @@ if [ "$SKIP_BUILD" != "YES" ]; then
 else
   verbosePrint "Mvn build skipped."
 fi  
-
-{{ prestart }}
 
 {{ poststart }}
 

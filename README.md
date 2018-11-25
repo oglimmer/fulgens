@@ -2,6 +2,8 @@
 
 This software helps with building, deploying and running software **locally**. It is a shell script generator to orchestrate software components **locally**.
 
+Fulgens also documents version compatibility for your software's dependencies like databases, Tomcat and Java.
+
 It is not a tool to build software. It is not a tool to remotely deploy software. It is generally not a DevOps tool by any means.
 
 The tool was made for software developers to document deployment dependencies like runtime environments and databases, as well as running it locally as easy as possible.
@@ -51,6 +53,8 @@ Now browse to [http://localhost:8080/MyApp/]()
 
 Now try `./run_local.sh -f -t tomcat:docker` to run the Tomcat inside a Docker container. Or `./run_local.sh -f -b docker` to build inside Docker, but run on your local machine.
 
+Also checkout `./run_local.sh -h` to see all available options.
+
 ## Supported software
 
 A Fulgensfile defines all software components needed to run a project. Supported software is
@@ -76,8 +80,10 @@ The Fulgensfile is JavaScript file defining an (JSON) object and assigning it to
 
 It must contain two attributes
 
-* config
-* software
+* `config`
+* `software`
+
+and it may contain a third attribute `versions`.
 
 This is a minimal and basic Fulgensfile:
 
@@ -102,7 +108,6 @@ Attribute name            | Type | Description
 SchemaVersion | string | Required. Must be "1.0.0"
 Name | string | Required. The name of the software
 Vagrant | object | Defines how a vagrant VM should be spun up
-JavaVersions | array of strings | If a software requires a certain version(s) of java, this attribute can document and limit those compatible versions By default the script will not change JAVA\_HOME. Though on macOS the script will provide a parameter to switch  Java (respectively JAVA\_HOME) to 1.8, 9 or 10. To document the compatibility one can set JavaVersions in the config section. As said on macOS this also defines the possible values for the "-j" parameter.Java version this project is compabile with. On macOS this value will be used with /usr/libexec/java_home
 UseHomeM2 | boolean | Default is false, if set to true ~/.m2 will be used for Vagrant and Docker environments
 BuildDependencies | object | Defines additional apt or npm packages needed for a build 
 Dependencycheck | array of strings | shell code to execute to check if a dependency or prerequisite is ok
@@ -127,6 +132,17 @@ Attribute name            | Type | Description
 Apt | array of strings | Apt package names.
 Npm | array of strings | Npm package names. The apt package "nodejs" will be automatically added to apt if this is array as at least one element
 
+### The root object `versions`
+
+This section is optional and can be used to define and document version compatiblity.
+
+Attribute name            | Type | Description
+----------------------- | ---- | -----------
+Docker | string | Tag of a docker image. 'latest' is always used unless this attribute is defined for a software compoenent
+JavaLocal | string | Works only on macOS. Sets JAVA_HOME to this version for this component
+Download | string | Overrides the download version
+TestedWith | string | A description to document tested versions
+KnownMax | string | A description to document a maximum version
 
 ### The root object `software`
 
@@ -472,14 +488,17 @@ In Fulgens a software components can define config files. This mechanism allows 
 Config param            | Type | Description
 ----------------------- | ---- | -----------
 Name | string | Required. Name of the config file
-Connections | object | Optional. Defines a at run-time replaced config file row
+Connections | array of objects | Optional. Defines a at run-time replaced config file row
 Connections.Source | string | Required. This references another software component by its name
-Connections.Var | string | Required. Variable name of the config file row.
-Connections.Content | string | Optional. Right side part of the config file row. $$VALUE$$ will be replaced by the host name at run-time.
-Content | array of strings | Optional. key=value added to the config file
+Connections.Regexp | string | Optional. A regular expression to search in the config file. The first line matching this regular expression will be replaced by the value giving via Line 
+Connections.Line | string | Optional. Right side part of the config file row. $$VALUE$$ will be replaced by the host name at run-time.
+Content | array of objects | Optional. Defines static content added or replaced in the config file
+Content.Regexp | string | Optional. A regular expression to search in the config file. The first line matching this regular expression will be replaced by the value giving via Line
+Content.Line | string | Required. Content to add or replace in the config file
 LoadDefaultContent | string | Optional. Absolute or relative file path to a config file
-AttachAsEnvVar | array of 2 strings | Mutually exclusive to AttachIntoDocker. The config file will be attached to the application via an environment variable. The first string defines the name of the environment variable. The second string defines the value where $$SELF_NAME$$ will be replaced by the file path to the config file at run-time
-AttachIntoDocker | string | Mutually exclusive to AttachAsEnvVar. The config file will be mounted into docker via a directory. This defines the absolute path on the docker filesystem
+AttachAsEnvVar | array of 2 strings | Mutually exclusive to AttachIntoDocker or AttachIntoDockerAsFile. The config file will be attached to the application via an environment variable. The first string defines the name of the environment variable. The second string defines the value where $$SELF_NAME$$ will be replaced by the file path to the config file at run-time
+AttachIntoDocker | string | Mutually exclusive to AttachAsEnvVar or AttachIntoDockerAsFile. The config file will be mounted into docker via a directory. This defines the absolute path on the docker filesystem
+AttachIntoDockerAsFile | string | Mutually exclusive to AttachAsEnvVar or AttachIntoDocker. The config file will be mounted into docker via a file. This defines the absolute path on the docker filesystem to the config file.
 
 Example:
 

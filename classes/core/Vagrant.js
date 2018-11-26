@@ -4,7 +4,7 @@ const nunjucks = require('nunjucks');
 const optionsBuilder = require('../phase/options');
 const prepareBuilder = require('../phase/prepare');
 
-const DependencyManager = require('../core/dependencyManager');
+const DependencyManager = require('../core/DependencyManager');
 
 var build = () => {};
 

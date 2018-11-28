@@ -76,16 +76,19 @@ class BaseConfigFile {
   }
 
   /* docker */
-  static writeDockerConnectionLogic(pluginName, configFilesArray) {
-    // step 1, flatten the configFilesArray to an array of connections from all configFiles
-    const allSources = configFilesArray.reduce((accumulator, currentValue) => accumulator.concat(currentValue.Connections), [])
-      // step 2 reduce an array of connection objects (Source, Var, Content) into a Set of Source
-      .map(c => c.Source).reduce((accumulator, currentValue) => {
-      accumulator.add(currentValue);
+  static writeDockerConnectionLogic(configFilesArray) {
+    // First reduce: from all config files we only want those objects: { Connection.Source, PluginName }
+    // Second reduce: remove any duplicates
+    const allSources = configFilesArray.reduce((accumulator, currentValue) => {
+      const simpleConnectionArray = currentValue.Connections.map(c => ({ sourceName: c.Source, pluginName: currentValue.pluginName }));
+      return accumulator.concat(simpleConnectionArray);
+    }, []).reduce((accumulator, currentValue) => {
+      if (!accumulator.find(e => e.sourceName === currentValue.sourceName && e.pluginName === currentValue.pluginName)) {
+        accumulator.push(currentValue);
+      }
       return accumulator;
-    }, new Set());
+    }, []);
     return nunjucks.render('classes/core/configFile/BaseConfigFile-writeDockerConnectionLogic.tmpl', {
-      pluginName,
       allSources
     });
   }

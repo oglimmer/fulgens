@@ -67,7 +67,7 @@ class MysqlPlugin extends BasePlugin {
       Mysql: Mysql ? Mysql : {},
       AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
       writeConfigFiles: configFiles.map(f => f.createFile()).join('\n'),
-      writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(softwareComponentName, configFiles),
+      writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(configFiles),
       mountToDocker: configFiles.map(f => f.mountToDocker()).join('\n')
     });
 

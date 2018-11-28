@@ -77,7 +77,7 @@ class NodePlugin extends BasePlugin {
       DockerImage,
       DockerMemory,
       writeConfigFiles: configFiles.map(f => f.createFile()).join('\n'),
-      writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(softwareComponentName, configFiles),
+      writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(configFiles),
       mountToDocker: configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n'),
       storeFileAndExportEnvVar: configFiles.map(f => f.storeFileAndExportEnvVar()).join('\n'),
       AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),

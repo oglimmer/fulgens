@@ -447,13 +447,14 @@ BeforeBuild | array of string | Bash code to execute before the component is sta
 AfterBuild | array of string | Bash code to execute after the component is started
 
 
-#### DockerImage
+#### DockerImage & DockerMemory
 
-Each software component type (plugin) has a docker image associated. This can be changed via this attribute.
+Each software component type (plugin) has a docker image associated. This can be changed via this attribute, also it is possible to set the max memory parameter for the docker container.
 
 Config param            | Type | Description
 ----------------------- | ---- | -----------
 DockerImage | string | docker image name without version
+DockerMemory | strig | max memory parameter "-m" for docker
 
 #### EnvVars
 

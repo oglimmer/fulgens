@@ -1,8 +1,8 @@
 
-{% for sourceName in allSources %}
-if [ "$TYPE_SOURCE_{{sourceName|upper}}" == "docker" ]; then
-  REPLVAR_{{pluginName|upper}}_{{sourceName|upper}}="{{sourceName}}"
-elif [ "$TYPE_SOURCE_{{sourceName|upper}}" == "local" ]; then
-  REPLVAR_{{pluginName|upper}}_{{sourceName|upper}}="host.docker.internal"
+{% for source in allSources %}
+if [ "$TYPE_SOURCE_{{source.sourceName|upper}}" == "docker" ]; then
+  REPLVAR_{{source.pluginName|upper}}_{{source.sourceName|upper}}="{{source.sourceName}}"
+elif [ "$TYPE_SOURCE_{{source.sourceName|upper}}" == "local" ]; then
+  REPLVAR_{{source.pluginName|upper}}_{{source.sourceName|upper}}="host.docker.internal"
 fi
 {% endfor %}

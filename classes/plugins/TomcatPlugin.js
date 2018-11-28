@@ -119,7 +119,7 @@ class TomcatPlugin extends BasePlugin {
       AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
       storeFileAndExportEnvVar: configFiles.map(f => f.storeFileAndExportEnvVar()).join('\n'),
       writeConfigFiles: configFiles.map(f => f.createFile()).join('\n'),
-      writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(softwareComponentName, configFiles),
+      writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(configFiles),
       mountToDocker: configFiles.map(f => f.mountToDocker('/usr/local/tomcat/webapps')).join('\n')
     });
 

@@ -6,6 +6,7 @@ const dependencycheckBuilder = require('../phase/dependencycheck');
 const optionsBuilder = require('../phase/options');
 const sourceTypeBuilder = require('../core/SourceType');
 const BaseConfigFile = require('../core/configFile/BaseConfigFile');
+const Strings = require('../core/Strings');
 
 const BasePlugin = require('./BasePlugin');
 
@@ -19,16 +20,16 @@ class NodePlugin extends BasePlugin {
     super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
     const { Name: systemName } = userConfig.config;
-    const { Start, Node, EnvVars = [], ExposedPort = '3000', BeforeBuild = [], AfterBuild = [], DockerImage = 'node' } = userConfig.software[softwareComponentName];
+    const { Start, Node, EnvVars = [], ExposedPort = '3000', BeforeBuild = [], AfterBuild = [], DockerImage = 'node', DockerMemory } = userConfig.software[softwareComponentName];
 
     const defaultVersion = ((userConfig.versions || {})[softwareComponentName] || {}).Docker || 'latest';
 
     dependencycheckBuilder.add('node --version 1>/dev/null');
     dependencycheckBuilder.add('npm --version 1>/dev/null');
 
-    optionsBuilder.addDetails(softwareComponentName, 'docker:' + defaultVersion, [
+    optionsBuilder.addDetails(softwareComponentName, 'local', [
       `${softwareComponentName}:local #reuse a local node installation`,
-      `${softwareComponentName}:docker:[TAG] #start docker, default tag ${defaultVersion}, uses image http://hub.docker.com/_/${DockerImage}`
+      `${softwareComponentName}:docker:[TAG] #start docker, default tag ${defaultVersion}, uses image ${Strings.dockerLink(DockerImage)}`
     ]);
 
     runtimeConfiguration.setTail('nodejs', `http://localhost:${ExposedPort}`);
@@ -74,6 +75,7 @@ class NodePlugin extends BasePlugin {
       BeforeBuild,
       AfterBuild,
       DockerImage,
+      DockerMemory,
       writeConfigFiles: configFiles.map(f => f.createFile()).join('\n'),
       writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(softwareComponentName, configFiles),
       mountToDocker: configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n'),

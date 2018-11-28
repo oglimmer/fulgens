@@ -6,6 +6,7 @@ const dependencycheckBuilder = require('../phase/dependencycheck');
 const optionsBuilder = require('../phase/options');
 const sourceTypeBuilder = require('../core/SourceType');
 const BaseConfigFile = require('../core/configFile/BaseConfigFile');
+const Strings = require('../core/Strings');
 
 const BasePlugin = require('./BasePlugin');
 const JavaPlugin = require('./JavaPlugin');
@@ -30,7 +31,7 @@ class TomcatPlugin extends BasePlugin {
     super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
     const { Name: systemName } = userConfig.config;
-    const { Deploy, Lib, EnvVars = [], SourceTypes = ['docker','download','local'], DockerImage = 'tomcat', ExposedPort = '8080' } = userConfig.software[softwareComponentName];
+    const { Deploy, Lib, EnvVars = [], SourceTypes = ['docker','download','local'], DockerImage = 'tomcat', ExposedPort = '8080', DockerMemory } = userConfig.software[softwareComponentName];
     const { Artifact } = userConfig.software[Deploy];
 
     const defaultDockerVersion = ((userConfig.versions || {})[softwareComponentName] || {}).Docker || 'latest';
@@ -55,7 +56,7 @@ class TomcatPlugin extends BasePlugin {
     var downloadLibsToCopy = '';
 
     // docker
-    optionsBuilderData.push(`${softwareComponentName}:docker:[TAG] #start docker, default tag ${defaultDockerVersion}, uses image http://hub.docker.com/_/${DockerImage}`);
+    optionsBuilderData.push(`${softwareComponentName}:docker:[TAG] #start docker, default tag ${defaultDockerVersion}, uses image ${Strings.dockerLink(DockerImage)}`);
     availableTypesData.push({ typeName: 'docker', defaultVersion: defaultDockerVersion });
     cleanupSourceTypesData.push({
       name: 'docker',
@@ -113,6 +114,7 @@ class TomcatPlugin extends BasePlugin {
       Artifact,
       DockerImage,
       ExposedPort,
+      DockerMemory,
       AllEnvVarsTomcat: 'export JAVA_OPTS="$JAVA_OPTS ' + EnvVars.map(p => `-D${p}`).join(' ') + '"',
       AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
       storeFileAndExportEnvVar: configFiles.map(f => f.storeFileAndExportEnvVar()).join('\n'),

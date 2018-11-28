@@ -222,6 +222,12 @@
         "Mysql": {
           "$ref": "#/definitions/MysqlType/definitions/MysqlSubType"
         },
+        "DockerImage": {
+          "type": "string"
+        },
+        "DockerMemory": {
+          "type": "string"
+        },
         "BeforeStart": {
           "type": "array",
           "minItems": 0,
@@ -273,6 +279,12 @@
         "Source": {
           "enum": [ "couchdb" ]
         },
+        "DockerImage": {
+          "type": "string"
+        },
+        "DockerMemory": {
+          "type": "string"
+        },
         "CouchDB": {
           "anyOf": [
             {
@@ -319,6 +331,12 @@
         "Source": {
           "enum": [ "tomcat" ]
         },
+        "DockerImage": {
+          "type": "string"
+        },
+        "DockerMemory": {
+          "type": "string"
+        },
         "Lib": {
           "type": "array",
           "minItems": 0,
@@ -351,6 +369,12 @@
       "properties": {
         "Source": {
           "enum": [ "node" ]
+        },
+        "DockerImage": {
+          "type": "string"
+        },
+        "DockerMemory": {
+          "type": "string"
         },
         "Start": {
           "type": "string"
@@ -393,6 +417,12 @@
         "Source": {
           "enum": [ "java" ]
         },
+        "DockerImage": {
+          "type": "string"
+        },
+        "DockerMemory": {
+          "type": "string"
+        },
         "Start": {
           "type": "string"
         },
@@ -424,6 +454,9 @@
           "type": "number"
         },
         "DockerImage": {
+          "type": "string"
+        },
+        "DockerMemory": {
           "type": "string"
         },
         "EnvVars": {

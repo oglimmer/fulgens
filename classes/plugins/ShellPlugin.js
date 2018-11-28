@@ -8,6 +8,7 @@ const cleanupBuilder = require('../phase/cleanup');
 const sourceTypeBuilder = require('../core/SourceType');
 const dependencycheckBuilder = require('../phase/dependencycheck');
 const BaseConfigFile = require('../core/configFile/BaseConfigFile');
+const Strings = require('../core/Strings');
 
 const BasePlugin = require('./BasePlugin');
 
@@ -21,14 +22,14 @@ class ShellPlugin extends BasePlugin {
     super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
     const { Name: systemName } = userConfig.config;
-    const { Start, ExposedPort, DockerImage = 'ubuntu', EnvVars = [] } = userConfig.software[softwareComponentName];
+    const { Start, ExposedPort, DockerImage = 'ubuntu', EnvVars = [], DockerMemory } = userConfig.software[softwareComponentName];
     const StartRpld = Start.replace('$$TMP$$', 'localrun');
 
     const defaultVersion = ((userConfig.versions || {})[softwareComponentName] || {}).Docker || 'latest';
 
     optionsBuilder.addDetails(softwareComponentName, 'local', [
       `${softwareComponentName}:local #start a local shell script`,
-      `${softwareComponentName}:docker:[latest] #start inside docker, default tag ${defaultVersion}, uses image http://hub.docker.com/_/${DockerImage}`
+      `${softwareComponentName}:docker:[latest] #start inside docker, default tag ${defaultVersion}, uses image ${Strings.dockerLink(DockerImage)}`
     ]);
 
     sourceTypeBuilder.add(this, {
@@ -70,6 +71,7 @@ class ShellPlugin extends BasePlugin {
       dcId,
       pid,
       DockerImage,
+      DockerMemory,
       writeConfigFiles: configFiles.map(f => f.createFile()).join('\n'),
       writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(softwareComponentName, configFiles),
       mountToDocker: configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join(' '),

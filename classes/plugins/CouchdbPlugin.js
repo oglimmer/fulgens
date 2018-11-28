@@ -5,6 +5,7 @@ const cleanupBuilder = require('../phase/cleanup');
 const dependencycheckBuilder = require('../phase/dependencycheck');
 const optionsBuilder = require('../phase/options');
 const BaseConfigFile = require('../core/configFile/BaseConfigFile');
+const Strings = require('../core/Strings');
 
 const sourceTypeBuilder = require('../core/SourceType');
 
@@ -20,7 +21,7 @@ class CouchdbPlugin extends BasePlugin {
     super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
     const { Name: systemName } = userConfig.config;
-    const { CouchDB, EnvVars = [], DockerImage = 'couchdb', ExposedPort = '5984' } = userConfig.software[softwareComponentName];
+    const { CouchDB, EnvVars = [], DockerImage = 'couchdb', ExposedPort = '5984', DockerMemory } = userConfig.software[softwareComponentName];
 
     const defaultVersion = ((userConfig.versions || {})[softwareComponentName] || {}).Docker || 'latest';
 
@@ -28,7 +29,8 @@ class CouchdbPlugin extends BasePlugin {
     
     optionsBuilder.addDetails(softwareComponentName, 'docker:' + defaultVersion, [
       `${softwareComponentName}:local #reuse a local, running CouchDB installation, does not start/stop this CouchDB`,
-      `${softwareComponentName}:docker:[TAG] #start docker, default tag ${defaultVersion}, uses image from http://hub.docker.com/_/${DockerImage}`]);
+      `${softwareComponentName}:docker:[TAG] #start docker, default tag ${defaultVersion}, uses image ${Strings.dockerLink(DockerImage)}`
+    ]);
 
     const configFiles = runtimeConfiguration.getConfigFiles(softwareComponentName);
 
@@ -63,6 +65,7 @@ class CouchdbPlugin extends BasePlugin {
       softwareComponentName,
       systemName,
       ExposedPort,
+      DockerMemory,
       AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
       couchDBs: Array.isArray(CouchDB) ? CouchDB : (CouchDB ? [CouchDB] : []),
       writeConfigFiles: configFiles.map(f => f.createFile()).join('\n'),

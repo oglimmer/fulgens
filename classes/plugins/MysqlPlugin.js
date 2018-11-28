@@ -6,6 +6,7 @@ const dependencycheckBuilder = require('../phase/dependencycheck');
 const optionsBuilder = require('../phase/options');
 const sourceTypeBuilder = require('../core/SourceType');
 const BaseConfigFile = require('../core/configFile/BaseConfigFile');
+const Strings = require('../core/Strings');
 
 const BasePlugin = require('./BasePlugin');
 
@@ -19,7 +20,7 @@ class MysqlPlugin extends BasePlugin {
     super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
     const { Name: systemName } = userConfig.config;
-    const { Mysql, EnvVars = [], DockerImage = 'mysql', ExposedPort = '3306' } = userConfig.software[softwareComponentName];
+    const { Mysql, EnvVars = [], DockerImage = 'mysql', ExposedPort = '3306', DockerMemory } = userConfig.software[softwareComponentName];
 
     const defaultVersion = ((userConfig.versions || {})[softwareComponentName] || {}).Docker || 'latest';
 
@@ -28,7 +29,7 @@ class MysqlPlugin extends BasePlugin {
  
     optionsBuilder.addDetails(softwareComponentName, 'docker:' + defaultVersion, [
       `${softwareComponentName}:local #reuse a local, running MySQL installation, does not start/stop this MySQL`,
-      `${softwareComponentName}:docker:[TAG] #start docker, default tag ${defaultVersion}, uses image http://hub.docker.com/_/${DockerImage}`
+      `${softwareComponentName}:docker:[TAG] #start docker, default tag ${defaultVersion}, uses image ${Strings.dockerLink(DockerImage)}`
     ]);
 
     sourceTypeBuilder.add(this, {
@@ -60,6 +61,7 @@ class MysqlPlugin extends BasePlugin {
       systemName,
       configFiles,
       DockerImage,
+      DockerMemory,
       ExposedPort,
       pidFile,
       Mysql: Mysql ? Mysql : {},

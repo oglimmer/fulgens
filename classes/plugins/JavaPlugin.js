@@ -8,6 +8,7 @@ const cleanupBuilder = require('../phase/cleanup');
 const sourceTypeBuilder = require('../core/SourceType');
 const dependencycheckBuilder = require('../phase/dependencycheck');
 const BaseConfigFile = require('../core/configFile/BaseConfigFile');
+const Strings = require('../core/Strings');
 
 const BasePlugin = require('./BasePlugin');
 
@@ -79,7 +80,7 @@ class JavaPlugin extends BasePlugin {
     super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
     const { Name: systemName, JavaVersions } = userConfig.config;
-    const { Start, ExposedPort, EnvVars = [], DockerImage = 'openjdk' } = userConfig.software[softwareComponentName];
+    const { Start, ExposedPort, EnvVars = [], DockerImage = 'openjdk', DockerMemory } = userConfig.software[softwareComponentName];
     const { Artifact } = userConfig.software[Start];
     const ArtifactRpld = Artifact.replace('$$TMP$$', 'localrun');
 
@@ -89,7 +90,7 @@ class JavaPlugin extends BasePlugin {
 
     optionsBuilder.addDetails(softwareComponentName, 'docker:' + defaultVersion, [
       `${softwareComponentName}:local #start a local java program`,
-      `${softwareComponentName}:docker:[TAG] #start inside docker, default tag ${defaultVersion}, uses image http://hub.docker.com/_/${DockerImage}`
+      `${softwareComponentName}:docker:[TAG] #start inside docker, default tag ${defaultVersion}, uses image ${Strings.dockerLink(DockerImage)}`
     ]);
 
     sourceTypeBuilder.add(this, {
@@ -131,6 +132,7 @@ class JavaPlugin extends BasePlugin {
       dcId,
       pid,
       DockerImage,
+      DockerMemory,
       writeConfigFiles: configFiles.map(f => f.createFile()).join('\n'),
       writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(softwareComponentName, configFiles),
       mountToDocker: configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n'),

@@ -4,6 +4,7 @@ const nunjucks = require('nunjucks');
 const dependencycheckBuilder = require('../phase/dependencycheck');
 const optionsBuilder = require('../phase/options');
 const sourceTypeBuilder = require('../core/SourceType');
+const Strings = require('../core/Strings');
 
 const BasePlugin = require('./BasePlugin');
 
@@ -27,7 +28,7 @@ class MvnPlugin extends BasePlugin {
 
     optionsBuilder.addDetails(softwareComponentName, 'local', [
       `${softwareComponentName}:local #build local and respect -j`,
-      `${softwareComponentName}:docker:[TAG] #docker based build, default tag: ${defaultVersion}, uses image http://hub.docker.com/_/${DockerImage}`
+      `${softwareComponentName}:docker:[TAG] #docker based build, default tag: ${defaultVersion}, uses image ${Strings.dockerLink(DockerImage)}`
     ]);
 
     sourceTypeBuilder.add(this, {

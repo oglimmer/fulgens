@@ -5,6 +5,7 @@ const cleanupBuilder = require('../phase/cleanup');
 const dependencycheckBuilder = require('../phase/dependencycheck');
 const optionsBuilder = require('../phase/options');
 const BaseConfigFile = require('../core/configFile/BaseConfigFile');
+const Strings = require('../core/Strings');
 
 const sourceTypeBuilder = require('../core/SourceType');
 
@@ -20,7 +21,7 @@ class RedisPlugin extends BasePlugin {
     super.exec(softwareComponentName, userConfig, runtimeConfiguration);
 
     const { Name: systemName } = userConfig.config;
-    const { EnvVars = [], DockerImage = 'redis', ExposedPort = '6379' } = userConfig.software[softwareComponentName];
+    const { EnvVars = [], DockerImage = 'redis', ExposedPort = '6379', DockerMemory } = userConfig.software[softwareComponentName];
 
     const defaultVersion = ((userConfig.versions || {})[softwareComponentName] || {}).Docker || 'latest';
 
@@ -28,7 +29,8 @@ class RedisPlugin extends BasePlugin {
     
     optionsBuilder.addDetails(softwareComponentName, 'docker:' + defaultVersion, [
       `${softwareComponentName}:local #reuse a local, running Redis installation, does not start/stop this Redis`,
-      `${softwareComponentName}:docker:[3|4] #start docker, default tag ${defaultVersion}, uses image http://hub.docker.com/_/${DockerImage}`]);
+      `${softwareComponentName}:docker:[3|4] #start docker, default tag ${defaultVersion}, uses image ${Strings.dockerLink(DockerImage)}`
+    ]);
 
     const configFiles = runtimeConfiguration.getConfigFiles(softwareComponentName);
 
@@ -63,6 +65,7 @@ class RedisPlugin extends BasePlugin {
       dcId,
       DockerImage,
       ExposedPort,
+      DockerMemory,
       AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
       writeConfigFiles: configFiles.map(f => f.createFile()).join('\n'),
       writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(softwareComponentName, configFiles),

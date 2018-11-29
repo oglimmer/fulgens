@@ -509,14 +509,6 @@
         "Name": {
           "type": "string"
         },
-        "Connections": {
-          "type": "array",
-          "minItems": 0,
-          "items": {
-            "$ref": "#/definitions/ConfigFileDef/definitions/Connections"
-          },
-          "uniqueItems": true
-        },
         "Content": {
           "type": "array",
           "minItems": 0,
@@ -547,23 +539,11 @@
       "additionalProperties": false,
       "required": [ "Name" ],
       "definitions": {
-        "Connections": {
+        "Content": {
           "properties": {
             "Source": {
               "type": "string"
             },
-            "Regexp": {
-              "type": "string"
-            },
-            "Line": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "required": [ "Source", "Line" ]
-        },
-        "Content": {
-          "properties": {
             "Regexp": {
               "type": "string"
             },

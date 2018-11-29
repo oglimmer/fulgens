@@ -13,13 +13,13 @@ const BaseConfigFile = require('./BaseConfigFile');
       { Line: "[mysqld]" },
       { Line: "collation-server = utf8_unicode_ci" },
       { Line: "init-connect='SET NAMES utf8'" },
-      { Line: "character-set-server = utf8" }
+      { Line: "character-set-server = utf8" },
+      {
+        Source: "lucene",
+        Regexp: "_fti=",
+        Line: "_fti={couch_httpd_proxy, handle_proxy_req, <<\\\"http://$$VALUE$$:5985\\\">>}"
+      }
     ],
-    Connections: [{
-      Source: "lucene",
-      Regexp: "_fti=",
-      Line: "_fti={couch_httpd_proxy, handle_proxy_req, <<\\\"http://$$VALUE$$:5985\\\">>}"
-    }],
     AttachIntoDockerAsFile: "/etc/mysql/conf.d"
   }
 */

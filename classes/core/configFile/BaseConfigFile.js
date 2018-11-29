@@ -17,7 +17,6 @@ class BaseConfigFile {
     
     this.Name = config.Name;
     this.Content = config.Content ? config.Content : [];
-    this.Connections = config.Connections ? config.Connections : [];
     this.LoadDefaultContent = config.LoadDefaultContent;
 
     const hash = crypto.createHash('sha256');
@@ -39,23 +38,8 @@ class BaseConfigFile {
     }
     // replace all variables given via this.Content (Regexp, Line)
     this.Content.forEach(contentLine => {
-      const { Regexp, Line } = contentLine;
-      if (!Regexp) {
-        content.push(Line);
-      } else {
-        const regExObj = new RegExp(Regexp);
-        const index = content.findIndex(l => regExObj.test(l));
-        if (index === -1) {
-          content.push(Line);
-        } else {
-          content[index] = Line;
-        }
-      }
-    });
-    // replace all variables given via this.Connections (Regexp, Line, Source), replace $$VALUE$$ with $REPLVAR{SOURCE_NAME}
-    this.Connections.forEach(connectionLine => {
-      const { Regexp, Line, Source } = connectionLine;
-      const replacedLine = Line.replace('$$VALUE$$', `$REPLVAR_${this.pluginName.toUpperCase()}_${Source.toUpperCase()}`);
+      const { Regexp, Line, Source } = contentLine;
+      const replacedLine = Source ? Line.replace('$$VALUE$$', `$REPLVAR_${this.pluginName.toUpperCase()}_${Source.toUpperCase()}`) : Line;
       if (!Regexp) {
         content.push(replacedLine);
       } else {
@@ -77,10 +61,10 @@ class BaseConfigFile {
 
   /* docker */
   static writeDockerConnectionLogic(configFilesArray) {
-    // First reduce: from all config files we only want those objects: { Connection.Source, PluginName }
+    // First reduce: from all config files we only want those objects: { Content.Source, PluginName }
     // Second reduce: remove any duplicates
     const allSources = configFilesArray.reduce((accumulator, currentValue) => {
-      const simpleConnectionArray = currentValue.Connections.map(c => ({ sourceName: c.Source, pluginName: currentValue.pluginName }));
+      const simpleConnectionArray = currentValue.Content.filter(c => c.Source).map(c => ({ sourceName: c.Source, pluginName: currentValue.pluginName }));
       return accumulator.concat(simpleConnectionArray);
     }, []).reduce((accumulator, currentValue) => {
       if (!accumulator.find(e => e.sourceName === currentValue.sourceName && e.pluginName === currentValue.pluginName)) {

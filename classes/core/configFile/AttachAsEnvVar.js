@@ -13,12 +13,12 @@ const BaseConfigFile = require('./BaseConfigFile');
     Name: "java.properties",
     Content: [
       { Line: "toldyouso.domain=http://localhost:8080/toldyouso" },
-      { Line: "toldyouso.password=foobar", Regexp: "toldyouso.password=" }
+      { Line: "toldyouso.password=foobar", Regexp: "toldyouso.password=" },
+      {
+        Source:"couchdb",
+        Line: "couchdb.host=$$VALUE$$"
+      }
     ],
-    Connections: [{
-      Source:"couchdb",
-      Line: "couchdb.host=$$VALUE$$"
-    }],
     LoadDefaultContent: 'src/main/resources/default.properties',
     AttachAsEnvVar: ["JAVA_OPTS", "-Dtoldyouso.properties=$$SELF_NAME$$"]
   }
@@ -36,7 +36,7 @@ class AttachAsEnvVar extends BaseConfigFile {
     const attachVarName = this.AttachAsEnvVar[0];
     const attachVarValue = this.AttachAsEnvVar[1].replace('$$SELF_NAME$$', `localrun/${this.TmpFolder}/${this.Name}`);
     return `
-      ${this.Connections.reduce((acc, val) => {
+      ${this.Content.filter(c => c.Source).reduce((acc, val) => {
         if (!acc.find(e => e.Source === val.Source)) {
           acc.push(val);
         }

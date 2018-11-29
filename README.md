@@ -489,13 +489,10 @@ In Fulgens a software components can define config files. This mechanism allows 
 Config param            | Type | Description
 ----------------------- | ---- | -----------
 Name | string | Required. Name of the config file
-Connections | array of objects | Optional. Defines a at run-time replaced config file row
-Connections.Source | string | Required. This references another software component by its name
-Connections.Regexp | string | Optional. A regular expression to search in the config file. The first line matching this regular expression will be replaced by the value giving via Line 
-Connections.Line | string | Optional. Right side part of the config file row. $$VALUE$$ will be replaced by the host name at run-time.
-Content | array of objects | Optional. Defines static content added or replaced in the config file
+Content | array of objects | Optional. Defines static or dynamic content added or replaced in the config file. Dynamic parts are set at run-time with host names of other resouces
+Content.Line | string | Required. Content to add or replace in the config file. It may containt $$VALUE$$ which will be replaced by the host name at run-time given my the Source attribute
 Content.Regexp | string | Optional. A regular expression to search in the config file. The first line matching this regular expression will be replaced by the value giving via Line
-Content.Line | string | Required. Content to add or replace in the config file
+Content.Source | string | Optional. This references another software component by its name
 LoadDefaultContent | string | Optional. Absolute or relative file path to a config file
 AttachAsEnvVar | array of 2 strings | Mutually exclusive to AttachIntoDocker or AttachIntoDockerAsFile. The config file will be attached to the application via an environment variable. The first string defines the name of the environment variable. The second string defines the value where $$SELF_NAME$$ will be replaced by the file path to the config file at run-time
 AttachIntoDocker | string | Mutually exclusive to AttachAsEnvVar or AttachIntoDockerAsFile. The config file will be mounted into docker via a directory. This defines the absolute path on the docker filesystem

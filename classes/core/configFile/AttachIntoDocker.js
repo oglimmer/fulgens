@@ -15,11 +15,6 @@ const BaseConfigFile = require('./BaseConfigFile');
       { Line: "init-connect='SET NAMES utf8'" },
       { Line: "character-set-server = utf8" }
     ],
-    Connections: [{
-      Source: "lucene",
-      Regexp: "_fti=",
-      Line: "_fti={couch_httpd_proxy, handle_proxy_req, <<\\\"http://$$VALUE$$:5985\\\">>}"
-    }],
     AttachIntoDocker: "/etc/mysql/conf.d"
   }
 */

@@ -9,6 +9,7 @@ const sourceTypeBuilder = require('../core/SourceType');
 const dependencycheckBuilder = require('../phase/dependencycheck');
 const BaseConfigFile = require('../core/configFile/BaseConfigFile');
 const Strings = require('../core/Strings');
+const CEnvVars = require('../core/CEnvVars');
 
 const BasePlugin = require('./BasePlugin');
 
@@ -60,6 +61,9 @@ class ShellPlugin extends BasePlugin {
     const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
     const pidFile = `.${softwareComponentName}Pid`;
 
+    const envVars = new CEnvVars(EnvVars);
+    const mountToDocker = configFiles.map(f => f.mountToDocker(envVars)).join(' ');
+
     this.build = () => nunjucks.render('classes/plugins/ShellPlugin.tmpl', {
       ...this.nunjucksObj(),
       typeSourceVarName,
@@ -74,9 +78,9 @@ class ShellPlugin extends BasePlugin {
       DockerMemory,
       writeConfigFiles: configFiles.map(f => f.createFile()).join('\n'),
       writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(configFiles),
-      mountToDocker: configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join(' '),
-      AllEnvVarsDocker: EnvVars.map(l => l.replace('$$TMP$$', 'localrun')).map(p => `-e ${p}`).join(' '),
-      AllEnvVarsShell: EnvVars.map(l => l.replace('$$TMP$$', 'localrun')).map(p => `export ${p}`).join('\n')
+      mountToDocker,
+      AllEnvVarsDocker: envVars.toDocker(),
+      AllEnvVarsShell: envVars.toShellExport()
     });
 
   }

@@ -7,6 +7,7 @@ const optionsBuilder = require('../phase/options');
 const sourceTypeBuilder = require('../core/SourceType');
 const BaseConfigFile = require('../core/configFile/BaseConfigFile');
 const Strings = require('../core/Strings');
+const CEnvVars = require('../core/CEnvVars');
 
 const BasePlugin = require('./BasePlugin');
 
@@ -61,6 +62,9 @@ class NodePlugin extends BasePlugin {
     const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
     const pidFile = `.${softwareComponentName}Pid`;
 
+    const envVars = new CEnvVars(EnvVars);
+    const mountToDocker = configFiles.map(f => f.mountToDocker(envVars)).join(' ');
+
     this.build = () => nunjucks.render('classes/plugins/NodePlugin.tmpl', {
       ...this.nunjucksObj(),
       Build,
@@ -78,10 +82,10 @@ class NodePlugin extends BasePlugin {
       DockerMemory,
       writeConfigFiles: configFiles.map(f => f.createFile()).join('\n'),
       writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(configFiles),
-      mountToDocker: configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n'),
+      mountToDocker,
       storeFileAndExportEnvVar: configFiles.map(f => f.storeFileAndExportEnvVar()).join('\n'),
-      AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
-      AllEnvVarsNode: EnvVars.map(p => `${p}`).join(' ')
+      AllEnvVarsDocker: envVars.toDocker(),
+      AllEnvVarsNode: envVars.toShell()
     });
 
   }

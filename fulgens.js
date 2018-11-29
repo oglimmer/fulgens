@@ -85,6 +85,7 @@ var env = nunjucks.configure(path.resolve(__dirname), { autoescape: false });
 env.addFilter('map', (str, name) => str.map(e => e[name]));
 env.addFilter('debug', (str) => { console.error(str); return str; });
 env.addFilter('filterNotEmpty', (arr, name) => arr.filter(e => e[name]));
+env.addFilter('removeTicks', str => str.replace(/"/g, "").replace(/'/g, ""));
 
 const rtConfig = new RuntimeConfiguration(userConfig, path.dirname(systemFilename));
 

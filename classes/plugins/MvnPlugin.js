@@ -5,6 +5,7 @@ const dependencycheckBuilder = require('../phase/dependencycheck');
 const optionsBuilder = require('../phase/options');
 const sourceTypeBuilder = require('../core/SourceType');
 const Strings = require('../core/Strings');
+const CEnvVars = require('../core/CEnvVars');
 
 const BasePlugin = require('./BasePlugin');
 
@@ -54,6 +55,8 @@ class MvnPlugin extends BasePlugin {
     const AllEnvVars = [...EnvVars, ...dependencyManager.getEnvVars()];
     const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
 
+    const envVars = new CEnvVars(EnvVars);
+
     const rpl = obj => (Array.isArray(obj)?obj:[obj]).map(e => e.replace('$$TMP$$', 'localrun')).join('\n');
 
     this.build = () => nunjucks.render('classes/plugins/MvnPlugin.tmpl', {
@@ -67,8 +70,8 @@ class MvnPlugin extends BasePlugin {
       m2Mapping: UseHomeM2 ? '"$HOME/.m2"' : '"$(pwd)/localrun/.m2"',
       BeforeBuild: rpl(BeforeBuild),
       AfterBuild: rpl(AfterBuild),
-      AllEnvVarsDocker: AllEnvVars.map(l => l.replace('$$TMP$$', 'localrun')).map(p => `-e ${p}`).join(' '),
-      AllEnvVarsShell: AllEnvVars.map(l => l.replace('$$TMP$$', 'localrun')).map(p => `export ${p}`).join('\n'),
+      AllEnvVarsDocker: envVars.toDocker(),
+      AllEnvVarsShell: envVars.toShellExport()
     });
   }
 

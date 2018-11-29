@@ -9,6 +9,7 @@ const sourceTypeBuilder = require('../core/SourceType');
 const dependencycheckBuilder = require('../phase/dependencycheck');
 const BaseConfigFile = require('../core/configFile/BaseConfigFile');
 const Strings = require('../core/Strings');
+const CEnvVars = require('../core/CEnvVars');
 
 const BasePlugin = require('./BasePlugin');
 
@@ -121,6 +122,9 @@ class JavaPlugin extends BasePlugin {
     const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
     const pidFile = `.${softwareComponentName}Pid`;
 
+    const envVars = new CEnvVars(EnvVars);
+    const mountToDocker = configFiles.map(f => f.mountToDocker(envVars)).join(' ');
+
     this.build = () => nunjucks.render('classes/plugins/JavaPlugin.tmpl', {
       ...this.nunjucksObj(),
       typeSourceVarName,
@@ -135,9 +139,9 @@ class JavaPlugin extends BasePlugin {
       DockerMemory,
       writeConfigFiles: configFiles.map(f => f.createFile()).join('\n'),
       writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(configFiles),
-      mountToDocker: configFiles.map(f => f.mountToDocker('/home/node/exec_env/server')).join('\n'),
-      AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
-      AllEnvVarsShell: EnvVars.join(' ')
+      mountToDocker,
+      AllEnvVarsDocker: envVars.toDocker(),
+      AllEnvVarsShell: envVars.toShell()
     });
   }
 }

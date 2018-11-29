@@ -31,7 +31,7 @@ if [ "${{typeSourceVarName}}" == "docker" ]; then
     startDockerNetwork
     {{writeDockerConnectionLogic}}
     {{writeConfigFiles}}
-    verbosePrint "docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} {% if DockerMemory %}-m {{DockerMemory}}{% endif %} --net={{systemName|lower}}net --name={{softwareComponentName}} $ADD_HOST_INTERNAL {{mountToDocker}} {{AllEnvVarsDocker}} -v $(pwd):/home/node/exec_env -w /home/node/exec_env {{DockerImage}}:${{typeSourceVarName}}_VERSION /bin/bash -c ./{{StartRpld}}"
+    verbosePrint "docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} {% if DockerMemory %}-m {{DockerMemory}}{% endif %} --net={{systemName|lower}}net --name={{softwareComponentName}} $ADD_HOST_INTERNAL {{mountToDocker|removeTicks}} {{AllEnvVarsDocker|removeTicks}} -v $(pwd):/home/node/exec_env -w /home/node/exec_env {{DockerImage}}:${{typeSourceVarName}}_VERSION /bin/bash -c ./{{StartRpld|removeTicks}}"
     {{dcId}}=$(docker run --rm -d -p {{ExposedPort}}:{{ExposedPort}} \
         {% if DockerMemory %}-m {{DockerMemory}}{% endif %} \
         --net={{systemName|lower}}net --name={{softwareComponentName}} $ADD_HOST_INTERNAL \

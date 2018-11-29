@@ -6,6 +6,7 @@ const dependencycheckBuilder = require('../phase/dependencycheck');
 const optionsBuilder = require('../phase/options');
 const BaseConfigFile = require('../core/configFile/BaseConfigFile');
 const Strings = require('../core/Strings');
+const CEnvVars = require('../core/CEnvVars');
 
 const sourceTypeBuilder = require('../core/SourceType');
 
@@ -56,6 +57,9 @@ class RedisPlugin extends BasePlugin {
     const pidFile = `.${softwareComponentName}Pid`;
     const dcId = `dockerContainerID${softwareComponentName}`;
 
+    const envVars = new CEnvVars(EnvVars);
+    const mountToDocker = configFiles.map(f => f.mountToDocker(envVars)).join(' ');
+
     this.build = () => nunjucks.render('classes/plugins/RedisPlugin.tmpl', {
       ...this.nunjucksObj(),
       typeSourceVarName,
@@ -66,10 +70,10 @@ class RedisPlugin extends BasePlugin {
       DockerImage,
       ExposedPort,
       DockerMemory,
-      AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
+      AllEnvVarsDocker: envVars.toDocker(),
       writeConfigFiles: configFiles.map(f => f.createFile()).join('\n'),
       writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(configFiles),
-      mountToDocker: configFiles.map(f => f.mountToDocker()).join('\n')
+      mountToDocker
     });
 
   }

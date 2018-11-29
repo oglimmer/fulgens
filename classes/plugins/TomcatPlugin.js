@@ -7,6 +7,7 @@ const optionsBuilder = require('../phase/options');
 const sourceTypeBuilder = require('../core/SourceType');
 const BaseConfigFile = require('../core/configFile/BaseConfigFile');
 const Strings = require('../core/Strings');
+const CEnvVars = require('../core/CEnvVars');
 
 const BasePlugin = require('./BasePlugin');
 const JavaPlugin = require('./JavaPlugin');
@@ -102,7 +103,10 @@ class TomcatPlugin extends BasePlugin {
     });
     
     dependencycheckBuilder.add('curl --version 1>/dev/null');
-        
+    
+    const envVars = new CEnvVars(EnvVars);
+    const mountToDocker = configFiles.map(f => f.mountToDocker(envVars)).join('\n');
+
     this.build = () => nunjucks.render('classes/plugins/TomcatPlugin.tmpl', {
       ...this.nunjucksObj(),
       dockerLibsToAdd,
@@ -115,12 +119,12 @@ class TomcatPlugin extends BasePlugin {
       DockerImage,
       ExposedPort,
       DockerMemory,
-      AllEnvVarsTomcat: 'export JAVA_OPTS="$JAVA_OPTS ' + EnvVars.map(p => `-D${p}`).join(' ') + '"',
-      AllEnvVarsDocker: EnvVars.map(p => `-e ${p}`).join(' '),
+      AllEnvVarsTomcat: envVars.toShellExportJavaOpts(),
+      AllEnvVarsDocker: envVars.toDocker(),
       storeFileAndExportEnvVar: configFiles.map(f => f.storeFileAndExportEnvVar()).join('\n'),
       writeConfigFiles: configFiles.map(f => f.createFile()).join('\n'),
       writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(configFiles),
-      mountToDocker: configFiles.map(f => f.mountToDocker('/usr/local/tomcat/webapps')).join('\n')
+      mountToDocker
     });
 
   }

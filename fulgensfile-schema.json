@@ -352,7 +352,7 @@
           "type": "array",
           "minItems": 0,
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/EnvVarsDef"
           },
           "uniqueItems": true
         }
@@ -386,7 +386,7 @@
           "type": "array",
           "minItems": 0,
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/EnvVarsDef"
           },
           "uniqueItems": true
         },
@@ -463,7 +463,7 @@
           "type": "array",
           "minItems": 0,
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/EnvVarsDef"
           },
           "uniqueItems": true
         },
@@ -491,6 +491,18 @@
       },
       "required": [ "Source", "Start" ],
       "additionalProperties": false
+    },
+    "EnvVarsDef": {
+      "properties": {
+        "Name": {
+          "type": "string"
+        },
+        "Value": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [ "Name", "Value" ]
     },
     "ConfigFileDef": {
       "properties": {

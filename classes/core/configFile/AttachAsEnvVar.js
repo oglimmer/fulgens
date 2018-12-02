@@ -50,7 +50,7 @@ class AttachAsEnvVar extends BaseConfigFile {
   /* docker */
   mountToDocker(EnvVars) {
     const attachValueRpl = this.AttachAsEnvVar[1].replace('$$SELF_NAME$$', `/tmp/${this.TmpFolder}/${this.Name}`);
-    EnvVars.push({
+    EnvVars.pushForDocker({
       Name: this.AttachAsEnvVar[0],
       Value: attachValueRpl
     });

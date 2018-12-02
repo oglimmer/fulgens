@@ -4,32 +4,38 @@ const replaceVariables = obj => {
 	return obj;
 }
 
+const reduceDuplicates = envVars => {
+    return envVars.reduce((accu, curval) => {
+      const foundElement = accu.find(e => e.Name === curval.Name);
+      if (foundElement) {
+        foundElement.Value += ` ${curval.Value}`;
+      } else {
+        accu.push(curval);
+      }
+      return accu;
+    }, []);
+}
+
 class CEnvVars {
 
 	constructor(envVarsConfig = []) {
 		this.envVars = envVarsConfig.map(e => replaceVariables(e));
+		this.envVarsDocker = [];
 	}
 
 	push(obj) {
-		replaceVariables(obj);
+		obj = replaceVariables(obj);
 		this.envVars.push(obj);
-		this.reduceDuplicates();
 	}
 
-	reduceDuplicates() {
-	    this.envVars = this.envVars.reduce((accu, curval) => {
-	      const foundElement = accu.find(e => e.Name === curval.Name);
-	      if (foundElement) {
-	        foundElement.Value += ` ${curval.Value}`;
-	      } else {
-	        accu.push(curval);
-	      }
-	      return accu;
-	    }, []);
+	pushForDocker(obj) {
+		obj = replaceVariables(obj);		
+		this.envVarsDocker.push(obj);
 	}
 
 	toDocker() {
-		return this.envVars.map(p => `-e ${p.Name}="${p.Value}"`).join(' ');
+		return reduceDuplicates([...this.envVars, ...this.envVarsDocker])
+			.map(p => `-e ${p.Name}="${p.Value}"`).join(' ');
 	}
 
 	toShell() {

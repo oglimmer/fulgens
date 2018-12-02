@@ -35,7 +35,7 @@ class AttachIntoDockerAsFile extends BaseConfigFile {
   }
 
   /* docker */
-  mountToDocker() {
+  mountToDocker(EnvVars) {
     return `-v "\$(pwd)/localrun/${this.TmpFolder}/${this.Name}:${this.AttachIntoDockerAsFile}"`;
   }
 

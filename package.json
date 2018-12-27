@@ -1,6 +1,6 @@
 {
   "name": "fulgens",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "description": "Helps with building, deploying and running software locally",
   "main": "fulgens.js",
   "scripts": {
@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "minimist": "^1.2.0",
-    "nunjucks": "^3.1.4"
+    "nunjucks": "^3.1.4",
+    "sync-request": "^6.0.0"
   }
 }

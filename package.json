@@ -1,6 +1,6 @@
 {
   "name": "fulgens",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "description": "Helps with building, deploying and running software locally",
   "main": "fulgens.js",
   "scripts": {

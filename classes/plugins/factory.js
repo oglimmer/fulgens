@@ -1,6 +1,7 @@
 
 const MvnPlugin = require('./MvnPlugin');
 const TomcatPlugin = require('./TomcatPlugin');
+const TomeePlugin = require('./TomeePlugin');
 const JavaPlugin = require('./JavaPlugin');
 const CouchdbPlugin = require('./CouchdbPlugin');
 const MysqlPlugin = require('./MysqlPlugin');
@@ -14,6 +15,8 @@ module.exports = name => {
       return MvnPlugin.instance();
     case 'tomcat':
       return TomcatPlugin.instance();
+    case 'tomee':
+      return TomeePlugin.instance();
     case 'java':
       return JavaPlugin.instance();
     case 'couchdb':

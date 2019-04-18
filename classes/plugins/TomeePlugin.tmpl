@@ -1,0 +1,95 @@
+
+{{ header }}
+
+if [ "$START_{{softwareComponentName|upper}}" = "YES" ]; then
+
+{{ preparecomp }}
+
+{{ getsource }}
+
+if [ "${{typeSourceVarName}}" == "download" ]; then
+  if [ -f "{{pidFile}}" ] && [ "$(<{{pidFile}})" != "download" ]; then
+    echo "Tomee running but started from different source type"
+    exit 1
+  fi
+  # download tomee
+  if [ ! -f "/${TMPDIR:-/tmp}/apache-tomee-$TOMEE_VERSION.tar" ]; then
+    curl -s $TOMEE_URL | gzip -d >/${TMPDIR:-/tmp}/apache-tomee-$TOMEE_VERSION.tar
+  fi
+  # extract tomee
+  if [ ! -d "./apache-tomee-$TOMEE_VERSION" ]; then
+    tar -xf /${TMPDIR:-/tmp}/apache-tomee-$TOMEE_VERSION.tar -C ./localrun
+  fi
+fi
+
+{{ prestart }}
+
+dockerAddLibRefs=()
+if [ "${{typeSourceVarName}}" == "docker" ]; then
+	{{ dockerLibsToAdd }}
+  	mkdir -p localrun/webapps
+  	targetPath=localrun/webapps/
+fi
+
+if [ "${{typeSourceVarName}}" == "download" ]; then
+	{{ downloadLibsToCopy }}
+	targetPath=localrun/apache-tomee-webprofile-$TOMEE_VERSION/webapps/
+fi
+
+if [ "${{typeSourceVarName}}" == "local" ]; then
+  targetPath=${{typeSourceVarName}}_PATH/webapps/
+fi
+
+f_deploy() {
+	cp {{Artifact}} $targetPath
+}
+f_deploy
+
+if [ "${{typeSourceVarName}}" == "download" ]; then
+  if [ ! -f "{{pidFile}}" ]; then
+    {{storeFileAndExportEnvVar}}
+    {{AllEnvVarsTomee}}
+    ./localrun/apache-tomee-webprofile-$TOMEE_VERSION/bin/startup.sh
+    echo "download">{{pidFile}}
+  else
+    echo "Reusing already running instance"
+  fi
+  tailCmd="tail -f ./localrun/apache-tomee-webprofile-$TOMEE_VERSION/logs/catalina.out"
+fi
+
+if [ "${{typeSourceVarName}}" == "docker" ]; then
+  if [ -f "{{pidFile}}" ] && [ "$(<{{pidFile}})" == "download" ]; then
+    echo "Tomee running but started from different source type"
+    exit 1
+  fi
+  if [ ! -f "{{pidFile}}" ]; then
+    startDockerNetwork
+    {{writeDockerConnectionLogic}}
+    {{writeConfigFiles}}
+    verbosePrint "docker run --rm -d ${dockerAddLibRefs[@]} -p {{ExposedPort}}:{{ExposedPort}} {% if DockerMemory %}-m {{DockerMemory}}{% endif %} --net={{systemName|lower}}net --name={{softwareComponentName}} $ADD_HOST_INTERNAL {{mountToDocker}} {{AllEnvVarsDocker}} -v "$(pwd)/localrun/webapps":/usr/local/tomee/webapps {{DockerImage}}:${{typeSourceVarName}}_VERSION"
+    dockerContainerID{{softwareComponentName}}=$(docker run --rm -d ${dockerAddLibRefs[@]} -p {{ExposedPort}}:{{ExposedPort}} \
+        {% if DockerMemory %}-m {{DockerMemory}}{% endif %} \
+        --net={{systemName|lower}}net --name={{softwareComponentName}} $ADD_HOST_INTERNAL \
+        {{mountToDocker}} {{AllEnvVarsDocker}} \
+        -v "$(pwd)/localrun/webapps":/usr/local/tomee/webapps {{DockerImage}}:${{typeSourceVarName}}_VERSION)
+    echo "$dockerContainerID{{softwareComponentName}}">{{pidFile}}
+  else
+    dockerContainerID{{softwareComponentName}}=$(<{{pidFile}})
+    echo "Reusing already running instance $dockerContainerID{{softwareComponentName}}"
+  fi
+  tailCmd="docker logs -f $dockerContainerID{{softwareComponentName}}"
+fi
+
+if [ "${{typeSourceVarName}}" == "local" ]; then
+  if [ -f "{{pidFile}}" ]; then
+    echo "Tomee running but started from different source type"
+    exit 1
+  fi
+  tailCmd="tail -f ${{typeSourceVarName}}_PATH/logs/catalina.out"
+fi
+
+{{ poststart }}
+
+{{ leavecomp }}
+
+fi

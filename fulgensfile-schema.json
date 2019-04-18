@@ -365,6 +365,45 @@
       "required": [ "Source", "Deploy" ],
       "additionalProperties": false
     },
+    "TomeeType": {
+      "properties": {
+        "Source": {
+          "enum": [ "tomee" ]
+        },
+        "DockerImage": {
+          "type": "string"
+        },
+        "DockerMemory": {
+          "type": "string"
+        },
+        "Lib": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "Deploy": {
+          "type": "string"
+        },
+        "EnvVars": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "$ref": "#/definitions/EnvVarsDef"
+          },
+          "uniqueItems": true
+        }
+      },
+      "patternProperties": {
+        "^[a-z]+.*$": {
+          "$ref": "#/definitions/ConfigFileDef"
+        }
+      },
+      "required": [ "Source", "Deploy" ],
+      "additionalProperties": false
+    },
     "NodeType": {
       "properties": {
         "Source": {

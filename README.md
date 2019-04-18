@@ -503,15 +503,14 @@ Example:
 ```
 config: {
     Name: "app.properties",
-    Connections: [{
-        Source:"mysql",
-        Var: "mysql.url",
-        Content: "jdbc:mysql://$$VALUE$$:3306/schema"
+    Content: [{
+      Source:"mysql",
+      Line: "mysql.url=jdbc:mysql://$$VALUE$$:3306/schema"
+    }, {
+      Line: "bind=0.0.0.0"
+    }, {
+      Line: "user=foobar"
     }],
-    Content: [
-        "bind=0.0.0.0",
-        "user=foobar"
-    ],
     AttachAsEnvVar: ["JAVA_OPTS", "-Dapp.filename=$$SELF_NAME$$"]        
     // or
     AttachIntoDocker: "/usr/local/etc/app/local.d"

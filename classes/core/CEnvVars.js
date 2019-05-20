@@ -18,12 +18,21 @@ const reduceDuplicates = envVars => {
 
 class CEnvVars {
 
-	constructor(envVarsConfig = []) {
-		this.envVars = envVarsConfig.map(e => replaceVariables(e));
-		this.envVarsDocker = [];
+	/**
+	 * @param Array of Object(Name:string, Value:string, Source:string(optional), DockerOnly:boolean(optional))
+	 * 				Name is the variable name
+	 *				Value is the variable value ($$TMP$$, $$VALUE$$)
+	 *				Source is the source component name (used for $$VALUE$$)
+	 * 				DockerOnly defines for attach to docker only
+	 */
+	constructor(softwareComponentName, envVarsConfig = []) {
+		this.softwareComponentName = softwareComponentName;
+		this.envVars = envVarsConfig.filter(e => e.DockerOnly !== true).map(e => replaceVariables(e));
+		this.envVarsDocker = envVarsConfig.filter(e => e.DockerOnly === true).map(e => replaceVariables(e));
 	}
 
 	push(obj) {
+		if(obj.DockerOnly === true) { throw "DockerOnly in non docker"; }
 		obj = replaceVariables(obj);
 		this.envVars.push(obj);
 	}
@@ -35,7 +44,10 @@ class CEnvVars {
 
 	toDocker() {
 		return reduceDuplicates([...this.envVars, ...this.envVarsDocker])
-			.map(p => `-e ${p.Name}="${p.Value}"`).join(' ');
+			.map(p => {
+				const value = p.Value.replace('$$VALUE$$', `$REPLVAR_${this.softwareComponentName.toUpperCase()}_${p.Source.toUpperCase()}`);
+				return `-e ${p.Name}="${value}"`;
+			}).join(' ');
 	}
 
 	toShell() {

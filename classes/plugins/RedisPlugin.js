@@ -57,7 +57,7 @@ class RedisPlugin extends BasePlugin {
     const pidFile = `.${softwareComponentName}Pid`;
     const dcId = `dockerContainerID${softwareComponentName}`;
 
-    const envVars = new CEnvVars(EnvVars);
+    const envVars = new CEnvVars(softwareComponentName, EnvVars);
     const mountToDocker = configFiles.map(f => f.mountToDocker(envVars)).join(' ');
 
     this.build = () => nunjucks.render('classes/plugins/RedisPlugin.tmpl', {
@@ -72,7 +72,7 @@ class RedisPlugin extends BasePlugin {
       DockerMemory,
       AllEnvVarsDocker: envVars.toDocker(),
       writeConfigFiles: configFiles.map(f => f.createFile()).join('\n'),
-      writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(configFiles),
+      writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(configFiles, envVars),
       mountToDocker
     });
 

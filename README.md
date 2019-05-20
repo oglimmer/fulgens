@@ -454,7 +454,7 @@ Each software component type (plugin) has a docker image associated. This can be
 Config param            | Type | Description
 ----------------------- | ---- | -----------
 DockerImage | string | docker image name without version
-DockerMemory | strig | max memory parameter "-m" for docker
+DockerMemory | string | max memory parameter "-m" for docker
 
 #### EnvVars
 
@@ -462,7 +462,11 @@ This attributes allows the definition of environment variables. They will be pas
 
 Config param            | Type | Description
 ----------------------- | ---- | -----------
-EnvVars | array of strings | string of the type "variable\_name=variable\_value". $$TMP$$ will be replaced with the working directory of the generated file
+EnvVars | array of objects | object with Name and Value 
+EnvVars.Name | string | string which defines the name of the environment variable
+EnvVars.Value | string | string which defines the value of the environment variable. $$TMP$$ will be replaced with the working directory of the generated file. $$VALUE$$ will be replaced with the hostname of the Source
+EnvVars.Source | string | string which defines the source component
+EnvVars.DockerOnly | boolean | if true will be set for Docker only
 
 #### ExposedPort
 
@@ -493,7 +497,7 @@ Content | array of objects | Optional. Defines static or dynamic content added o
 Content.Line | string | Required. Content to add or replace in the config file. It may containt $$VALUE$$ which will be replaced by the host name at run-time given my the Source attribute
 Content.Regexp | string | Optional. A regular expression to search in the config file. The first line matching this regular expression will be replaced by the value giving via Line
 Content.Source | string | Optional. This references another software component by its name
-LoadDefaultContent | string | Optional. Absolute or relative file path to a config file
+LoadDefaultContent | string | Optional. Absolute or relative file path (to project root) to a config file. Supports $$TMP$$
 AttachAsEnvVar | array of 2 strings | Mutually exclusive to AttachIntoDocker or AttachIntoDockerAsFile. The config file will be attached to the application via an environment variable. The first string defines the name of the environment variable. The second string defines the value where $$SELF_NAME$$ will be replaced by the file path to the config file at run-time
 AttachIntoDocker | string | Mutually exclusive to AttachAsEnvVar or AttachIntoDockerAsFile. The config file will be mounted into docker via a directory. This defines the absolute path on the docker filesystem
 AttachIntoDockerAsFile | string | Mutually exclusive to AttachAsEnvVar or AttachIntoDocker. The config file will be mounted into docker via a file. This defines the absolute path on the docker filesystem to the config file.

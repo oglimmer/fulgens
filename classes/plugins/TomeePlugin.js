@@ -109,7 +109,7 @@ class TomeePlugin extends BasePlugin {
     
     dependencycheckBuilder.add('curl --version 1>/dev/null');
     
-    const envVars = new CEnvVars(EnvVars);
+    const envVars = new CEnvVars(softwareComponentName, EnvVars);
     const mountToDocker = configFiles.map(f => f.mountToDocker(envVars)).join('\n');
 
     this.build = () => nunjucks.render('classes/plugins/TomeePlugin.tmpl', {
@@ -128,7 +128,7 @@ class TomeePlugin extends BasePlugin {
       AllEnvVarsDocker: envVars.toDocker(),
       storeFileAndExportEnvVar: configFiles.map(f => f.storeFileAndExportEnvVar()).join('\n'),
       writeConfigFiles: configFiles.map(f => f.createFile()).join('\n'),
-      writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(configFiles),
+      writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(configFiles, envVars),
       mountToDocker
     });
 

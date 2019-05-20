@@ -55,7 +55,7 @@ class MvnPlugin extends BasePlugin {
     const AllEnvVars = [...EnvVars, ...dependencyManager.getEnvVars()];
     const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
 
-    const envVars = new CEnvVars(EnvVars);
+    const envVars = new CEnvVars(softwareComponentName, EnvVars);
 
     const rpl = obj => (Array.isArray(obj)?obj:[obj]).map(e => e.replace('$$TMP$$', 'localrun')).join('\n');
 

@@ -62,7 +62,7 @@ class NodePlugin extends BasePlugin {
     const typeSourceVarName = `TYPE_SOURCE_${softwareComponentName.toUpperCase()}`;
     const pidFile = `.${softwareComponentName}Pid`;
 
-    const envVars = new CEnvVars(EnvVars);
+    const envVars = new CEnvVars(softwareComponentName, EnvVars);
     const mountToDocker = configFiles.map(f => f.mountToDocker(envVars)).join(' ');
 
     this.build = () => nunjucks.render('classes/plugins/NodePlugin.tmpl', {
@@ -81,7 +81,7 @@ class NodePlugin extends BasePlugin {
       DockerImage,
       DockerMemory,
       writeConfigFiles: configFiles.map(f => f.createFile()).join('\n'),
-      writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(configFiles),
+      writeDockerConnectionLogic: BaseConfigFile.writeDockerConnectionLogic(configFiles, envVars),
       mountToDocker,
       storeFileAndExportEnvVar: configFiles.map(f => f.storeFileAndExportEnvVar()).join('\n'),
       AllEnvVarsDocker: envVars.toDocker(),

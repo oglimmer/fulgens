@@ -66,13 +66,15 @@ class BaseConfigFile {
   }
 
   /* docker */
-  static writeDockerConnectionLogic(configFilesArray) {
-    // First reduce: from all config files we only want those objects: { Content.Source, PluginName }
-    // Second reduce: remove any duplicates
+  static writeDockerConnectionLogic(configFilesArray, envVars) {
+    // First reduce: from all config files we only want those objects: { Content.Source, pluginName }
+    // Then first concat with EnvVars as { Content.Source, pluginName }
+    // Then second reduce: remove any duplicates
     const allSources = configFilesArray.reduce((accumulator, currentValue) => {
       const simpleConnectionArray = currentValue.Content.filter(c => c.Source).map(c => ({ sourceName: c.Source, pluginName: currentValue.pluginName }));
       return accumulator.concat(simpleConnectionArray);
-    }, []).reduce((accumulator, currentValue) => {
+    }, []).concat(envVars.envVarsDocker.filter(p => p.Source).map(p => ({ sourceName: p.Source, pluginName: envVars.softwareComponentName }))
+    ).reduce((accumulator, currentValue) => {
       if (!accumulator.find(e => e.sourceName === currentValue.sourceName && e.pluginName === currentValue.pluginName)) {
         accumulator.push(currentValue);
       }

@@ -8,6 +8,7 @@ const MysqlPlugin = require('./MysqlPlugin');
 const NodePlugin = require('./NodePlugin');
 const RedisPlugin = require('./RedisPlugin');
 const ShellPlugin = require('./ShellPlugin');
+const NpmPlugin = require('./NpmPlugin');
 
 module.exports = name => {
     switch (name) {
@@ -29,6 +30,8 @@ module.exports = name => {
       return RedisPlugin.instance();
     case 'shell':
       return ShellPlugin.instance();
+    case 'npm':
+      return NpmPlugin.instance();
     default:
     throw Error(`Unknown Plugin ${name}`);
   }

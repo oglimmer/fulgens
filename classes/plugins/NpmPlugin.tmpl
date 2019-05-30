@@ -1,0 +1,60 @@
+
+{{ header }}
+
+if [ "$START_{{softwareComponentName|upper}}" = "YES" ]; then
+
+{{ preparecomp }}
+
+{{ getsource }}
+
+{# prestart must come before the build code, as it might set JAVA_HOME in BasePlugin #}
+{{ prestart }}
+
+if [ "${{typeSourceVarName}}" == "local" ]; then
+  f_build() {
+    verbosePrint "pwd=$(pwd)\nnpm {{Command}}"
+    {{BeforeBuild}}
+    {{AllEnvVarsShell}}
+    npm {{Command}}
+    {{AfterBuild}}
+  }
+fi
+
+if [ "${{typeSourceVarName}}" == "docker" ]; then
+
+  {% if dependencyManager.hasAnyBuildDep() %} 
+  dockerImage=npm_build
+  mkdir -p localrun/dockerbuild
+  cat <<- EOFDOCK > localrun/dockerbuild/Dockerfile
+    FROM {{DockerImage}}:${{typeSourceVarName}}_VERSION
+    RUN apt-get update && \\ {{dependencyManager.getAptBuild()}} && \\
+      apt-get clean && \\
+      rm -rf /tmp/* /var/tmp/* /var/lib/apt/archive/* /var/lib/apt/lists/*
+    {{dependencyManager.getNpmBuild('RUN')}}
+    CMD ["node"]
+EOFDOCK
+  verbosePrint "docker build --tag npm_build:${{typeSourceVarName}}_VERSION localrun/dockerbuild/"
+  docker build --tag npm_build:${{typeSourceVarName}}_VERSION localrun/dockerbuild/
+  {% else %}
+  dockerImage={{DockerImage}}
+  {% endif %}
+
+  f_build() {
+    verbosePrint "pwd=$(pwd)\ndocker run --name={{softwareComponentName}} --rm -v $(pwd):/usr/src/build -w /usr/src/build $dockerImage:${{typeSourceVarName}}_VERSION npm {{Command}}"
+    {{BeforeBuild}}
+    docker run --name={{softwareComponentName}} --rm {{AllEnvVarsDocker}} -v "$(pwd)":/usr/src/build -w /usr/src/build $dockerImage:${{typeSourceVarName}}_VERSION npm {{Command}}
+    {{AfterBuild}}
+  }
+fi   
+
+if [ "$SKIP_BUILD" != "YES" ]; then
+  f_build
+else
+  verbosePrint "npm build skipped."
+fi  
+
+{{ poststart }}
+
+{{ leavecomp }}
+
+fi

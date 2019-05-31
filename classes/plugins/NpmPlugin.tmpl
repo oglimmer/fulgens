@@ -15,6 +15,7 @@ if [ "${{typeSourceVarName}}" == "local" ]; then
     verbosePrint "pwd=$(pwd)\nnpm {{Command}}"
     {{BeforeBuild}}
     {{AllEnvVarsShell}}
+    npm i
     npm {{Command}}
     {{AfterBuild}}
   }
@@ -42,7 +43,7 @@ EOFDOCK
   f_build() {
     verbosePrint "pwd=$(pwd)\ndocker run --name={{softwareComponentName}} --rm -v $(pwd):/usr/src/build -w /usr/src/build $dockerImage:${{typeSourceVarName}}_VERSION npm {{Command}}"
     {{BeforeBuild}}
-    docker run --name={{softwareComponentName}} --rm {{AllEnvVarsDocker}} -v "$(pwd)":/usr/src/build -w /usr/src/build $dockerImage:${{typeSourceVarName}}_VERSION npm {{Command}}
+    docker run --name={{softwareComponentName}} --rm {{AllEnvVarsDocker}} -v "$(pwd)":/usr/src/build -w /usr/src/build $dockerImage:${{typeSourceVarName}}_VERSION npm i && npm {{Command}}
     {{AfterBuild}}
   }
 fi   

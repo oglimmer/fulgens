@@ -45,7 +45,12 @@ class CEnvVars {
 	toDocker() {
 		return reduceDuplicates([...this.envVars, ...this.envVarsDocker])
 			.map(p => {
-				const value = p.Value.replace('$$VALUE$$', `$REPLVAR_${this.softwareComponentName.toUpperCase()}_${p.Source.toUpperCase()}`);
+				let value;
+				if (p.Source) {
+					value = p.Value.replace('$$VALUE$$', `$REPLVAR_${this.softwareComponentName.toUpperCase()}_${p.Source.toUpperCase()}`);
+				} else {
+					value = p.Value;
+				}
 				return `-e ${p.Name}="${value}"`;
 			}).join(' ');
 	}
